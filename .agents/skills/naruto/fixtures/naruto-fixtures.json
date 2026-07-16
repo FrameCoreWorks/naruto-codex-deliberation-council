@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "trigger_cases": [
+    {"id": "trigger-exact-inline", "message": "$naruto Review this architecture.", "expected": true},
+    {"id": "trigger-exact-newline", "message": "  $naruto\nReview this architecture.", "expected": true},
+    {"id": "trigger-no-task", "message": "$naruto", "expected": false},
+    {"id": "trigger-plain", "message": "naruto Review this architecture.", "expected": false},
+    {"id": "trigger-case", "message": "$Naruto Review this architecture.", "expected": false},
+    {"id": "trigger-upper", "message": "$NARUTO Review this architecture.", "expected": false},
+    {"id": "trigger-colon", "message": "$naruto: Review this architecture.", "expected": false},
+    {"id": "trigger-later", "message": "Please use $naruto for this architecture.", "expected": false},
+    {"id": "trigger-inline-code", "message": "`$naruto` Review this architecture.", "expected": false},
+    {"id": "trigger-fenced-code", "message": "```\n$naruto Review this architecture.\n```", "expected": false},
+    {"id": "trigger-quote", "message": "> $naruto Review this architecture.", "expected": false},
+    {"id": "trigger-list", "message": "- $naruto Review this architecture.", "expected": false},
+    {"id": "trigger-natural-language", "message": "Use Naruto deliberation to review this.", "expected": false}
+  ],
+  "protocol_cases": [
+    {
+      "id": "full-verified",
+      "valid_commits": 4,
+      "valid_same_thread_revisions": 4,
+      "barrier": "pass",
+      "moderator": "available",
+      "critical_objection": "resolved",
+      "evidence": "complete",
+      "expected_max_result": "verified_consensus"
+    },
+    {
+      "id": "three-candidate-degraded",
+      "valid_commits": 3,
+      "valid_same_thread_revisions": 3,
+      "barrier": "pass",
+      "moderator": "available",
+      "critical_objection": "none",
+      "evidence": "complete",
+      "expected_max_result": "provisional_consensus"
+    },
+    {
+      "id": "two-candidate-blocked",
+      "valid_commits": 2,
+      "valid_same_thread_revisions": 2,
+      "barrier": "pass",
+      "moderator": "available",
+      "critical_objection": "none",
+      "evidence": "complete",
+      "expected_max_result": "blocked"
+    },
+    {
+      "id": "hash-mismatch-degrades",
+      "valid_commits": 3,
+      "invalid_reason": "source_packet_hash_mismatch",
+      "valid_same_thread_revisions": 3,
+      "barrier": "pass",
+      "moderator": "available",
+      "critical_objection": "none",
+      "evidence": "complete",
+      "expected_max_result": "provisional_consensus"
+    },
+    {
+      "id": "early-reveal-blocked",
+      "valid_commits": 4,
+      "valid_same_thread_revisions": 0,
+      "barrier": "fail_early_reveal",
+      "moderator": "available",
+      "critical_objection": "unknown",
+      "evidence": "contaminated",
+      "expected_max_result": "blocked"
+    },
+    {
+      "id": "same-thread-unavailable",
+      "valid_commits": 4,
+      "valid_same_thread_revisions": 0,
+      "barrier": "pass",
+      "moderator": "available",
+      "critical_objection": "unknown",
+      "evidence": "complete",
+      "expected_max_result": "blocked"
+    },
+    {
+      "id": "moderator-unavailable",
+      "valid_commits": 4,
+      "valid_same_thread_revisions": 0,
+      "barrier": "pass",
+      "moderator": "unavailable",
+      "critical_objection": "unknown",
+      "evidence": "complete",
+      "expected_max_result": "blocked"
+    },
+    {
+      "id": "critical-minority-unresolved",
+      "valid_commits": 4,
+      "valid_same_thread_revisions": 4,
+      "barrier": "pass",
+      "moderator": "available",
+      "critical_objection": "evidence_backed_unresolved",
+      "evidence": "conflicting",
+      "expected_max_result": "structured_dispute"
+    },
+    {
+      "id": "protected-action-requested",
+      "valid_commits": 4,
+      "valid_same_thread_revisions": 4,
+      "barrier": "pass",
+      "moderator": "available",
+      "critical_objection": "none",
+      "evidence": "complete",
+      "protected_action_without_normal_gate": true,
+      "expected_max_result": "blocked"
+    }
+  ],
+  "regression_cases": [
+    {"id": "normal-routing-creative", "message": "Create an image prompt for GPT Image 2.", "naruto_must_activate": false},
+    {"id": "normal-routing-engineering", "message": "Fix the validator test failure.", "naruto_must_activate": false},
+    {"id": "normal-routing-provider", "message": "fal active. Check the endpoint schema.", "naruto_must_activate": false},
+    {"id": "no-permission-inheritance", "message": "$naruto Decide whether this provider route is suitable.", "provider_execution_allowed": false},
+    {"id": "no-majority-authority", "scenario": "three unsupported candidates agree; one candidate provides decisive canonical evidence", "expected_rule": "evidence_over_vote"},
+    {"id": "no-speed-authority", "scenario": "fastest candidate is wrong", "expected_rule": "completion_order_ignored"},
+    {"id": "no-verbosity-authority", "scenario": "longest candidate is wrong", "expected_rule": "answer_length_ignored"}
+  ],
+  "frozen_domain_cases": [
+    {
+      "id": "creative-route",
+      "domain": "creative",
+      "task": "Choose and justify a non-generic creative device for a 30-second product reel.",
+      "required_observables": ["four_complete_solutions", "product_proof", "continuity_cost", "shot_acceptance_tests", "evidence_weighted_synthesis"]
+    },
+    {
+      "id": "workflow-governance-route",
+      "domain": "workflow_governance",
+      "task": "Decide whether a proposed capability belongs in a new skill or an existing canonical owner.",
+      "required_observables": ["source_of_truth", "duplicate_check", "minority_evidence", "minimal_patch", "normal_route_preserved"]
+    },
+    {
+      "id": "engineering-route",
+      "domain": "engineering",
+      "task": "Choose a cache invalidation design and provide tests and rollback boundaries.",
+      "required_observables": ["complete_designs", "failure_modes", "deterministic_tests", "tradeoffs", "rollback"]
+    },
+    {
+      "id": "decision-support-route",
+      "domain": "decision_support",
+      "task": "Compare two alternatives when one required current fact is unavailable.",
+      "required_observables": ["shared_evidence_gap", "no_private_research", "provisional_or_dispute", "exact_resolution_need"]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+id: naruto-uzumaki
+runtime_id: naruto_uzumaki
+name: Naruto Uzumaki
+function: integrative practical candidate
+tier: request_only_candidate
+behavior_contract_ids:
+  - naruto_candidate.v1
+  - naruto_integrative_method.v1
+activation: Only inside an Oskar-routed run triggered by exact first token `$naruto`.
+owns:
+  - one blind complete solution through the integrative practical method
+  - practical user-value synthesis
+  - opportunity and workable fallback analysis
+inputs:
+  - identical source_evidence_packet
+  - separate method_profile_id
+  - candidate_solution schema
+outputs:
+  - candidate_solution.v1
+  - revised_candidate_solution.v1 after the common reveal
+handoff_to:
+  - kakashi-hatake
+forbidden:
+  - see peer outputs before commit
+  - solve only a subtask
+  - independent research outside the shared source packet
+  - expose raw chain-of-thought
+  - spawn agents, write files, execute providers, upload, push, install, delete, or write Memory Cache
+done_when: A complete evidence-linked solution and one same-thread revision pass schema, hash, and protected-boundary checks.

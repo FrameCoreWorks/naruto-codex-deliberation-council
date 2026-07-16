@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "name": "naruto",
+  "activation": {
+    "mode": "exact_first_token",
+    "token": "$naruto",
+    "case_sensitive": true,
+    "allow_implicit_invocation": false
+  },
+  "owner_runtime_id": "oskar",
+  "qa_runtime_id": "olga",
+  "moderation": {
+    "commit_barrier": true,
+    "reveal_cycles": 1,
+    "same_thread_revision_required": true,
+    "majority_is_authority": false,
+    "raw_reasoning_transcripts_forbidden": true
+  },
+  "agents": [
+    {
+      "id": "naruto-uzumaki",
+      "runtime_id": "naruto_uzumaki",
+      "name": "Naruto Uzumaki",
+      "function": "integrative practical candidate",
+      "tier": "request_only_candidate",
+      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_integrative_method.v1"]
+    },
+    {
+      "id": "sasuke-uchiha",
+      "runtime_id": "sasuke_uchiha",
+      "name": "Sasuke Uchiha",
+      "function": "adversarial risk-first candidate",
+      "tier": "request_only_candidate",
+      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_adversarial_method.v1"]
+    },
+    {
+      "id": "shikamaru-nara",
+      "runtime_id": "shikamaru_nara",
+      "name": "Shikamaru Nara",
+      "function": "systems efficiency candidate",
+      "tier": "request_only_candidate",
+      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_systems_method.v1"]
+    },
+    {
+      "id": "sakura-haruno",
+      "runtime_id": "sakura_haruno",
+      "name": "Sakura Haruno",
+      "function": "empirical implementation-quality candidate",
+      "tier": "request_only_candidate",
+      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_empirical_method.v1"]
+    },
+    {
+      "id": "kakashi-hatake",
+      "runtime_id": "kakashi_hatake",
+      "name": "Kakashi Hatake",
+      "function": "commit-barrier and evidence-reconciliation moderator",
+      "tier": "request_only_moderator",
+      "behavior_contract_ids": ["naruto_moderator.v1", "naruto_commit_barrier.v1"]
+    }
+  ]
+}

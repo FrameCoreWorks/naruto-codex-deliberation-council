@@ -1,0 +1,55 @@
+{
+  "schema": "codex_deliberation_package.v1",
+  "package_name": "codex-deliberation-council",
+  "package_version": "0.1.0",
+  "skill_name": "naruto",
+  "activation": {
+    "mode": "exact_first_token",
+    "token": "$naruto",
+    "case_sensitive": true,
+    "implicit_invocation": false
+  },
+  "distribution": {
+    "kind": "standalone_skill_with_custom_agents",
+    "plugin_wrapper_included": false,
+    "remote_included": false
+  },
+  "layout": {
+    "skill_root": ".agents/skills/naruto",
+    "profile_root": ".codex/agents",
+    "checksums": "SHA256SUMS"
+  },
+  "required_profiles": [
+    "naruto_uzumaki.toml",
+    "sasuke_uchiha.toml",
+    "shikamaru_nara.toml",
+    "sakura_haruno.toml",
+    "kakashi_hatake.toml"
+  ],
+  "required_skill_directories": [
+    "agents",
+    "fixtures",
+    "references",
+    "scripts",
+    "templates"
+  ],
+  "portable_transformations": [
+    "standalone_dependency_free_validator",
+    "package_checksum_verification",
+    "project_and_user_scope_installer",
+    "workspace_integration_moved_to_optional_documentation"
+  ],
+  "excluded_patterns": [
+    "._*",
+    ".DS_Store",
+    "__MACOSX/",
+    ".env",
+    ".env.*",
+    "node_modules/",
+    ".git/",
+    "Memory Cache/",
+    "Context/"
+  ],
+  "license": "MIT",
+  "third_party_names_licensed": false
+}

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Naruto Deliberation"
+  short_description: "Blind multi-agent deliberation for hard decisions"
+  default_prompt: "$naruto Solve this task through four independent methods, one evidence reveal, revision, and Oskar synthesis."
+
+policy:
+  allow_implicit_invocation: false
