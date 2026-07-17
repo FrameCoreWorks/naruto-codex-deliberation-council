@@ -21,7 +21,13 @@ if (!new Set(["--write", "--check"]).has(mode)) {
   process.exit(2);
 }
 
-const ignoredDirectories = new Set([".git", "node_modules", "__MACOSX"]);
+const ignoredDirectories = new Set([
+  ".git",
+  "node_modules",
+  "__MACOSX",
+  "Memory Cache",
+  "Context",
+]);
 const ignoredFiles = new Set([".DS_Store", "SHA256SUMS"]);
 
 function toPortablePath(path) {

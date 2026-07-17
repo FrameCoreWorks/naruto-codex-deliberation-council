@@ -10,7 +10,7 @@ upload, push, install, delete, or write project memory.
 
 ## Status
 
-- Standalone package version: `0.1.0`
+- Standalone package version: `0.2.0`
 - Skill name: `naruto`
 - Trigger: exact, case-sensitive first non-empty token `$naruto`
 - Runtime profiles: four candidates and one moderator
@@ -54,25 +54,36 @@ marker.
 
 1. The parent Codex agent acts as Oskar, the sole orchestrator and final
    synthesizer.
-2. One immutable evidence packet is canonicalized and hashed.
+2. Oskar opens `loop_control_fit` with `max_iterations: 1`, fixes the acceptance
+   criteria, and creates one canonical, hashed evidence packet.
 3. `naruto_uzumaki`, `sasuke_uchiha`, `shikamaru_nara`, and
    `sakura_haruno` receive byte-identical task evidence and solve the complete
    task independently through distinct methods.
-4. Every candidate commits a concise, schema-valid output before any peer
-   result is revealed.
-5. `kakashi_hatake` validates the barrier and prepares one common reveal
+4. Every candidate commits a concise, schema-valid output, including evidence
+   classes, independence keys, falsification checks, and a pre-reveal
+   self-audit, before any peer result is revealed.
+5. `kakashi_hatake` validates the barrier and prepares one byte-identical reveal
    packet. Kakashi is a moderator, not a fifth candidate or final judge.
-6. The same reveal packet returns to the same four open candidate threads for
-   exactly one complete revision.
-7. Kakashi records the evidence and dispute matrix. Oskar synthesizes the final
-   answer. A QA review is required for consequential implementation,
-   governance, or external-action decisions.
+6. The reveal returns to the same four open candidate threads for exactly one
+   complete revision. Matching opaque thread-handle hashes and an
+   experience-transfer claim map prove continuity without exposing thread IDs.
+7. `protocol_run_manifest.v1` records phase checkpoints, reveal identity,
+   same-thread proofs, and regression results without entering the common packet
+   hash.
+8. Kakashi reconciles evidence lineages, minority objections, collective blind
+   spots, quick surrender, and performative dissent. Repeated use of one source
+   independence key still counts as one evidence lineage.
+9. Oskar synthesizes with claim-level provenance. Consequential outputs receive
+   role-blind Olga QA with reproducible findings before the final stop decision.
 
 Completion speed, majority, answer length, confidence, and style are never
 evidence. A supported minority objection can block verified consensus.
 
 Possible result statuses are `verified_consensus`, `provisional_consensus`,
 `structured_dispute`, and `blocked`.
+
+The bounded stop decisions are `stop_sufficient`, `patch_one_gap`, `ask_user`,
+and `blocked`. The protocol never starts a second panel automatically.
 
 ## Repository Layout
 
@@ -96,12 +107,13 @@ project configuration.
 No dependency installation is required:
 
 ```bash
+npm run validate
 npm test
 ```
 
-This checks the skill contract, trigger fixtures, protocol fixtures, five
-read-only profiles, package hygiene, required documentation, and all recorded
-SHA-256 checksums.
+Both commands run the same suite. It checks the skill contract, trigger,
+protocol, integrity, loop, and regression fixtures, five read-only profiles,
+package hygiene, required documentation, and all recorded SHA-256 checksums.
 
 ## Install
 
@@ -159,12 +171,20 @@ After installation and any required restart, verify in a new task:
 - all five dedicated profiles are available and read-only
 - all four candidates receive the same evidence-packet hash
 - no candidate sees peers before the commit barrier
-- the reveal returns to the same four threads for one revision
+- acceptance criteria exist before fan-out and bind to `loop_control_fit`
+- the reveal bytes are identical for every candidate
+- opaque original/revision thread-handle hashes match for each candidate
+- every revision has a traceable experience-transfer ledger
+- shared sources retain one independence key rather than inflating consensus
+- Kakashi records bounded anti-groupthink and minority-preservation checks
+- Oskar synthesis traces material claims back to revisions and evidence
+- consequential Olga QA is role-blind and every failure is reproducible
 - a missing dedicated profile is not replaced by a generic worker
 - result status respects quorum and unresolved minority evidence
 - `$naruto` does not inherit provider, upload, write, push, install, or delete
   permission
-- the run stops after one reveal/revision cycle
+- previous passes are rechecked for regressions after the one revision
+- the run stops after one reveal/revision cycle and never opens a second panel
 
 If same-thread follow-up or the dedicated profiles are unavailable in the
 target runtime, the correct result is `blocked`.
@@ -176,7 +196,7 @@ target runtime, the correct result is `blocked`.
 - Missing dedicated agents cannot be replaced by `default`, `worker`, or
   `explorer` profiles.
 - `$naruto` grants no provider, API, MCP, cost, upload, publishing, file-write,
-  destructive-action, install, or project-memory permission.
+  push, destructive-action, install, delete, or project-memory permission.
 - Any later execution leaves deliberation mode and re-enters the target
   project's normal approval and safety route.
 - Raw chain-of-thought, private scratchpads, and debate transcripts are not

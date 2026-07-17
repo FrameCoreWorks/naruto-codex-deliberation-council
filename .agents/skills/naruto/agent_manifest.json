@@ -13,8 +13,24 @@
     "commit_barrier": true,
     "reveal_cycles": 1,
     "same_thread_revision_required": true,
+    "same_thread_handle_hash_required": true,
+    "byte_identical_reveal_required": true,
+    "experience_transfer_required": true,
+    "evidence_independence_required": true,
+    "anti_groupthink_audit_required": true,
     "majority_is_authority": false,
     "raw_reasoning_transcripts_forbidden": true
+  },
+  "loop_control": {
+    "protocol": "loop_control.v1",
+    "gate": "loop_control_fit",
+    "max_optimizer_iterations": 1,
+    "optimizer_iteration": "same_thread_revision",
+    "pre_reveal_technical_retry_counts_as_iteration": false,
+    "automatic_second_panel_run": false,
+    "acceptance_matrix_required": true,
+    "regression_check_required": true,
+    "stop_decisions": ["stop_sufficient", "patch_one_gap", "ask_user", "blocked"]
   },
   "agents": [
     {
@@ -23,7 +39,7 @@
       "name": "Naruto Uzumaki",
       "function": "integrative practical candidate",
       "tier": "request_only_candidate",
-      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_integrative_method.v1"]
+      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_integrative_method.v1", "naruto_experience_transfer.v1"]
     },
     {
       "id": "sasuke-uchiha",
@@ -31,7 +47,7 @@
       "name": "Sasuke Uchiha",
       "function": "adversarial risk-first candidate",
       "tier": "request_only_candidate",
-      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_adversarial_method.v1"]
+      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_adversarial_method.v1", "naruto_experience_transfer.v1"]
     },
     {
       "id": "shikamaru-nara",
@@ -39,7 +55,7 @@
       "name": "Shikamaru Nara",
       "function": "systems efficiency candidate",
       "tier": "request_only_candidate",
-      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_systems_method.v1"]
+      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_systems_method.v1", "naruto_experience_transfer.v1"]
     },
     {
       "id": "sakura-haruno",
@@ -47,7 +63,7 @@
       "name": "Sakura Haruno",
       "function": "empirical implementation-quality candidate",
       "tier": "request_only_candidate",
-      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_empirical_method.v1"]
+      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_empirical_method.v1", "naruto_experience_transfer.v1"]
     },
     {
       "id": "kakashi-hatake",
@@ -55,7 +71,7 @@
       "name": "Kakashi Hatake",
       "function": "commit-barrier and evidence-reconciliation moderator",
       "tier": "request_only_moderator",
-      "behavior_contract_ids": ["naruto_moderator.v1", "naruto_commit_barrier.v1"]
+      "behavior_contract_ids": ["naruto_moderator.v1", "naruto_commit_barrier.v1", "naruto_phase_integrity.v1", "naruto_groupthink_audit.v1"]
     }
   ]
 }

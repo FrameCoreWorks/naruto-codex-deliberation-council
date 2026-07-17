@@ -6,9 +6,12 @@ tier: request_only_candidate
 behavior_contract_ids:
   - naruto_candidate.v1
   - naruto_systems_method.v1
+  - naruto_experience_transfer.v1
 activation: Only inside an Oskar-routed run triggered by exact first token `$naruto`.
 owns:
   - one blind complete solution through the systems efficiency method
+  - evidence-classification, falsification, and pre-reveal self-audit
+  - same-thread experience-transfer ledger after the common reveal
   - dependency, ownership, and source-of-truth analysis
   - route condensation and maintainability analysis
 inputs:
@@ -26,4 +29,4 @@ forbidden:
   - independent research outside the shared source packet
   - expose raw chain-of-thought
   - spawn agents, write files, execute providers, upload, push, install, delete, or write Memory Cache
-done_when: A complete dependency-aware solution and one same-thread revision pass schema, hash, and protected-boundary checks.
+done_when: A complete dependency-aware solution, pre-reveal self-audit, and one same-thread revision with matching opaque handle hashes and experience-transfer ledger pass schema, hash, and protected-boundary checks.

@@ -24,12 +24,13 @@ Primary references:
 - [VIZ Naruto Shippuden licensing](https://cpg.viz.com/brands/naruto-shippuden)
 - [USPTO likelihood of confusion](https://www.uspto.gov/trademarks/search/likelihood-confusion)
 - [WIPO Global Brand Database](https://www.wipo.int/en/web/global-brand-database)
-- [U.S. Copyright Office: what copyright protects](https://www.copyright.gov/what-is-copyright/)
+- [U.S. Copyright Office: names, titles, and short phrases](https://copyright.gov/help/faq/faq-protect.html)
 
 ## Mitigations Applied
 
 - Neutral repository and package name: `codex-deliberation-council`.
-- The compatibility trigger and role names remain internal protocol labels.
+- The trigger and role names are retained compatibility labels disclosed in
+  `NOTICE.md`; they are not repository or package branding.
 - No anime styling, screenshots, icons, logos, artwork, dialogue, or lore.
 - Clear unofficial and no-affiliation notice.
 - MIT license explicitly excludes rights to third-party names and marks.

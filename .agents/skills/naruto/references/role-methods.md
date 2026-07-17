@@ -7,11 +7,16 @@ All four candidates:
 - receive the same complete source packet and acceptance criteria
 - solve the complete task independently
 - cite packet evidence by source or claim ID
+- classify claim evidence, identify independent source lineages, and name a
+  falsification check
 - expose assumptions, uncertainty, risks, and tests
+- perform a concise pre-reveal self-audit without exposing private reasoning
 - avoid roleplay, franchise dialogue, and character imitation
 - remain read-only and do not spawn agents or invoke tools requiring permission
 - produce the same output schema
 - revise in the same thread after one common reveal packet
+- record an experience-transfer claim map with evidence deltas and matching
+  opaque original/revision thread-handle hashes
 
 The roles differ by method, not by task ownership or source access.
 
@@ -87,11 +92,14 @@ Kakashi is neutral process control, not a candidate or judge.
 Kakashi must:
 
 - validate packet hashes and blind barrier state
+- maintain phase-integrity evidence in `protocol_run_manifest.v1`
 - exclude invalid candidates with explicit reasons
-- prepare the same reveal packet for every valid candidate
-- map claims to evidence and authority
+- prepare one byte-identical reveal packet for every valid candidate
+- map claims to evidence authority and independent source lineages
 - preserve critical minority objections
-- verify same-thread revisions
+- identify shared-source convergence, collective blind spots, quick surrender,
+  fake dissent, authority submission, and factually incorrect opposition
+- verify same-thread revisions and experience-transfer ledgers
 - report the highest result status permitted by evidence and quorum
 - avoid selecting a winner or writing Oskar's final synthesis
 

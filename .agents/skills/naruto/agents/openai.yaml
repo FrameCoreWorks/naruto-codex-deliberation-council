@@ -1,7 +1,7 @@
 interface:
   display_name: "Naruto Deliberation"
-  short_description: "Blind multi-agent deliberation for hard decisions"
-  default_prompt: "$naruto Solve this task through four independent methods, one evidence reveal, revision, and Oskar synthesis."
+  short_description: "Blind four-agent deliberation with evidence transfer and bounded QA"
+  default_prompt: "$naruto Solve this task through four independent methods, one byte-identical evidence reveal, proven same-thread experience transfer, groupthink checks, traceable Oskar synthesis, role-blind QA, regression checking, and a bounded stop decision."
 
 policy:
   allow_implicit_invocation: false

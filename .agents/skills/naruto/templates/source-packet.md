@@ -9,6 +9,7 @@ source_evidence_packet:
   expected_output: ""
   source_inventory:
     - source_id: ""
+      independence_key: ""
       authority: workspace_policy | official_current | primary_research | deterministic_observation | user_supplied | secondary
       location_or_citation: ""
       freshness: current | dated | not_time_sensitive | unknown
@@ -27,6 +28,16 @@ source_evidence_packet:
     - no_installs
     - no_destructive_actions
     - no_memory_cache_writes
+  loop_control:
+    gate: loop_control_fit
+    loop_id: ""
+    objective: ""
+    checklist_version: ""
+    iteration_count: 0
+    max_iterations: 1
+    optimizer_iteration: same_thread_revision
+    automatic_second_panel_run: false
+    stop_condition: ""
   acceptance_criteria:
     - criterion_id: C1
       requirement: ""
@@ -34,6 +45,15 @@ source_evidence_packet:
       pass_condition: ""
   evidence_rules:
     authority_order: []
+    evidence_classes:
+      - canonical_workspace
+      - deterministic_observation
+      - primary_current
+      - source_packet_fact
+      - shared_artifact_interpretation
+      - unsupported
+      - contradicted
+    shared_source_counts_once: true
     unsupported_claim_policy: expose
     critical_minority_policy: preserve_and_resolve
   output_schema: candidate_solution.v1
@@ -41,4 +61,5 @@ source_evidence_packet:
 ```
 
 Canonicalize and hash only after all non-volatile fields are final. Do not add
-candidate method instructions to this packet.
+candidate method instructions to this packet. Acceptance criteria are the loop
+checklist and must be fixed before hashing.

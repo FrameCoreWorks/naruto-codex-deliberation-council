@@ -2,6 +2,8 @@
 ._*
 __MACOSX/
 node_modules/
+Memory Cache/
+Context/
 .env
 .env.*
 *.log

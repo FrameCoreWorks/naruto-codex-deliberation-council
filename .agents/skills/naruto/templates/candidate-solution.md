@@ -16,7 +16,16 @@ candidate_solution:
     - claim_id: CL1
       claim: ""
       evidence_refs: []
+      evidence_class: canonical_workspace | deterministic_observation | primary_current | source_packet_fact | shared_artifact_interpretation | unsupported | contradicted
+      source_independence_keys: []
+      falsification_check: ""
       confidence: low | medium | high
+  pre_reveal_self_audit:
+    strongest_claim_id: ""
+    least_defensible_claim_id: ""
+    assumption_most_likely_to_fail: ""
+    falsification_check: ""
+    possible_blind_spot: ""
   verification_plan:
     - criterion_id: C1
       test_or_check: ""
@@ -34,4 +43,5 @@ candidate_solution:
 ```
 
 Return a complete solution. Do not return a roleplay transcript, private
-scratchpad, critique-only note, or assigned subtask.
+scratchpad, critique-only note, or assigned subtask. The self-audit is a concise
+claim-and-evidence check, never a chain-of-thought transcript.

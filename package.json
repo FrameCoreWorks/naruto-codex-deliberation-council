@@ -1,6 +1,6 @@
 {
   "name": "codex-deliberation-council",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "A request-only, evidence-weighted multi-agent deliberation skill for Codex.",
   "type": "module",
@@ -8,6 +8,7 @@
     "checksums": "node scripts/checksums.mjs --write",
     "checksums:check": "node scripts/checksums.mjs --check",
     "install": "node scripts/install.mjs",
+    "validate": "node scripts/validate.mjs",
     "test": "node scripts/validate.mjs"
   },
   "engines": {

@@ -16,6 +16,27 @@ revised_candidate_solution:
       evidence_based_reason: ""
   changed_claims: []
   unchanged_claims: []
+  experience_transfer:
+    same_thread_attestation: true
+    original_thread_handle_sha256: ""
+    revision_thread_handle_sha256: ""
+    reveal_packet_sha256: ""
+    claim_revision_map:
+      - claim_id: ""
+        prior_position: ""
+        revised_position: ""
+        change_kind: adopted | rejected | refined | unchanged
+        basis: new_evidence | corrected_assumption | peer_claim_or_evidence | requirement_clarification | no_material_change
+        peer_claim_ids: []
+        evidence_delta: []
+        concise_reason: ""
+    peer_claims_adopted: []
+    peer_claims_rejected: []
+    unchanged_critical_claims_reviewed: []
+  loop_repair:
+    failed_criterion_ids_addressed: []
+    evidence_delta: []
+    regression_risks: []
   complete_revised_solution: ""
   remaining_disputes: []
   protected_boundary_check:
@@ -26,4 +47,7 @@ revised_candidate_solution:
 ```
 
 Revise in the original candidate thread. Return the complete solution again,
-not only a diff.
+not only a diff. The two opaque thread-handle hashes must match; if the runtime
+cannot provide this proof, stop as blocked. Record only concise claim changes
+and evidence deltas, never private reasoning. This is the only Naruto optimizer
+repair iteration.
