@@ -1,3 +1,5 @@
+![Naruto Codex Deliberation Council fan-art banner with four Naruto shadow clones, Kakashi, Yamato, and Tsunade as Hokage](assets/naruto-codex-deliberation-council-banner.png)
+
 # Codex Deliberation Council
 
 > **One Naruto. Four parallel training paths. Two supervisors. One accumulated
@@ -68,7 +70,7 @@ four independent, method-diverse training paths.
 
 | Manga-inspired role | Protocol responsibility |
 |---|---|
-| **Hokage** | Public top-level role assumed by the parent Codex process. Hokage frames the task, controls phases, owns the stop decision, and writes the final synthesis. No separate Hokage profile is spawned. |
+| **Tsunade Senju, Fifth Hokage** | Public identity of the top-level role assumed by the parent Codex process. Hokage frames the task, controls phases, owns the stop decision, and writes the final synthesis. Tsunade is not a seventh child profile or an additional solver. |
 | **Four shadow-clone instances** | Share `actor_identity_id: naruto_uzumaki`, receive the same complete task and common packets, use four fixed methods, commit before seeing peer work, then revise once in the original threads. |
 | **Kakashi** | Creates one common, non-solution training brief and receives the manifest-derived method matrix without changing it. After blind work, he validates the barrier and moderates evidence comparison without selecting a winner. |
 | **Yamato** | Validates identity, method assignments, packet integrity, protected boundaries, and phase safety. He returns `pass`, `hold`, or `blocked`, but never coaches an individual instance or proposes a solution. |
@@ -81,10 +83,10 @@ The four training paths are fixed before fan-out:
 | `naruto_clone_integrator` | `naruto_integrative_method.v1` | Build the most useful complete route, reconcile constraints, and preserve a practical fallback. |
 | `naruto_clone_challenger` | `naruto_adversarial_method.v1` | Falsify weak premises, expose hidden cost and risk, and construct a safe alternative. |
 | `naruto_clone_strategist` | `naruto_systems_method.v1` | Map ownership, dependencies, source-of-truth boundaries, and maintainability. |
-| `naruto_clone_verifier` | `naruto_empirical_method.v1` | Convert claims into observables, tests, edge cases, and operational acceptance evidence. |
+| `naruto_clone_verifier` | `naruto_empirical_method.v1` | Build a complete hypothesis-led route with discriminating tests, observables, decision thresholds, and fallback or rollback conditions. |
 
 ```text
-Hokage frames the mission, shared evidence, and manifest-derived method matrix
+Tsunade as Hokage frames the mission, shared evidence, and manifest-derived method matrix
         -> Kakashi fixes one common brief and preserves the matrix unchanged
         -> Yamato validates identity, routing, and safety
         -> four Naruto training instances solve the whole task independently
@@ -92,16 +94,19 @@ Hokage frames the mission, shared evidence, and manifest-derived method matrix
         -> one byte-identical reveal returns to the same four threads
         -> each instance revises without changing identity or method
         -> Kakashi reconciles evidence; Yamato reports phase safety
-        -> Hokage accumulates the four lessons into one synthesis
+        -> Tsunade as Hokage accumulates the four lessons into one synthesis
 ```
 
 This is not four agents chatting until they agree. It is a controlled training
 ground with identical evidence, four explicit methods, one reveal, one
 same-thread revision, reproducible supervision, and a traceable final decision.
 
-This independent project contains no manga artwork or reproduced dialogue and
-does not imitate a character performance. It is not affiliated with or
+The banner is original, unofficial fan art created for this repository. It is
+not part of the MIT-licensed project materials and does not reproduce a manga
+panel, dialogue, or an official logo. This project is not affiliated with or
 endorsed by Masashi Kishimoto, Shueisha, VIZ Media, or the *Naruto* franchise.
+Its public provenance, digest, QA, and delivery record is stored in
+[`manifest/assets.json`](manifest/assets.json).
 
 ## What It Is
 
@@ -115,21 +120,23 @@ install, delete, or write project memory.
 
 ## Status
 
-- Standalone package version: `0.4.0`
+- Standalone package version: `1.0.0`
 - Skill name: `naruto`
 - Trigger: exact, case-sensitive first non-empty token `$naruto`
 - Runtime profiles: four Naruto training instances, Kakashi, and Yamato
 - Shared actor identity: `naruto_uzumaki`
-- Parent role: Hokage; no separate Hokage profile is bundled
-- Dependencies: Node.js 18 or newer for validation and installation helpers
+- Parent role: Tsunade Senju as Hokage; no separate Hokage profile is bundled
+- Conditional host role: independent `final_qa` reviewer for consequential results; not bundled
+- Dependencies: Node.js 22 or newer for validation and installation helpers
 - External services: none
 
-Version `0.4.0` is intentionally pre-1.0. Static contracts, fixtures, package
-integrity, and isolated installation can be validated locally, but a real
-post-install Codex run is still required to prove six-profile availability,
-same-thread follow-up, method continuity, and Yamato supervision in the target
-runtime. `1.0.0` should mark that live runtime contract, not only polished
-documentation.
+Version `1.0.0` freezes the public trigger, six runtime profile IDs, four method
+IDs, packet schemas, installer boundaries, and standalone package layout. The
+release suite validates those contracts, isolated project and user installs,
+upgrade behavior, checksums, and method fixtures. Host capabilities such as
+profile capacity and same-thread follow-up remain runtime acceptance checks and
+fail closed when unavailable; see
+[`docs/release-acceptance-v1.0.0.md`](docs/release-acceptance-v1.0.0.md).
 
 ## Activation
 
@@ -192,8 +199,8 @@ marker.
     spots, quick surrender, and performative dissent. Yamato produces a final
     `safety_report.v1` from phase and boundary metadata only.
 11. Hokage synthesizes with claim-level provenance. Consequential outputs
-    receive role-blind Olga QA with reproducible findings before the stop
-    decision.
+    receive role-blind independent final QA with reproducible findings before
+    the stop decision.
 
 Completion speed, majority, answer length, confidence, and style are never
 evidence. One independence key represents one underlying source lineage, even
@@ -270,9 +277,10 @@ new task so old thread context cannot affect trigger checks.
 
 ## Update
 
-Version `0.4.0` replaces the four pre-`0.4` solution profiles and cards. The
-installer deliberately does not delete files. If any of the eight legacy paths
-are present, installation returns:
+Version `1.0.0` updates `0.4.x` installations in place because all six runtime
+IDs remain stable. Preview differences first, then use `--force` only for
+reviewed package-owned files. The installer deliberately does not delete files.
+If any of the eight pre-`0.4` legacy paths are present, installation returns:
 
 ```text
 status: blocked
@@ -293,6 +301,10 @@ reason: legacy_0_3_installation_detected
 
 The installer never removes, archives, renames, or edits legacy files for you.
 It never creates a remote or pushes code.
+Copies are sequential rather than transactional. If the installer returns
+`copy_failed` or `destination_verification_failed`, inspect the reported target,
+rerun a dry run, and then repeat the reviewed install. No automatic rollback is
+claimed.
 
 ## Live Acceptance
 
@@ -300,7 +312,7 @@ After installation and any required restart, verify in a new task:
 
 - exact `$naruto` activation and all documented non-activation examples
 - all six dedicated profiles are present and read-only
-- no separate `hokage.toml` exists; the parent process assumes Hokage
+- no separate `hokage.toml` exists; the parent process assumes Tsunade Senju's Hokage role
 - all four solution runtimes share `actor_identity_id: naruto_uzumaki`
 - the method matrix contains four unique runtime IDs and four unique fixed methods
 - all four routing envelopes pass the difference allowlist
@@ -318,7 +330,7 @@ After installation and any required restart, verify in a new task:
 - one shared source remains one independence key rather than four confirmations
 - Kakashi records anti-groupthink and minority-preservation checks
 - Hokage synthesis traces material claims to revisions and evidence
-- consequential Olga QA is role-blind and every failure is reproducible
+- consequential final QA is role-blind and every failure is reproducible
 - missing dedicated profiles cannot be replaced by `default`, `worker`, or
   `explorer`
 - `$naruto` grants no provider, upload, write, push, install, or delete permission
@@ -361,5 +373,7 @@ release.
 ## License
 
 Original repository code and documentation are available under the MIT License.
-Third-party names are not licensed. See [`LICENSE`](LICENSE) and
-[`NOTICE.md`](NOTICE.md).
+The title banner is unofficial fan art and is expressly excluded from the MIT
+License. Third-party characters, names, and marks are not licensed. See
+[`LICENSE`](LICENSE), [`NOTICE.md`](NOTICE.md), and
+[`docs/naming-risk.md`](docs/naming-risk.md).

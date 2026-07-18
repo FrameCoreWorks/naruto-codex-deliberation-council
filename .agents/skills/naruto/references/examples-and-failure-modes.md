@@ -42,7 +42,7 @@ Task: choose a non-generic creative device for a 30-second product reel.
 - Integrator builds a complete audience-to-memory-device route.
 - Challenger attacks generic hooks, unsupported product claims, and reference drift.
 - Strategist condenses the production path and continuity carriers.
-- Verifier defines shot-level acceptance tests and QA evidence.
+- Empirical Verifier builds a complete creative route around a falsifiable audience-response hypothesis, observable shot-level signals, a decision threshold, and a fallback.
 - Kakashi reveals conflicting claims such as spectacle versus product proof.
 - Hokage synthesizes a route only after evidence and production constraints are
   reconciled.
@@ -93,7 +93,7 @@ behavior earns authority.
 
 ## Loop Control Case
 
-Before fan-out, Hokage and Hipson convert the task requirements into acceptance
+Before fan-out, Hokage and an optional `evidence_packet_builder` convert the task requirements into acceptance
 criteria. Kakashi evaluates those criteria after the blind commits and uses the
 single reveal as a criterion-level critique. The same four training instances perform the
 only optimizer repair in their existing threads. Kakashi and Hokage then rerun
@@ -128,7 +128,7 @@ starts a second panel automatically.
 | Generic replacement | Dedicated profile fails and a worker is substituted | Block or degrade by valid dedicated quorum only. |
 | Different evidence sets | A training instance receives a private source | Block verified status and rebuild a common packet. |
 | Shared-source inflation | Several instances repeat one underlying source as independent proof | Count the shared `independence_key` once and cap unsupported convergence. |
-| Majority shortcut | Synthesis cites vote count as authority | Route to Olga and repair evidence weighting. |
+| Majority shortcut | Synthesis cites vote count as authority | Route to independent final QA and repair evidence weighting. |
 | Speed/verbosity bias | Completion order or answer length affects rank | Remove the signal and re-evaluate claims. |
 | Lost minority objection | Evidence-backed critical objection omitted | Result cannot be verified; restore dispute. |
 | New thread revision | An instance is respawned after reveal | Block; same-thread learning was not proven. |
@@ -139,8 +139,8 @@ starts a second panel automatically.
 | Fake dissent | An instance preserves a contradicted claim only to remain different | Reject the dissent; diversity is not evidence. |
 | Lost collective blind spot | All instances omit the same acceptance category | Cap the result and state the missing check. |
 | Unsupported Hokage claim | Synthesis adds a critical or major claim without traceable evidence | Verify, demote, or reject it before delivery. |
-| Role-biased QA | Olga sees identities, prestige, order, or vote counts | Rebuild a role-blind QA packet. |
-| Non-reproducible QA failure | Olga reports a failure without observed/expected evidence and next check | Treat QA as incomplete and block consequential delivery. |
+| Role-biased QA | The final QA reviewer sees identities, prestige, order, or vote counts | Rebuild a role-blind QA packet. |
+| Non-reproducible QA failure | The final QA reviewer reports a failure without observed/expected evidence and next check | Treat QA as incomplete and block consequential delivery. |
 | Raw reasoning leakage | Scratchpad or chain-of-thought appears | Reject artifact; retain concise claims/evidence only. |
 | Nested spawn | A training instance launches children | Mark invalid and stop protected action. |
 | Write/provider/upload attempt | A training instance tries execution | Reject; `$naruto` grants no permission. |
@@ -165,7 +165,7 @@ A useful final answer must tell the user:
 - the selected route or structured dispute
 - whether Hokage's final claims are traceable to revisions and evidence
 - whether common guidance and Yamato safety control remained intact
-- whether Olga QA was required and passed
+- whether independent final QA was required and passed
 - what happens next under the normal workflow
 
 Do not dump internal instance transcripts or pretend unanimity.

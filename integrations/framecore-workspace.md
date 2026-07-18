@@ -14,14 +14,15 @@ In the target workspace:
    only when the first non-empty token is exact, case-sensitive `$naruto`.
 2. Map the workspace's existing parent orchestrator to the public **Hokage**
    role for every Naruto artifact. Do not add a separate Hokage profile.
-3. Use Hipson and Eryk only before training-instance fan-out to compile one
-   common evidence packet. Close those preparation threads before opening the
-   four instances.
+3. Map the optional public `evidence_packet_builder` role to Hipson and
+   `source_verifier` to Eryk. Use them only before training-instance fan-out,
+   then close those preparation threads before opening the four instances.
 4. Keep the six bundled profiles outside the permanent core roster. They are
    request-only.
-5. Keep Kakashi and Yamato open through the bounded protocol, then close all
-   six child threads before opening the workspace's final QA role when the
-   conclusion affects implementation, governance, or external action.
+5. Map the host-provided public `final_qa` role to Olga. Keep Kakashi and Yamato
+   open through the bounded protocol, then close all six child threads before
+   opening that independent reviewer when the conclusion affects
+   implementation, governance, or external action.
 6. Register a workspace test command that runs the installed skill validator.
 7. If the workspace maintains its own skill checksum registry, generate the
    entry from the installed files. Do not copy another workspace's registry.

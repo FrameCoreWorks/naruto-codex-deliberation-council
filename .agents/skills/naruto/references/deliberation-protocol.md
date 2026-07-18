@@ -14,7 +14,8 @@
 
 ## Purpose
 
-This protocol implements a request-only deliberation adapter under Hokage. Four
+This protocol implements a request-only deliberation adapter under Hokage,
+publicly identified as Tsunade Senju in the parent Codex process. Four
 independent shadow-clone training instances share one Naruto actor identity but
 use four different, fixed methods. Each solves the same complete problem,
 inspects the same committed peer artifacts once, revises its own solution in
@@ -62,7 +63,7 @@ compatible with the existing Naruto shape were assimilated:
 - pre-reveal self-audit and blind evidence review instead of extra debate rounds
 - same-thread experience-transfer records instead of shared free-form memory
 - evidence-lineage checks, quick-surrender detection, and minority preservation
-- traceable Hokage synthesis plus role-blind, reproducible Olga QA
+- traceable Hokage synthesis plus role-blind, reproducible final QA
 
 Adopted patterns:
 
@@ -107,7 +108,7 @@ inactive
   -> moderation_reconcile
   -> safety_report
   -> hokage_synthesis
-  -> olga_qa (when required)
+  -> final_qa (when required)
   -> closed
 ```
 
@@ -127,8 +128,9 @@ report hashes.
 
 The Naruto state machine is a bounded projection of the workspace Loop
 Protocol. Hokage opens `loop_control_fit` before fan-out and owns its stop
-decision. Hipson may compile the checklist and packet; Olga evaluates evidence
-when QA is required. No Naruto training instance becomes a loop owner.
+decision. A host-provided `evidence_packet_builder` may compile the checklist
+and packet; an independent `final_qa` reviewer evaluates evidence when QA is
+required. No Naruto training instance becomes a loop owner.
 
 | Loop phase | State-machine evidence |
 |---|---|
@@ -139,7 +141,7 @@ when QA is required. No Naruto training instance becomes a loop owner.
 | critique | one common reveal packet with evidence, failures, and questions |
 | repair | one same-thread revised solution from every valid training instance |
 | repeat | failed criteria and previous passes rechecked by Kakashi/Hokage |
-| stop | result ceiling, Olga QA when required, and Hokage stop decision |
+| stop | result ceiling, independent final QA when required, and Hokage stop decision |
 
 The optimizer budget is exactly one reveal/revision cycle. The pre-reveal
 technical retry is a transport recovery and does not consume or extend that
@@ -149,8 +151,9 @@ resolution need.
 
 ### Packet Build
 
-Hokage owns the task. Hipson compiles one source packet. Eryk verifies current
-facts when required. The packet is complete enough that every training instance can
+Hokage owns the task and one source packet. Optional host-provided
+`evidence_packet_builder` and `source_verifier` roles may compile the packet and
+verify current facts when required. The packet is complete enough that every training instance can
 solve the whole task without hidden parent context.
 
 Acceptance criteria are the loop checklist. Each required criterion names its
@@ -307,7 +310,7 @@ test, source, or user decision that would resolve it.
 
 Hokage records synthesis provenance from final claims back to revision claim IDs
 and evidence. Any critical or major claim introduced by Hokage must be verified,
-demoted, or rejected before delivery. For consequential results Olga receives
+demoted, or rejected before delivery. For consequential results the independent final QA reviewer receives
 only the final artifact, criteria, and evidence, without training-instance
 identities, role prestige, completion order, or vote counts. Every QA failure
 must include an observable mismatch and reproducible next check.
@@ -334,7 +337,7 @@ must include an observable mismatch and reproducible next check.
 | Critical evidence-backed objection unresolved | `structured_dispute` |
 | Critical agreement depends on one shared lineage only | at most `provisional_consensus` |
 | Unsupported critical or major Hokage-introduced claim | at most `provisional_consensus` |
-| Consequential Olga QA missing or non-reproducible | `blocked` |
+| Consequential final QA missing or non-reproducible | `blocked` |
 | Required protected action lacks permission | `blocked` |
 
 Runtime timeout and token controls come from the normal Codex task router,

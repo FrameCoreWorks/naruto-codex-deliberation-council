@@ -77,6 +77,64 @@
       "expected_state": "blocked"
     }
   ],
+  "empirical_method_cases": [
+    {
+      "id": "empirical-engineering-complete",
+      "has_complete_solution": true,
+      "fixed_acceptance_criteria_preserved": true,
+      "hypothesis_count": 2,
+      "discriminating_test_count": 2,
+      "observable_count": 2,
+      "decision_threshold_count": 1,
+      "fallback_or_rollback_defined": true,
+      "invented_results": false,
+      "peer_evaluation": false,
+      "safety_or_qa_status_issued": false,
+      "expected": true
+    },
+    {
+      "id": "empirical-creative-complete",
+      "has_complete_solution": true,
+      "fixed_acceptance_criteria_preserved": true,
+      "hypothesis_count": 1,
+      "discriminating_test_count": 1,
+      "observable_count": 2,
+      "decision_threshold_count": 1,
+      "fallback_or_rollback_defined": true,
+      "invented_results": false,
+      "peer_evaluation": false,
+      "safety_or_qa_status_issued": false,
+      "expected": true
+    },
+    {
+      "id": "empirical-checklist-only",
+      "has_complete_solution": false,
+      "fixed_acceptance_criteria_preserved": true,
+      "hypothesis_count": 0,
+      "discriminating_test_count": 3,
+      "observable_count": 3,
+      "decision_threshold_count": 1,
+      "fallback_or_rollback_defined": true,
+      "invented_results": false,
+      "peer_evaluation": false,
+      "safety_or_qa_status_issued": false,
+      "expected": false
+    },
+    {
+      "id": "empirical-invented-certification",
+      "has_complete_solution": true,
+      "fixed_acceptance_criteria_preserved": false,
+      "hypothesis_count": 1,
+      "discriminating_test_count": 1,
+      "observable_count": 1,
+      "decision_threshold_count": 1,
+      "fallback_or_rollback_defined": true,
+      "invented_results": true,
+      "peer_evaluation": true,
+      "safety_or_qa_status_issued": true,
+      "expected": false
+    }
+  ],
   "protocol_cases": [
     {
       "id": "full-verified",
@@ -344,7 +402,7 @@
       "quick_surrender_unresolved": false,
       "hokage_unverified_critical_or_major_claims": 0,
       "consequential": true,
-      "olga_qa": "pass_reproducible",
+      "final_qa": "pass_reproducible",
       "expected_max_result": "verified_consensus"
     },
     {
@@ -467,7 +525,7 @@
       "expected_max_result": "provisional_consensus"
     },
     {
-      "id": "integrity-olga-non-reproducible",
+      "id": "integrity-final-qa-non-reproducible",
       "barrier": "pass",
       "reveal_byte_identical": true,
       "valid_training_instances": 4,
@@ -479,7 +537,7 @@
       "critical_minority": "resolved",
       "hokage_unverified_critical_or_major_claims": 0,
       "consequential": true,
-      "olga_qa": "fail_non_reproducible",
+      "final_qa": "fail_non_reproducible",
       "expected_max_result": "blocked"
     },
     {

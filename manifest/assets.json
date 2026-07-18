@@ -1,0 +1,48 @@
+{
+  "schema": "codex_deliberation_asset_manifest.v1",
+  "assets": [
+    {
+      "asset_id": "naruto_codex_deliberation_council_banner",
+      "version": 1,
+      "path": "assets/naruto-codex-deliberation-council-banner.png",
+      "media_type": "image/png",
+      "width": 1942,
+      "height": 809,
+      "sha256": "a265beeed6973fbbecc90831a678eabd196daba3b46aea344bc3d12f8fbf9806",
+      "created_on": "2026-07-18",
+      "creation": {
+        "tool": "codex_builtin_imagegen",
+        "model_target": "openai/gpt-image-2",
+        "source_prompt_summary": "Colorful manga-doodle fan art with four Naruto shadow clones, Kakashi as teacher, Yamato as safety supervisor, Tsunade as Hokage, and the exact title Naruto Codex Deliberation Council.",
+        "raw_prompt_published": false,
+        "edit_history": [
+          "Generated the four-method Naruto council with Kakashi and Yamato.",
+          "Added Tsunade in the upper center as the governing Hokage.",
+          "Corrected the visible title to Naruto Codex Deliberation Council."
+        ],
+        "external_uploads": false,
+        "internal_request_ids_published": false
+      },
+      "qa": {
+        "status": "accepted",
+        "verified_on": "2026-07-18",
+        "checks": [
+          "exact visible title",
+          "four Naruto shadow clones",
+          "Kakashi present",
+          "Yamato present",
+          "Tsunade present as compositional Hokage",
+          "seven total humanoid figures",
+          "PNG signature and dimensions",
+          "README-first placement"
+        ]
+      },
+      "distribution": {
+        "delivery_status": "local_repository_only",
+        "license_scope": "unofficial_fan_art_excluded_from_mit",
+        "rights_clearance": "not_cleared",
+        "affiliation_claimed": false
+      }
+    }
+  ]
+}

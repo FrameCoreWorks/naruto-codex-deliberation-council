@@ -3,7 +3,7 @@
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join, relative, resolve, sep } from "node:path";
+import { dirname, extname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
@@ -253,6 +253,19 @@ function classifyTrainingInstanceFixture(fixture) {
   return valid ? "ready" : "blocked";
 }
 
+function validateEmpiricalMethodFixture(fixture) {
+  return fixture.has_complete_solution === true &&
+    fixture.fixed_acceptance_criteria_preserved === true &&
+    fixture.hypothesis_count > 0 &&
+    fixture.discriminating_test_count > 0 &&
+    fixture.observable_count > 0 &&
+    fixture.decision_threshold_count > 0 &&
+    fixture.fallback_or_rollback_defined === true &&
+    fixture.invented_results === false &&
+    fixture.peer_evaluation === false &&
+    fixture.safety_or_qa_status_issued === false;
+}
+
 function portablePath(path) {
   return path.split(sep).join("/");
 }
@@ -352,7 +365,7 @@ function classifyIntegrityFixture(fixture) {
     fixture.blind_phase_content_feedback_detected === true ||
     (fixture.safety_report != null && fixture.safety_report !== "pass") ||
     fixture.anti_groupthink_audit !== "pass" ||
-    (fixture.consequential === true && fixture.olga_qa !== "pass_reproducible")
+    (fixture.consequential === true && fixture.final_qa !== "pass_reproducible")
   ) {
     return "blocked";
   }
@@ -411,7 +424,10 @@ const publicSkillText = listFiles(skillRoot)
   .filter((file) => !file.startsWith("scripts/"))
   .map((file) => read(join(skillRoot, file)))
   .join("\n");
-const forbiddenInternalRolePattern = new RegExp(["\\bOs", "kar\\b"].join(""), "i");
+const forbiddenInternalRolePattern = new RegExp(
+  ["\\bOs", "kar\\b|\\bHip", "son\\b|\\bEr", "yk\\b|\\bOl", "ga\\b"].join(""),
+  "i",
+);
 const frontmatter = skillText.match(/^---\n([\s\S]*?)\n---\n/)?.[1] ?? "";
 const frontmatterKeys = frontmatter
   .split("\n")
@@ -428,9 +444,9 @@ record("skill_frontmatter_name", /^name:\s*naruto$/m.test(frontmatter), "skill n
 record("skill_frontmatter_description", /^description:\s*\S.+$/m.test(frontmatter), "description missing");
 record("skill_under_500_lines", skillText.split(/\r?\n/).length < 500, "SKILL.md is too long");
 record(
-  "public_role_name_no_internal_orchestrator",
+  "public_role_names_neutral",
   !forbiddenInternalRolePattern.test(publicSkillText),
-  "internal orchestrator name leaked into the public skill",
+  "workspace-internal role name leaked into the public skill",
 );
 record("skill_no_todo", !/\bTODO\b|\[TODO/i.test(skillText), "SKILL.md contains a placeholder");
 record(
@@ -513,7 +529,7 @@ record(
 record(
   "skill_synthesis_provenance",
   skillText.includes("synthesis provenance") && skillText.includes("reproducible next check"),
-  "Hokage provenance or reproducible Olga QA missing",
+  "Hokage provenance or reproducible final QA missing",
 );
 
 const openaiText = read(join(skillRoot, "agents/openai.yaml"));
@@ -545,7 +561,25 @@ const manifest = parseJson(join(skillRoot, "agent_manifest.json"));
 record("manifest_schema_version", manifest?.schema_version === 3, "manifest schema_version must be 3");
 record("manifest_agent_count", manifest?.agents?.length === 6, "manifest must contain six agents");
 record("manifest_owner_hokage", manifest?.owner_role_id === "hokage", "Hokage must remain the public owner role");
-record("manifest_qa_olga", manifest?.qa_runtime_id === "olga", "Olga must remain QA owner");
+record(
+  "manifest_parent_tsunade",
+  manifest?.parent_role?.id === "hokage" &&
+    manifest?.parent_role?.public_identity_id === "tsunade_senju" &&
+    manifest?.parent_role?.name === "Tsunade Senju, Fifth Hokage" &&
+    manifest?.parent_role?.runtime === "parent_codex_process" &&
+    manifest?.parent_role?.bundled_profile === false,
+  "Tsunade Senju must be the public Hokage identity without a bundled seventh profile",
+);
+record(
+  "manifest_final_qa_role",
+  manifest?.qa_role?.id === "final_qa" &&
+    manifest?.qa_role?.runtime_binding === "host_provided" &&
+    manifest?.qa_role?.bundled_profile === false &&
+    manifest?.qa_role?.required_when === "consequential_result" &&
+    manifest?.qa_role?.review_mode === "role_blind_independent" &&
+    manifest?.qa_role?.unavailable_policy === "blocked",
+  "final QA must be an explicit host-provided, role-blind, fail-closed role",
+);
 record("manifest_trigger", manifest?.activation?.token === "$naruto", "manifest trigger mismatch");
 record("manifest_trigger_case", manifest?.activation?.case_sensitive === true, "trigger must be case-sensitive");
 record(
@@ -792,6 +826,34 @@ for (const expected of expectedAgents) {
   }
 }
 
+const empiricalVerifierCardText = read(join(skillRoot, "agents/naruto-clone-verifier.yaml"));
+const empiricalVerifierRuntimeText = profileRoot
+  ? read(join(profileRoot, "naruto_clone_verifier.toml"))
+  : "";
+record(
+  "empirical_verifier_card_contract",
+  empiricalVerifierCardText.includes("Naruto Clone: Empirical Verifier") &&
+    empiricalVerifierCardText.includes("operationalization of fixed acceptance criteria") &&
+    empiricalVerifierCardText.includes("decision thresholds") &&
+    empiricalVerifierCardText.includes("rollback design") &&
+    empiricalVerifierCardText.includes("execute tests") &&
+    empiricalVerifierCardText.includes("return only a checklist"),
+  "Empirical Verifier card must own a complete hypothesis-led solution without changing criteria, executing tests, or becoming QA-only",
+);
+record(
+  "empirical_verifier_runtime_contract",
+  empiricalVerifierRuntimeText.includes("Naruto Clone: Empirical Verifier") &&
+    empiricalVerifierRuntimeText.includes("explicit hypotheses") &&
+    empiricalVerifierRuntimeText.includes("discriminating tests") &&
+    empiricalVerifierRuntimeText.includes("decision thresholds") &&
+    empiricalVerifierRuntimeText.includes("never change them") &&
+    empiricalVerifierRuntimeText.includes("without executing tests or inventing outcomes") &&
+    empiricalVerifierRuntimeText.includes("Do not evaluate peers") &&
+    empiricalVerifierRuntimeText.includes("perform final QA") &&
+    empiricalVerifierRuntimeText.includes("return only a checklist"),
+  "Empirical Verifier runtime must design discriminating evidence without peer evaluation, invented results, or final QA",
+);
+
 const fixtures = parseJson(join(skillRoot, "fixtures/naruto-fixtures.json"));
 record("fixtures_schema_version", fixtures?.schema_version === 3, "fixtures schema_version must be 3");
 for (const fixture of fixtures?.trigger_cases ?? []) {
@@ -823,6 +885,28 @@ for (const fixture of fixtures?.training_instance_cases ?? []) {
     `training_instance_fixture_result:${fixture.id}`,
     classifyTrainingInstanceFixture(fixture) === fixture.expected_state,
     `expected ${fixture.expected_state}, got ${classifyTrainingInstanceFixture(fixture)}`,
+  );
+}
+
+const requiredEmpiricalMethodCases = new Set([
+  "empirical-engineering-complete",
+  "empirical-creative-complete",
+  "empirical-checklist-only",
+  "empirical-invented-certification",
+]);
+const actualEmpiricalMethodCases = new Set(
+  (fixtures?.empirical_method_cases ?? []).map(({ id }) => id),
+);
+record(
+  "empirical_method_fixture_coverage",
+  [...requiredEmpiricalMethodCases].every((id) => actualEmpiricalMethodCases.has(id)),
+  "required complete-solution and QA-boundary empirical method cases missing",
+);
+for (const fixture of fixtures?.empirical_method_cases ?? []) {
+  record(
+    `empirical_method_fixture_result:${fixture.id}`,
+    validateEmpiricalMethodFixture(fixture) === fixture.expected,
+    `expected ${fixture.expected}, got ${validateEmpiricalMethodFixture(fixture)}`,
   );
 }
 
@@ -889,7 +973,7 @@ const requiredIntegrityCases = new Set([
   "integrity-quick-surrender-without-evidence",
   "integrity-fake-dissent-rejected",
   "integrity-hokage-unsupported-major-claim",
-  "integrity-olga-non-reproducible",
+  "integrity-final-qa-non-reproducible",
   "integrity-lost-critical-minority",
   "integrity-experience-transfer-missing",
   "integrity-blind-supervisor-contact",
@@ -967,6 +1051,7 @@ record("template_revision_repair", revisionTemplateText.includes("loop_repair:")
 record("template_revision_experience", revisionTemplateText.includes("actor_identity_id: naruto_uzumaki") && revisionTemplateText.includes("method_profile_id:") && revisionTemplateText.includes("method_matrix_sha256:") && revisionTemplateText.includes("training_instance_envelope_sha256:") && revisionTemplateText.includes("experience_transfer:") && revisionTemplateText.includes("original_thread_handle_sha256:") && revisionTemplateText.includes("claim_revision_map:") && revisionTemplateText.includes("training_guidance_packet_sha256:") && revisionTemplateText.includes("safety_control_packet_sha256:"), "same-thread identity, method, experience-transfer, or supervision binding fields missing");
 record("template_consensus_regression", consensusTemplateText.includes("loop_summary:") && consensusTemplateText.includes("repair_history:") && consensusTemplateText.includes("regression_check:"), "loop summary, repair history, or regression check missing");
 record("template_consensus_provenance", consensusTemplateText.includes("synthesis_provenance:") && consensusTemplateText.includes("hokage_introduced_claims:") && consensusTemplateText.includes("reproducible_next_check:") && consensusTemplateText.includes("protocol_run_manifest_sha256:") && consensusTemplateText.includes("moderator_report_sha256:") && consensusTemplateText.includes("safety_report_sha256:"), "synthesis provenance, safety binding, protocol binding, or reproducible QA fields missing");
+record("template_consensus_conditional_final_qa", consensusTemplateText.includes("final_qa:") && consensusTemplateText.includes("required: true | false") && consensusTemplateText.includes("status: pass | fail | not_run"), "consensus template must represent both required and non-required final QA");
 record("template_protocol_checkpoint", protocolCheckpointTemplateText.includes("protocol_checkpoint.v1") && protocolCheckpointTemplateText.includes("previous_checkpoint_sha256:") && protocolCheckpointTemplateText.includes("manifest_snapshot:") && protocolCheckpointTemplateText.includes("checkpoint_sha256:"), "immutable protocol checkpoint schema missing");
 record("template_protocol_run_manifest", runManifestTemplateText.includes("protocol_run_manifest.v1") && runManifestTemplateText.includes("actor_identity_id: naruto_uzumaki") && runManifestTemplateText.includes("method_matrix_sha256:") && runManifestTemplateText.includes("unique_instance_and_method_ids_verified:") && runManifestTemplateText.includes("training_instance_envelope_sha256:") && runManifestTemplateText.includes("yamato_preflight_passed:") && runManifestTemplateText.includes("blind_supervisor_contact_absent:") && runManifestTemplateText.includes("safety_supervisor:") && runManifestTemplateText.includes("moderator_report_sha256:") && runManifestTemplateText.includes("safety_report_complete:") && runManifestTemplateText.includes("training_control:") && runManifestTemplateText.includes("reveal_byte_identical:") && runManifestTemplateText.includes("same_thread_revisions_verified:") && runManifestTemplateText.includes("checkpoint_hashes:") && runManifestTemplateText.includes("reconcile:") && runManifestTemplateText.includes("safety_report:") && runManifestTemplateText.includes("qa:"), "protocol run manifest identity, method, supervision, report binding, or phase checkpoints missing");
 record("contracts_integrity_projection", contractsText.includes("### Artifact Digest Projection") && contractsText.includes("### Manifest Checkpoints And Acyclic Order") && contractsText.includes("method_matrix.v1") && contractsText.includes("naruto_training_instance_envelope.v1") && contractsText.includes("protocol_checkpoint.v1") && contractsText.includes("## Training Guidance") && contractsText.includes("## Safety Control") && contractsText.includes("## Protocol Run Manifest") && contractsText.includes("safety_report.v1") && contractsText.includes("evidence_independence_findings:") && contractsText.includes("synthesis_provenance:") && contractsText.includes("protocol_run_manifest_reconcile_checkpoint_sha256:"), "digest projection, immutable checkpoint, shared-identity supervision, integrity contracts, or phase binding missing from schema reference");
@@ -1130,7 +1215,7 @@ const digestManifest = {
     moderator_reconcile_complete: "not_reached",
     safety_report_complete: "not_reached",
     synthesis_provenance_checked: "not_reached",
-    olga_qa_complete_or_not_required: "not_reached",
+    final_qa_complete_or_not_required: "not_reached",
   },
   moderator: { moderator_report_sha256: "" },
   safety_supervisor: { preflight_status: "pass", report_complete: false, safety_report_sha256: "" },
@@ -1158,7 +1243,7 @@ for (const phase of protocolCheckpointOrder) {
     digestManifest.phase_integrity.safety_report_complete = "pass";
   }
   if (phase === "synthesis") digestManifest.phase_integrity.synthesis_provenance_checked = "pass";
-  if (phase === "qa") digestManifest.phase_integrity.olga_qa_complete_or_not_required = "pass";
+  if (phase === "qa") digestManifest.phase_integrity.final_qa_complete_or_not_required = "pass";
   const checkpoint = createProtocolCheckpoint(digestManifest, phase);
   checkpointArtifacts.push(checkpoint);
   digestManifest.checkpoint_hashes[phase] = checkpoint.checkpoint_sha256;
@@ -1203,7 +1288,7 @@ const postQaConsensusDraft = {
   safety_report_sha256: digestSafetyReport.safety_report_sha256,
   result_status: "verified_consensus",
   hokage_synthesis: "final semantic result",
-  olga_qa: { status: "pass" },
+  final_qa: { status: "pass" },
 };
 const postQaConsensusFinal = {
   ...postQaConsensusDraft,
@@ -1237,18 +1322,27 @@ record(
 
 if (packageMode) {
   const requiredPackageFiles = [
+    ".github/workflows/ci.yml",
     ".gitattributes",
     ".gitignore",
+    "CHANGELOG.md",
     "LICENSE",
     "NOTICE.md",
     "README.md",
+    "SECURITY.md",
     "SHA256SUMS",
+    "assets/naruto-codex-deliberation-council-banner.png",
     "docs/compatibility.md",
     "docs/naming-risk.md",
+    "docs/release-acceptance-v1.0.0.md",
+    "docs/releases/v1.0.0.md",
     "integrations/framecore-workspace.md",
     "manifest/package-manifest.json",
+    "manifest/assets.json",
     "scripts/checksums.mjs",
     "scripts/install.mjs",
+    "scripts/release-readiness.mjs",
+    "scripts/test-install-lifecycle.mjs",
     "scripts/test-install-security.mjs",
     "scripts/validate.mjs",
   ];
@@ -1259,6 +1353,7 @@ if (packageMode) {
   const readme = read(join(workspaceRoot, "README.md"));
   const notice = read(join(workspaceRoot, "NOTICE.md"));
   const packageManifest = parseJson(join(workspaceRoot, "manifest/package-manifest.json"));
+  const assetManifest = parseJson(join(workspaceRoot, "manifest/assets.json"));
 
   record("readme_install", /^## Install$/m.test(readme), "README install section missing");
   record("readme_update", /^## Update$/m.test(readme), "README update section missing");
@@ -1273,12 +1368,16 @@ if (packageMode) {
   record("readme_epistemic_contract", readme.includes("independence key") && readme.includes("anti-groupthink") && readme.includes("role-blind"), "evidence or QA contract missing");
   record("readme_supervision_contract", readme.includes("`training_guidance_packet.v1`") && readme.includes("`safety_control_packet.v1`") && readme.includes("Hokage") && readme.includes("Kakashi") && readme.includes("Yamato"), "public parent or supervision contract missing");
   record("readme_training_instance_contract", readme.includes("`actor_identity_id: naruto_uzumaki`") && readme.includes("`method_matrix.v1`") && readme.includes("`naruto_training_instance_envelope.v1`"), "README shared-identity or method-assignment contract missing");
+  record("readme_tsunade_parent", readme.includes("Tsunade Senju, Fifth Hokage") && readme.includes("not a seventh child profile"), "Tsunade must be the parent-process public identity, not a bundled profile");
+  record("readme_final_qa_role", readme.includes("independent `final_qa` reviewer") && readme.includes("not bundled"), "README must disclose the conditional host-provided final QA role");
+  record("readme_fan_art_scope", /unofficial fan art/i.test(readme) && /excluded from the MIT/i.test(readme), "README fan-art rights scope missing");
   record("notice_no_affiliation", /not affiliated[\s\S]+not endorsed/i.test(notice), "no-affiliation notice missing");
   record(
     "package_manifest_layout",
     packageManifest?.schema === "codex_deliberation_package.v3" &&
       packageManifest?.layout?.skill_root === ".agents/skills/naruto" &&
-      packageManifest?.layout?.profile_root === ".codex/agents",
+      packageManifest?.layout?.profile_root === ".codex/agents" &&
+      packageManifest?.layout?.asset_manifest === "manifest/assets.json",
     "package manifest layout mismatch",
   );
   record(
@@ -1317,29 +1416,85 @@ if (packageMode) {
         "templates/training-guidance.md",
         "templates/training-instance-envelope.md",
       ].sort()),
-    "package manifest omits or adds protocol artifacts outside the 0.4 contract",
+    "package manifest omits or adds protocol artifacts outside the 1.0 contract",
   );
   record(
     "package_manifest_public_parent",
     packageManifest?.public_parent_role_id === "hokage" &&
+      packageManifest?.public_parent_identity_id === "tsunade_senju" &&
       packageManifest?.parent_role_profile_bundled === false,
-    "Hokage must be the unbundled public parent role",
+    "Tsunade as Hokage must be the unbundled public parent identity",
   );
   record(
     "package_manifest_version",
-    /^0\.4\.\d+$/.test(packageJson?.version ?? "") &&
+    packageJson?.version === "1.0.0" &&
       packageManifest?.package_version === packageJson?.version,
-    "package must use the 0.4 release line and keep both versions equal",
+    "package and manifest must use the exact 1.0.0 version",
+  );
+  record(
+    "package_manifest_release",
+    packageManifest?.release?.status === "stable" &&
+      packageManifest?.release?.contract_version === "1.0.0" &&
+      packageManifest?.release?.node_minimum_major === 22 &&
+      JSON.stringify(packageManifest?.release?.ci_node_majors) === JSON.stringify([22, 24]) &&
+      packageManifest?.release?.runtime_capability_policy === "fail_closed",
+    "stable release metadata, Node matrix, or runtime capability policy mismatch",
+  );
+  record(
+    "package_manifest_banner",
+    packageManifest?.assets?.length === 1 &&
+      packageManifest?.assets?.[0]?.path === "assets/naruto-codex-deliberation-council-banner.png" &&
+      packageManifest?.assets?.[0]?.asset_id === "naruto_codex_deliberation_council_banner" &&
+      packageManifest?.assets?.[0]?.version === 1 &&
+      packageManifest?.assets?.[0]?.kind === "readme_banner" &&
+      packageManifest?.assets?.[0]?.media_type === "image/png" &&
+      packageManifest?.assets?.[0]?.license_scope === "unofficial_fan_art_excluded_from_mit" &&
+      packageManifest?.fan_art_included_in_mit === false,
+    "banner manifest or fan-art license scope mismatch",
+  );
+  record(
+    "package_asset_traceability",
+    assetManifest?.schema === "codex_deliberation_asset_manifest.v1" &&
+      assetManifest?.assets?.length === 1 &&
+      assetManifest?.assets?.[0]?.asset_id === packageManifest?.assets?.[0]?.asset_id &&
+      assetManifest?.assets?.[0]?.version === packageManifest?.assets?.[0]?.version &&
+      assetManifest?.assets?.[0]?.path === packageManifest?.assets?.[0]?.path &&
+      assetManifest?.assets?.[0]?.sha256 === "a265beeed6973fbbecc90831a678eabd196daba3b46aea344bc3d12f8fbf9806" &&
+      assetManifest?.assets?.[0]?.sha256 ===
+        sha256(readFileSync(join(workspaceRoot, "assets/naruto-codex-deliberation-council-banner.png"))) &&
+      assetManifest?.assets?.[0]?.qa?.status === "accepted" &&
+      assetManifest?.assets?.[0]?.distribution?.delivery_status === "local_repository_only" &&
+      assetManifest?.assets?.[0]?.distribution?.rights_clearance === "not_cleared",
+    "asset identity, digest, QA, delivery, or rights traceability mismatch",
+  );
+  record(
+    "package_manifest_distribution",
+    packageManifest?.distribution?.github_source_ready === true &&
+      packageManifest?.distribution?.remote_included === false &&
+      packageManifest?.distribution?.remote_meaning === "no_remote_configuration_or_push_automation",
+    "GitHub source-ready distribution metadata mismatch",
+  );
+  record(
+    "package_manifest_host_final_qa",
+    packageManifest?.host_role_requirements?.length === 1 &&
+      packageManifest?.host_role_requirements?.[0]?.role_id === "final_qa" &&
+      packageManifest?.host_role_requirements?.[0]?.runtime_binding === "host_provided" &&
+      packageManifest?.host_role_requirements?.[0]?.bundled_profile === false &&
+      packageManifest?.host_role_requirements?.[0]?.required_when === "consequential_result" &&
+      packageManifest?.host_role_requirements?.[0]?.review_mode === "role_blind_independent" &&
+      packageManifest?.host_role_requirements?.[0]?.unavailable_policy === "blocked",
+    "conditional host-provided final QA requirement mismatch",
   );
   record(
     "package_manifest_legacy_migration",
     packageManifest?.migration?.legacy_0_3_installation_policy === "fail_closed_manual_cleanup" &&
-      packageManifest?.migration?.legacy_profile_paths?.length === 8,
+      packageManifest?.migration?.legacy_profile_paths?.length === 8 &&
+      JSON.stringify(packageManifest?.migration?.supported_in_place_from) === JSON.stringify(["0.4.x"]),
     "package manifest must declare fail-closed manual cleanup for eight legacy 0.3 paths",
   );
   record("package_private", packageJson?.private === true, "package must not be npm-publishable");
   record("package_no_dependencies", !packageJson?.dependencies && !packageJson?.devDependencies, "package must stay dependency-free");
-  record("package_node_version", packageJson?.engines?.node === ">=18", "Node engine requirement mismatch");
+  record("package_node_version", packageJson?.engines?.node === ">=22", "Node engine requirement mismatch");
 
   const allPackageFiles = listFiles(workspaceRoot, "", {
     ignoredDirectories: [".git", "node_modules", "__MACOSX"],
@@ -1365,8 +1520,12 @@ if (packageMode) {
   });
   record("package_forbidden_files_absent", forbiddenEntries.length === 0, forbiddenEntries.join(", "));
 
+  const textExtensions = new Set(["", ".json", ".md", ".mjs", ".toml", ".yaml", ".yml"]);
   const textFiles = allPackageFiles.filter(
-    (path) => !path.startsWith(".git/") && path !== "SHA256SUMS",
+    (path) =>
+      !path.startsWith(".git/") &&
+      path !== "SHA256SUMS" &&
+      textExtensions.has(extname(path).toLowerCase()),
   );
   const privatePathHits = [];
   const secretHits = [];
@@ -1382,7 +1541,10 @@ if (packageMode) {
     if (privatePathPattern.test(text) || text.includes(staleHomeMarker)) {
       privatePathHits.push(path);
     }
-    if (forbiddenInternalRolePattern.test(text)) {
+    if (
+      path !== "integrations/framecore-workspace.md" &&
+      forbiddenInternalRolePattern.test(text)
+    ) {
       internalRoleNameHits.push(path);
     }
     if (

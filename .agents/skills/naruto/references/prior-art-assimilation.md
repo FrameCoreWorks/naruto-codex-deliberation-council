@@ -38,7 +38,7 @@ or fail-closed behavior.
    envelopes, and phase safety.
 7. Hokage's synthesis traces final claims to revision claims and evidence;
    critical or major new synthesis claims must be verified or demoted.
-8. Olga receives a role-blind final packet and reports only reproducible
+8. The independent final QA reviewer receives a role-blind final packet and reports only reproducible
    observed-versus-expected findings.
 
 ## Non-Negotiable Naruto Shape

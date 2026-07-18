@@ -27,7 +27,7 @@ protocol_run_manifest:
     moderator_reconcile_complete: pass | fail | not_reached
     safety_report_complete: pass | fail | not_reached
     synthesis_provenance_checked: pass | fail | not_reached
-    olga_qa_complete_or_not_required: pass | fail | not_reached
+    final_qa_complete_or_not_required: pass | fail | not_reached
   candidates:
     - candidate_id: ""
       actor_identity_id: naruto_uzumaki

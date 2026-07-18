@@ -1,9 +1,10 @@
 {
   "schema": "codex_deliberation_package.v3",
   "package_name": "codex-deliberation-council",
-  "package_version": "0.4.0",
+  "package_version": "1.0.0",
   "skill_name": "naruto",
   "public_parent_role_id": "hokage",
+  "public_parent_identity_id": "tsunade_senju",
   "bundled_profile_count": 6,
   "parent_role_profile_bundled": false,
   "activation": {
@@ -26,13 +27,43 @@
   "distribution": {
     "kind": "standalone_skill_with_custom_agents",
     "plugin_wrapper_included": false,
-    "remote_included": false
+    "remote_included": false,
+    "remote_meaning": "no_remote_configuration_or_push_automation",
+    "github_source_ready": true
   },
   "layout": {
     "skill_root": ".agents/skills/naruto",
     "profile_root": ".codex/agents",
+    "asset_manifest": "manifest/assets.json",
     "checksums": "SHA256SUMS"
   },
+  "release": {
+    "status": "stable",
+    "contract_version": "1.0.0",
+    "node_minimum_major": 22,
+    "ci_node_majors": [22, 24],
+    "runtime_capability_policy": "fail_closed"
+  },
+  "assets": [
+    {
+      "path": "assets/naruto-codex-deliberation-council-banner.png",
+      "asset_id": "naruto_codex_deliberation_council_banner",
+      "version": 1,
+      "kind": "readme_banner",
+      "media_type": "image/png",
+      "license_scope": "unofficial_fan_art_excluded_from_mit"
+    }
+  ],
+  "host_role_requirements": [
+    {
+      "role_id": "final_qa",
+      "runtime_binding": "host_provided",
+      "bundled_profile": false,
+      "required_when": "consequential_result",
+      "review_mode": "role_blind_independent",
+      "unavailable_policy": "blocked"
+    }
+  ],
   "required_profiles": [
     "naruto_clone_integrator.toml",
     "naruto_clone_challenger.toml",
@@ -68,6 +99,7 @@
     "workspace_integration_moved_to_optional_documentation"
   ],
   "migration": {
+    "supported_in_place_from": ["0.4.x"],
     "legacy_0_3_installation_policy": "fail_closed_manual_cleanup",
     "force_bypass_allowed": false,
     "legacy_profile_paths": [
@@ -93,5 +125,6 @@
     "Context/"
   ],
   "license": "MIT",
+  "fan_art_included_in_mit": false,
   "third_party_names_licensed": false
 }

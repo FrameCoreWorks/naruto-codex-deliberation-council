@@ -42,8 +42,8 @@ consensus_report:
       exact_resolution_need_for_open_items: []
   selected_normal_route: ""
   protected_boundaries_preserved: true
-  olga_qa:
-    required: true
+  final_qa:
+    required: true | false
     status: pass | fail | not_run
     review_packet_scope: final_artifact_criteria_evidence_only
     candidate_role_identities_excluded: true
@@ -74,7 +74,7 @@ consensus_report:
 
 User-facing delivery should summarize the decision, decisive evidence,
 remaining uncertainty, Loop Protocol stop decision, and next normal route
-without exposing raw transcripts. After Olga returns, freeze the complete report
+without exposing raw transcripts. After the independent final QA reviewer returns, freeze the complete report
 with `protocol_run_manifest_sha256` still empty. Record QA in the manifest,
 compute the QA checkpoint and final manifest digest, then fill only that one
 hash field. Any other post-QA edit requires QA again.

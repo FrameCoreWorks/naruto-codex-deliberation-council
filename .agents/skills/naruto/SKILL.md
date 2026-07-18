@@ -26,11 +26,13 @@ activate from prior turns, Memory Cache, a fixture, or an agent suggestion.
 ## Ownership And Boundaries
 
 - Hokage remains the only workflow orchestrator and final synthesizer.
+- The public Hokage identity is Tsunade Senju. This is a label for the parent
+  Codex process, not a seventh child profile or an additional solver.
 - Hokage owns `loop_control_fit`, the acceptance checklist, loop state, loopback,
   and the final stop decision. Naruto does not create a second loop owner.
 - The normal task router remains authoritative before and after deliberation.
 - Four shadow-clone training instances share one `naruto_uzumaki` actor
-  identity. Integrator, Challenger, Strategist, and Verifier each solve the
+  identity. Integrator, Challenger, Strategist, and Empirical Verifier each solve the
   same complete task independently through a different fixed method. They are
   not four characters and are not four identical approaches.
 - Kakashi is the common training guide and evidence moderator. Before fan-out,
@@ -41,8 +43,10 @@ activate from prior turns, Memory Cache, a fixture, or an agent suggestion.
   guidance, protected boundaries, and phase-control metadata, then returns only
   `pass`, `hold`, or `blocked` safety findings. Yamato never coaches one
   instance, proposes a solution, or becomes a second moderator.
-- Olga performs final QA when the result affects implementation, workflow
-  governance, external execution, or another consequential decision.
+- A host-provided, independent `final_qa` reviewer performs role-blind QA when
+  the result affects implementation, workflow governance, external execution,
+  or another consequential decision. This reviewer is not bundled with the six
+  Naruto profiles; if required and unavailable, the run blocks.
 - Training instances are read-only and cannot spawn children, edit files, run
   providers, upload, push, install, delete, write Memory Cache, or execute the
   proposed solution.
@@ -78,7 +82,7 @@ cycle. It does not add a second debate round or a second automatic panel run.
 | critique | one byte-identical reveal packet with criterion gaps |
 | repair | one complete revision in the same four instance threads |
 | repeat | rerun failed criteria and regression checks during reconciliation |
-| stop | Olga QA when required and Hokage's explicit stop decision |
+| stop | independent final QA when required and Hokage's explicit stop decision |
 
 Set `max_iterations: 1` for the Naruto optimizer iteration. The one permitted
 pre-reveal technical retry repairs malformed transport or truncation and does
@@ -89,7 +93,8 @@ different or more polished answer might be possible.
 
 ### 1. Normalize The Task
 
-Hokage removes only the exact activation token and preserves the user's task.
+Hokage, publicly identified as Tsunade Senju, removes only the exact activation
+token and preserves the user's task.
 Resolve scope ambiguities only when they make safe deliberation impossible.
 Select the smallest normal task/model route capable of running the protocol.
 Open `loop_control_fit` with the objective, exclusions, checklist version,
@@ -97,8 +102,10 @@ Open `loop_control_fit` with the objective, exclusions, checklist version,
 
 ### 2. Build One Shared Evidence Packet
 
-Use Hipson to compile the packet and Eryk to verify current or external facts
-when those facts matter. Finish and close those preparatory agents before the
+Hokage builds one shared packet. When the host provides them, Hokage may use an
+`evidence_packet_builder` to compile it and a `source_verifier` to check current
+or external facts. These are optional capability roles, not required bundled
+profiles or fixed runtime IDs. Finish any preparatory roles before the
 training-instance phase so runtime capacity remains bounded.
 
 Create `source_evidence_packet` from `templates/source-packet.md`. It must
@@ -169,7 +176,7 @@ same source, method-matrix, guidance, and safety packet hashes:
 | `naruto_clone_integrator` | Integrative and practical: maximize user value and find a workable synthesis. |
 | `naruto_clone_challenger` | Adversarial and risk-first: attack assumptions, failure modes, and hidden costs. |
 | `naruto_clone_strategist` | Systems strategy: map dependencies, simplify the route, and protect maintainability. |
-| `naruto_clone_verifier` | Empirical verification: require testability, evidence, and operational quality. |
+| `naruto_clone_verifier` | Empirical verification: build a complete hypothesis-led route with discriminating tests, observables, decision thresholds, and rollback conditions. |
 
 These are four training instances of the same Naruto identity, not four
 characters. Each must return a full `candidate_solution`, not a subtask,
@@ -257,14 +264,14 @@ Send the four revisions to the same Kakashi thread for the final
 claim/evidence/dispute matrix. Record that reconciliation state and freeze the
 manifest `reconcile` checkpoint. Then send the final boundary and
 guidance-integrity metadata plus that checkpoint to the same Yamato thread for
-`safety_report.v1`. Close all six Naruto agents before opening Olga when QA is
-required.
+`safety_report.v1`. Close all six Naruto agents before opening the host-provided
+independent `final_qa` reviewer when QA is required.
 
 Every phase preserves `protocol_checkpoint.v1` from
 `templates/protocol-checkpoint.md`, including its immutable manifest snapshot
 and previous-checkpoint digest. Bind the safety report to the preserved
 `reconcile` checkpoint, add its digest to the manifest, and preserve a separate
-`safety_report` checkpoint. Record Hokage synthesis and Olga QA, preserve their
+`safety_report` checkpoint. Record Hokage synthesis and final QA, preserve their
 checkpoints, then freeze the complete consensus draft with its final manifest
 hash field still empty. Compute the final manifest digest and fill only that
 hash in the frozen consensus report. Use the self-digest projections and exact
@@ -295,7 +302,7 @@ and evidence. A critical or major claim introduced during synthesis must be
 verified, demoted, or rejected; it cannot silently support a verified result.
 The final consensus report binds the post-QA protocol manifest hash and Kakashi
 moderator report hash.
-When Olga QA is required, provide only the final artifact, acceptance criteria,
+When final QA is required, provide only the final artifact, acceptance criteria,
 and evidence. Exclude training-instance identities, role prestige, completion order,
 and vote counts. Every failed QA finding must include an observable mismatch
 and a reproducible next check.
@@ -318,7 +325,7 @@ Use exactly one result:
   shared guidance or safety hashes differ, instance-specific coaching occurs,
   shared identity or fixed method assignments drift,
   same-thread revision provenance is unavailable, reveal bytes differ,
-  consequential Olga QA is missing or non-reproducible, required evidence is
+  consequential final QA is missing or non-reproducible, required evidence is
   inaccessible, or a protected gate prevents the next step.
 
 Four valid instances are mandatory for `verified_consensus`. After one
@@ -351,8 +358,9 @@ normal Loop Protocol with its own owner, acceptance test, and stop condition.
 
 The documented default supports six open child-agent threads. This protocol
 uses all six at peak: four Naruto shadow-clone instances, Kakashi, and Yamato.
-Finish and close Eryk/Hipson before training control; close instances and both supervisors
-before Olga. Never nest training-instance spawning.
+Finish and close any optional packet-building or source-verification roles
+before training control; close instances and both supervisors before the
+host-provided final QA reviewer. Never nest training-instance spawning.
 
 ## Load On Demand
 

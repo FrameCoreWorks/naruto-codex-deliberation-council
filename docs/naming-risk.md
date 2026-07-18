@@ -1,25 +1,30 @@
-# Public Naming Risk
+# Public Naming And Fan-art Risk
 
-This note is a practical release assessment, not legal advice and not a
-trademark-clearance opinion.
+This note is a practical release assessment. It is not legal advice, a
+copyright opinion, or a trademark-clearance opinion.
 
 ## Assessment
 
-- Copyright risk from names alone is lower than risk from copied character
-  expression. A brief attributed description of the inspiring training
-  mechanism is included, but the repository must not include manga pages,
-  franchise artwork, dialogue, catchphrases, extended plot retelling,
-  character imitation, logos, or visual identity.
-- Trademark and affiliation risk is material because Naruto is an active,
-  commercially licensed entertainment franchise. Using the franchise name as
-  repository, product, icon, or marketing identity can create a source or
-  endorsement concern.
-- Full character names and the Hokage title are safer as mnemonic protocol
-  labels than as public branding, but they are not risk-free.
-- No complete USPTO, WIPO, or country-by-country clearance search has been
-  performed.
+- Naruto is an active, commercially licensed entertainment franchise. Using
+  its name, characters, or recognizable visual identity in a public repository
+  can create copyright, trademark, affiliation, and endorsement concerns.
+- The banner at
+  `assets/naruto-codex-deliberation-council-banner.png` intentionally depicts
+  Naruto, Kakashi, Yamato, and Tsunade. This exact-character fan-art route has
+  materially more rights risk than neutral original artwork or names used only
+  as functional labels.
+- A newly generated or newly drawn fan-art image can still contain protected
+  character expression. The absence of an official logo, copied panel, or
+  dialogue does not by itself establish permission to distribute the image.
+- An unofficial, no-affiliation disclaimer helps prevent a false endorsement
+  claim, but it does not grant copyright, trademark, merchandising, or
+  publicity rights.
+- The `$naruto` trigger and character-derived role names remain functional
+  compatibility labels, but they are not risk-free when presented publicly.
+- No complete USPTO, WIPO, copyright, publicity-rights, or country-by-country
+  clearance review has been performed.
 
-Primary references:
+Primary background references:
 
 - [Official Naruto site](https://naruto-official.com/en/about)
 - [VIZ Naruto](https://www.viz.com/naruto)
@@ -30,28 +35,39 @@ Primary references:
 
 ## Mitigations Applied
 
-- Neutral repository and package name: `codex-deliberation-council`.
-- The trigger and role names are retained compatibility labels disclosed in
-  `NOTICE.md`; they are not repository or package branding.
-- No anime styling, screenshots, icons, logos, artwork, dialogue, catchphrases,
-  or extended plot retelling.
-- The README limits manga context to a short attributed explanation of the
-  training mechanism that maps directly to the protocol design.
-- Clear unofficial and no-affiliation notice.
-- MIT license explicitly excludes rights to third-party names and marks.
-- No public push or remote creation is performed by the packaging workflow.
+- The repository and package use the neutral name
+  `codex-deliberation-council`.
+- `NOTICE.md` clearly states that the project and banner are unofficial and
+  unaffiliated.
+- The fan-art banner is isolated at one documented asset path and explicitly
+  excluded from the MIT license.
+- The repository includes no official logo, manga scan, copied panel, manga
+  dialogue, or official brand asset.
+- Tsunade Senju is documented only as the public identity of the Hokage role
+  assumed by the parent Codex process. There is no seventh runtime profile and
+  no additional solver.
+- The fourth Naruto instance is defined by the Empirical Verifier method. The
+  method label describes hypothesis-led testing and decision thresholds, not a
+  new fictional persona.
+- Package automation does not create a remote, push, upload, or publish the
+  repository.
 
-## Before Public Release
+These mitigations reduce ambiguity. They do not amount to rights clearance.
 
-Choose one route:
+## Before Public Distribution
 
-1. Lowest practical risk: rename the public skill trigger, all six profile
-   labels, and the Hokage parent role to neutral names, then update profiles,
-   fixtures, docs, hashes, and live acceptance tests together.
-2. Compatibility route: retain `$naruto` and the current internal labels, keep
-   the neutral repository branding and notice, and obtain legal review if the
-   repository will be promoted or distributed commercially.
+The publisher should choose and document one of these routes:
 
-Do not rename only part of the protocol. A rename must preserve trigger tests,
-runtime IDs, behavior-contract mapping, packet schemas, and the no-fallback
-rule.
+1. Obtain appropriate rights-holder permission or qualified legal review for
+   the exact public use of the banner and franchise-derived labels.
+2. Replace the banner with fully original, non-franchise artwork and consider
+   neutralizing public role and trigger names while preserving the underlying
+   technical contract.
+3. Proceed with the exact fan-art route while knowingly accepting the
+   unresolved rights risk. The MIT license and disclaimer do not transfer that
+   risk or grant the missing rights.
+
+A technical `1.0.0` validation pass is not a legal clearance result. If names
+or artwork are changed later, update the README, notice, manifest, checksums,
+fixtures, profile labels, and acceptance tests together. Do not rename only
+part of the protocol.

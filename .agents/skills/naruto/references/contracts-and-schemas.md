@@ -88,7 +88,7 @@ Build final artifacts in this order:
 5. Add that digest to the manifest, mark the safety report complete, then create
    and preserve the `safety_report` checkpoint.
 6. Record Hokage synthesis and create the `synthesis` checkpoint.
-7. After Olga returns, finalize every semantic and QA field in the consensus
+7. After the independent final QA reviewer returns, finalize every semantic and QA field in the consensus
    draft while leaving `protocol_run_manifest_sha256` empty. Freeze that draft,
    record QA in the manifest, and create the `qa` checkpoint.
 8. Compute final `manifest_sha256` with only its own field omitted.
@@ -520,7 +520,7 @@ protocol_run_manifest:
     moderator_reconcile_complete: pass | fail | not_reached
     safety_report_complete: pass | fail | not_reached
     synthesis_provenance_checked: pass | fail | not_reached
-    olga_qa_complete_or_not_required: pass | fail | not_reached
+    final_qa_complete_or_not_required: pass | fail | not_reached
   candidates:
     - candidate_id:
       actor_identity_id: naruto_uzumaki
@@ -652,7 +652,7 @@ consensus_report:
       exact_resolution_need_for_open_items: []
   selected_normal_route:
   protected_boundaries_preserved: true
-  olga_qa:
+  final_qa:
     required: true | false
     status: pass | fail | not_run
     review_packet_scope: final_artifact_criteria_evidence_only
@@ -682,7 +682,7 @@ consensus_report:
   next_action:
 ```
 
-Before Olga QA, `protocol_run_manifest_sha256` remains empty. After Olga returns,
+Before final QA, `protocol_run_manifest_sha256` remains empty. After the final QA reviewer returns,
 freeze all semantic, provenance, result, QA, and stop fields, create the QA
 checkpoint and final manifest digest, then fill only that one manifest-hash
 field. Any other post-QA change invalidates the QA result.
@@ -721,6 +721,6 @@ or a numerical personality score.
 
 Critical or major claims introduced by Hokage must be independently verified,
 demoted, or rejected. An unsupported Hokage-introduced claim cannot support
-`verified_consensus`. Olga receives the final artifact, acceptance criteria,
+`verified_consensus`. The role-blind final QA reviewer receives the final artifact, acceptance criteria,
 and evidence only; candidate identities, role prestige, completion order, and
 vote counts are excluded from the QA packet.

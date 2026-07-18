@@ -9,6 +9,8 @@ const repoRoot = resolve(scriptDir, "..");
 const commands = [
   [join(repoRoot, ".agents/skills/naruto/scripts/validate-naruto.mjs")],
   [join(repoRoot, "scripts/test-install-security.mjs")],
+  [join(repoRoot, "scripts/test-install-lifecycle.mjs")],
+  [join(repoRoot, "scripts/release-readiness.mjs")],
   [join(repoRoot, "scripts/checksums.mjs"), "--check"],
 ];
 

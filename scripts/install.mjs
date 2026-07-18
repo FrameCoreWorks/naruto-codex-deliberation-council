@@ -401,6 +401,10 @@ for (const item of plan) {
     actions.push({ ...item, action: "create" });
     continue;
   }
+  if (!lstatSync(item.destination).isFile()) {
+    conflicts.push({ path: item.destination, reason: "destination exists and is not a regular file" });
+    continue;
+  }
   if (sha256(item.source) === sha256(item.destination)) {
     actions.push({ ...item, action: "unchanged" });
     continue;
@@ -426,10 +430,54 @@ if (conflicts.length > 0) {
 }
 
 if (!dryRun) {
+  try {
+    for (const item of actions) {
+      if (item.action === "unchanged") continue;
+      mkdirSync(dirname(item.destination), { recursive: true });
+      copyFileSync(item.source, item.destination);
+    }
+  } catch (error) {
+    console.log(
+      JSON.stringify(
+        {
+          status: "blocked",
+          reason: "copy_failed",
+          scope,
+          error: error.message,
+          next_step: "Review the target and rerun the installer after resolving the reported filesystem error.",
+        },
+        null,
+        2,
+      ),
+    );
+    process.exit(2);
+  }
+
+  const destinationErrors = [];
   for (const item of actions) {
-    if (item.action === "unchanged") continue;
-    mkdirSync(dirname(item.destination), { recursive: true });
-    copyFileSync(item.source, item.destination);
+    const entry = lstatEntry(item.destination);
+    if (!entry || !entry.isFile() || entry.isSymbolicLink()) {
+      destinationErrors.push(`missing, non-file, or symlink destination: ${item.destination}`);
+      continue;
+    }
+    if (sha256(item.destination) !== sha256(item.source)) {
+      destinationErrors.push(`post-copy checksum mismatch: ${item.destination}`);
+    }
+  }
+  if (destinationErrors.length > 0) {
+    console.log(
+      JSON.stringify(
+        {
+          status: "blocked",
+          reason: "destination_verification_failed",
+          scope,
+          errors: destinationErrors,
+        },
+        null,
+        2,
+      ),
+    );
+    process.exit(2);
   }
 }
 
