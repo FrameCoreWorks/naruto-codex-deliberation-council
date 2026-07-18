@@ -1,4 +1,4 @@
-![Naruto Codex Deliberation Council fan-art banner with four Naruto shadow clones, Kakashi, Yamato, and Tsunade as Hokage](assets/naruto-codex-deliberation-council-banner.png)
+![Black-and-white manga-sketch fan-art banner with one Naruto, Kakashi, Yamato, and Tsunade as Hokage posing beside the Naruto Codex Deliberation Council title](assets/naruto-codex-deliberation-council-banner.png)
 
 # Codex Deliberation Council
 

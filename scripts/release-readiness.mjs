@@ -169,7 +169,7 @@ record(
   "manifest_banner",
   manifest?.assets?.length === 1 &&
     assetEntry?.asset_id === "naruto_codex_deliberation_council_banner" &&
-    assetEntry?.version === 1 &&
+    assetEntry?.version === 2 &&
     assetEntry?.kind === "readme_banner" &&
     assetEntry?.media_type === "image/png" &&
     assetEntry?.license_scope === "unofficial_fan_art_excluded_from_mit" &&
@@ -183,9 +183,9 @@ record(
     assetRecord?.asset_id === assetEntry?.asset_id &&
     assetRecord?.version === assetEntry?.version &&
     assetRecord?.media_type === "image/png" &&
-    assetRecord?.width === 1942 &&
-    assetRecord?.height === 809 &&
-    assetRecord?.sha256 === "a265beeed6973fbbecc90831a678eabd196daba3b46aea344bc3d12f8fbf9806" &&
+    assetRecord?.width === 1938 &&
+    assetRecord?.height === 812 &&
+    assetRecord?.sha256 === "79bfeef01d58dc6f9e220e0dbdc1085199c37d317f4a8dcafb2c702e68336d96" &&
     assetRecord?.sha256 === bannerDigest &&
     assetRecord?.creation?.tool === "codex_builtin_imagegen" &&
     assetRecord?.qa?.status === "accepted" &&

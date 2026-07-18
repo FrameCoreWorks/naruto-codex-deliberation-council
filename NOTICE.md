@@ -16,9 +16,10 @@ hypothesis-led empirical method, not a separate character identity.
 
 [`assets/naruto-codex-deliberation-council-banner.png`](assets/naruto-codex-deliberation-council-banner.png)
 is unofficial fan art created for this repository. It depicts Naruto, Kakashi,
-Yamato, and Tsunade in a colorful manga-doodle composition. It is not an
-official franchise asset and does not reproduce an official logo, manga panel,
-or manga dialogue.
+Yamato, and Tsunade in a black-and-white, hand-drawn manga-sketch composition.
+The four characters pose as a group; the image does not depict the protocol's
+parallel tasks literally. It is not an official franchise asset and does not
+reproduce an official logo, manga panel, or manga dialogue.
 
 The banner is excluded from the MIT license. The repository does not grant a
 license to use, reproduce, modify, distribute, or commercialize the depicted

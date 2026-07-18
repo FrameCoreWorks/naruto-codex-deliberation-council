@@ -3,22 +3,23 @@
   "assets": [
     {
       "asset_id": "naruto_codex_deliberation_council_banner",
-      "version": 1,
+      "version": 2,
       "path": "assets/naruto-codex-deliberation-council-banner.png",
       "media_type": "image/png",
-      "width": 1942,
-      "height": 809,
-      "sha256": "a265beeed6973fbbecc90831a678eabd196daba3b46aea344bc3d12f8fbf9806",
+      "width": 1938,
+      "height": 812,
+      "sha256": "79bfeef01d58dc6f9e220e0dbdc1085199c37d317f4a8dcafb2c702e68336d96",
       "created_on": "2026-07-18",
+      "updated_on": "2026-07-18",
       "creation": {
         "tool": "codex_builtin_imagegen",
         "model_target": "openai/gpt-image-2",
-        "source_prompt_summary": "Colorful manga-doodle fan art with four Naruto shadow clones, Kakashi as teacher, Yamato as safety supervisor, Tsunade as Hokage, and the exact title Naruto Codex Deliberation Council.",
+        "source_prompt_summary": "Black-and-white hand-drawn manga-sketch fan art with exactly one Naruto, Kakashi, Yamato, and Tsunade as Hokage posing as a group beside the exact title Naruto Codex Deliberation Council.",
         "raw_prompt_published": false,
         "edit_history": [
-          "Generated the four-method Naruto council with Kakashi and Yamato.",
-          "Added Tsunade in the upper center as the governing Hokage.",
-          "Corrected the visible title to Naruto Codex Deliberation Council."
+          "Version 1 depicted the four-method council as a colorful action composition with four Naruto figures.",
+          "Version 2 redrew the banner as a monochrome posed portrait with exactly one Naruto, Kakashi, Yamato, and Tsunade.",
+          "Version 2 regenerated the integrated title to preserve a clear space between CODEX and DELIBERATION and removed all non-title glyphs."
         ],
         "external_uploads": false,
         "internal_request_ids_published": false
@@ -27,12 +28,14 @@
         "status": "accepted",
         "verified_on": "2026-07-18",
         "checks": [
-          "exact visible title",
-          "four Naruto shadow clones",
-          "Kakashi present",
-          "Yamato present",
-          "Tsunade present as compositional Hokage",
-          "seven total humanoid figures",
+          "exact visible title with an unambiguous space between CODEX and DELIBERATION",
+          "exactly one Naruto",
+          "Kakashi, Yamato, and Tsunade present exactly once",
+          "Tsunade presented as Hokage",
+          "four total humanoid figures",
+          "all four characters pose without tasks, tools, action, or power effects",
+          "strictly black-and-white manga sketch and doodle treatment",
+          "no non-title text or accidental glyphs",
           "PNG signature and dimensions",
           "README-first placement"
         ]

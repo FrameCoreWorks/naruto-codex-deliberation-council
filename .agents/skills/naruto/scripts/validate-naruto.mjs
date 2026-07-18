@@ -1445,7 +1445,7 @@ if (packageMode) {
     packageManifest?.assets?.length === 1 &&
       packageManifest?.assets?.[0]?.path === "assets/naruto-codex-deliberation-council-banner.png" &&
       packageManifest?.assets?.[0]?.asset_id === "naruto_codex_deliberation_council_banner" &&
-      packageManifest?.assets?.[0]?.version === 1 &&
+      packageManifest?.assets?.[0]?.version === 2 &&
       packageManifest?.assets?.[0]?.kind === "readme_banner" &&
       packageManifest?.assets?.[0]?.media_type === "image/png" &&
       packageManifest?.assets?.[0]?.license_scope === "unofficial_fan_art_excluded_from_mit" &&
@@ -1459,7 +1459,7 @@ if (packageMode) {
       assetManifest?.assets?.[0]?.asset_id === packageManifest?.assets?.[0]?.asset_id &&
       assetManifest?.assets?.[0]?.version === packageManifest?.assets?.[0]?.version &&
       assetManifest?.assets?.[0]?.path === packageManifest?.assets?.[0]?.path &&
-      assetManifest?.assets?.[0]?.sha256 === "a265beeed6973fbbecc90831a678eabd196daba3b46aea344bc3d12f8fbf9806" &&
+      assetManifest?.assets?.[0]?.sha256 === "79bfeef01d58dc6f9e220e0dbdc1085199c37d317f4a8dcafb2c702e68336d96" &&
       assetManifest?.assets?.[0]?.sha256 ===
         sha256(readFileSync(join(workspaceRoot, "assets/naruto-codex-deliberation-council-banner.png"))) &&
       assetManifest?.assets?.[0]?.qa?.status === "accepted" &&

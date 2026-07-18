@@ -14,8 +14,9 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   boundaries, and portable package layout.
 - Tsunade Senju as the public identity of the Hokage role assumed by the parent
   Codex process, without a seventh child profile or additional solver.
-- A repository banner depicting four Naruto shadow clones, Kakashi, Yamato,
-  and Tsunade as Hokage, with the title "Naruto Codex Deliberation Council".
+- A black-and-white manga-sketch repository banner depicting one Naruto,
+  Kakashi, Yamato, and Tsunade as Hokage in a posed group portrait, with the
+  title "Naruto Codex Deliberation Council".
 - Release acceptance documentation, security reporting guidance, and CI for
   Node.js 22 and 24.
 - Isolated installer lifecycle, release-readiness, checksum, and package
