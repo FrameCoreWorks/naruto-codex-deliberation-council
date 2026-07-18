@@ -6,8 +6,10 @@ Shueisha, TV Tokyo, Studio
 Pierrot, VIZ Media, Masashi Kishimoto, OpenAI, or any other rights holder.
 
 The legacy `$naruto` trigger and related character names are used only as
-mnemonic labels for deliberation methods. This repository includes no
-franchise artwork, logos, dialogue, story content, character imitation, visual
+mnemonic labels for deliberation methods. The README contains a brief,
+attributed description of the Volume 35 training mechanism that inspired the
+protocol. This repository includes no manga pages, franchise artwork, logos,
+dialogue, catchphrases, extended plot retelling, character imitation, visual
 identity, or official brand assets.
 
 All third-party names and marks remain the property of their respective

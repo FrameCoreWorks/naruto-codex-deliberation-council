@@ -6,8 +6,10 @@ trademark-clearance opinion.
 ## Assessment
 
 - Copyright risk from names alone is lower than risk from copied character
-  expression. This repository must not include franchise artwork, dialogue,
-  lore, character imitation, logos, or visual identity.
+  expression. A brief attributed description of the inspiring training
+  mechanism is included, but the repository must not include manga pages,
+  franchise artwork, dialogue, catchphrases, extended plot retelling,
+  character imitation, logos, or visual identity.
 - Trademark and affiliation risk is material because Naruto is an active,
   commercially licensed entertainment franchise. Using the franchise name as
   repository, product, icon, or marketing identity can create a source or
@@ -31,7 +33,10 @@ Primary references:
 - Neutral repository and package name: `codex-deliberation-council`.
 - The trigger and role names are retained compatibility labels disclosed in
   `NOTICE.md`; they are not repository or package branding.
-- No anime styling, screenshots, icons, logos, artwork, dialogue, or lore.
+- No anime styling, screenshots, icons, logos, artwork, dialogue, catchphrases,
+  or extended plot retelling.
+- The README limits manga context to a short attributed explanation of the
+  training mechanism that maps directly to the protocol design.
 - Clear unofficial and no-affiliation notice.
 - MIT license explicitly excludes rights to third-party names and marks.
 - No public push or remote creation is performed by the packaging workflow.

@@ -1,5 +1,52 @@
 # Codex Deliberation Council
 
+> **One mission. Four paths. Every lesson comes home.**
+
+## Where The Idea Began
+
+A hard problem blocks the road? Good. That means training starts now.
+
+One attempt hits the wall. Then another. Each one tests a different opening,
+finds a different weakness, and earns a different lesson. When the attempts
+come back together, none of that experience is wasted. The next answer returns
+stronger because every struggle left something behind.
+
+That is the spark behind this skill.
+
+The inspiration comes from Masashi Kishimoto's *Naruto*, specifically
+[*NARUTO*, Volume 35](https://naruto-official.com/en/comics/01_117). The volume
+collects [chapters 310-319](https://www.viz.com/shonenjump/chapters/naruto),
+while chapter 315 introduces the mechanism that shaped this protocol: Naruto
+learns that a shadow clone's experience returns when it disperses. Chapters
+316-319 then show that idea put to work as parallel training. The
+[official Naruto retrospective](https://naruto-official.com/en/news/01_1610)
+also identifies this Volume 35 training as the point where the technique lets
+him accelerate his progress.
+
+The manga's training idea became a software rule:
+
+1. Four dedicated agents face the same complete task.
+2. Each attempt stays blind and independent until every answer is committed.
+3. One identical reveal carries the lessons, conflicts, and missing evidence
+   back to the same four agent threads.
+4. Every agent revises its own complete answer instead of surrendering its
+   perspective or voting for the loudest result.
+5. Kakashi reconciles the evidence. Oskar delivers the synthesis or preserves
+   the dispute when the evidence does not justify consensus.
+
+This is not a shortcut. It is not four agents splitting one mission into easy
+pieces. It is four full attempts, one shared lesson, and one chance to return
+stronger.
+
+**Train in parallel. Learn together. Bring back the strongest answer.**
+
+This is an independent, unofficial project inspired by a general training
+mechanism from the manga. It does not reproduce manga pages, dialogue,
+catchphrases, artwork, or character performance, and it is not affiliated with
+or endorsed by Masashi Kishimoto, Shueisha, or any *Naruto* rights holder.
+
+## What It Is
+
 Codex Deliberation Council is a request-only skill for comparing four complete,
 independent solutions before one evidence-weighted synthesis. The current
 compatibility trigger is `$naruto`.
