@@ -3,12 +3,12 @@
   "assets": [
     {
       "asset_id": "naruto_codex_deliberation_council_banner",
-      "version": 2,
+      "version": 3,
       "path": "assets/naruto-codex-deliberation-council-banner.png",
       "media_type": "image/png",
-      "width": 1938,
-      "height": 812,
-      "sha256": "79bfeef01d58dc6f9e220e0dbdc1085199c37d317f4a8dcafb2c702e68336d96",
+      "width": 1942,
+      "height": 809,
+      "sha256": "fdd77292c3778aee20d0a4bc608b4b5567223fd44de6e443ebff82228ae00c46",
       "created_on": "2026-07-18",
       "updated_on": "2026-07-18",
       "creation": {
@@ -19,25 +19,30 @@
         "edit_history": [
           "Version 1 depicted the four-method council as a colorful action composition with four Naruto figures.",
           "Version 2 redrew the banner as a monochrome posed portrait with exactly one Naruto, Kakashi, Yamato, and Tsunade.",
-          "Version 2 regenerated the integrated title to preserve a clear space between CODEX and DELIBERATION and removed all non-title glyphs."
+          "Version 2 regenerated the integrated title to preserve a clear space between CODEX and DELIBERATION and removed all non-title glyphs.",
+          "Version 3 restores the earlier monochrome portrait explicitly selected by the user, including its compact CODEX/DELIBERATION lettering and Fifth-generation sleeve marking."
         ],
         "external_uploads": false,
         "internal_request_ids_published": false
       },
       "qa": {
         "status": "accepted",
+        "acceptance_basis": "explicit_user_selection",
         "verified_on": "2026-07-18",
         "checks": [
-          "exact visible title with an unambiguous space between CODEX and DELIBERATION",
+          "selected visible title treatment",
           "exactly one Naruto",
           "Kakashi, Yamato, and Tsunade present exactly once",
           "Tsunade presented as Hokage",
           "four total humanoid figures",
           "all four characters pose without tasks, tools, action, or power effects",
           "strictly black-and-white manga sketch and doodle treatment",
-          "no non-title text or accidental glyphs",
           "PNG signature and dimensions",
           "README-first placement"
+        ],
+        "known_visual_notes": [
+          "CODEX and DELIBERATION use tightly joined lettering in the user-selected composition.",
+          "Tsunade's sleeve includes the selected Fifth-generation character marking."
         ]
       },
       "distribution": {
