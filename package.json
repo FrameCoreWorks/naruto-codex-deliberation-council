@@ -1,5 +1,5 @@
 {
-  "name": "codex-deliberation-council",
+  "name": "naruto-codex-deliberation-council",
   "version": "1.0.0",
   "private": true,
   "description": "A request-only, evidence-weighted shadow-clone deliberation skill for Codex.",

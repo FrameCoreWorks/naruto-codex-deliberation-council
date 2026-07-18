@@ -1,6 +1,6 @@
 {
   "schema": "codex_deliberation_package.v3",
-  "package_name": "codex-deliberation-council",
+  "package_name": "naruto-codex-deliberation-council",
   "package_version": "1.0.0",
   "skill_name": "naruto",
   "public_parent_role_id": "hokage",

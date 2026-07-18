@@ -390,7 +390,7 @@ function classifyIntegrityFixture(fixture) {
 
 const packageJsonPath = join(workspaceRoot, "package.json");
 const packageJson = existsSync(packageJsonPath) ? parseJson(packageJsonPath) : null;
-const packageMode = packageJson?.name === "codex-deliberation-council";
+const packageMode = packageJson?.name === "naruto-codex-deliberation-council";
 
 const profileRootCandidates = packageMode
   ? [join(workspaceRoot, ".codex/agents")]

@@ -27,7 +27,7 @@ console.log(
   JSON.stringify(
     {
       status: "pass",
-      package: "codex-deliberation-council",
+      package: "naruto-codex-deliberation-council",
       standalone: true,
     },
     null,

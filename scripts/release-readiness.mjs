@@ -52,6 +52,11 @@ const compatibility = readText(join(repoRoot, "docs/compatibility.md"));
 const bannerRelativePath = "assets/naruto-codex-deliberation-council-banner.png";
 const bannerPath = join(repoRoot, bannerRelativePath);
 
+record(
+  "package_identity",
+  packageJson?.name === "naruto-codex-deliberation-council" && manifest?.package_name === packageJson?.name,
+  `${packageJson?.name ?? "missing"}/${manifest?.package_name ?? "missing"}`,
+);
 record("package_version", packageJson?.version === "1.0.0", packageJson?.version ?? "missing");
 record("package_private", packageJson?.private === true, "package must remain non-publishable through npm");
 record("package_node", packageJson?.engines?.node === ">=22", packageJson?.engines?.node ?? "missing");

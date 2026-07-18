@@ -43,7 +43,7 @@ function digest(path) {
 function baseManifest(requiredProfiles = exactProfiles) {
   return {
     schema: "codex_deliberation_package.v3",
-    package_name: "codex-deliberation-council",
+    package_name: "naruto-codex-deliberation-council",
     package_version: "1.0.0",
     bundled_profile_count: 6,
     parent_role_profile_bundled: false,

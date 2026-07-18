@@ -1,6 +1,6 @@
 ![Black-and-white manga-sketch fan-art banner with one Naruto, Kakashi, Yamato, and Tsunade as Hokage posing beside the Naruto Codex Deliberation Council title](assets/naruto-codex-deliberation-council-banner.png)
 
-# Codex Deliberation Council
+# Naruto Codex Deliberation Council
 
 > **One Naruto. Four parallel training paths. Two supervisors. One accumulated
 > lesson.**
@@ -110,7 +110,7 @@ Its public provenance, digest, QA, and delivery record is stored in
 
 ## What It Is
 
-Codex Deliberation Council is a request-only skill for exploring one complete
+Naruto Codex Deliberation Council is a request-only skill for exploring one complete
 problem through four independent methods before one evidence-weighted synthesis.
 The exact compatibility trigger is `$naruto`.
 

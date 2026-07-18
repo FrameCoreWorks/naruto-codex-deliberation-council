@@ -36,7 +36,7 @@ Primary background references:
 ## Mitigations Applied
 
 - The repository and package use the neutral name
-  `codex-deliberation-council`.
+  `naruto-codex-deliberation-council`.
 - `NOTICE.md` clearly states that the project and banner are unofficial and
   unaffiliated.
 - The fan-art banner is isolated at one documented asset path and explicitly
