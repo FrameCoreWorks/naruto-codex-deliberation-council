@@ -4,7 +4,7 @@
 
 Naruto remains a workspace-native, request-only skill. Public projects are
 research inputs, not runtime dependencies. Assimilate only mechanisms that
-strengthen the existing five-agent protocol without changing its trigger,
+strengthen the existing six-profile protocol without changing its trigger,
 ownership, same-complete-task fan-out, one reveal/revision cycle, permissions,
 or fail-closed behavior.
 
@@ -32,9 +32,11 @@ or fail-closed behavior.
    four independent confirmations.
 5. Kakashi checks unsupported convergence, quick surrender, fake dissent,
    authority submission, incorrect opposition, and lost minority evidence.
-6. Oskar's synthesis traces final claims to revision claims and evidence;
+6. Kakashi first creates one common, non-solution training brief; Yamato
+   validates its byte identity, protected boundaries, and phase safety.
+7. Hokage's synthesis traces final claims to revision claims and evidence;
    critical or major new synthesis claims must be verified or demoted.
-7. Olga receives a role-blind final packet and reports only reproducible
+8. Olga receives a role-blind final packet and reports only reproducible
    observed-versus-expected findings.
 
 ## Non-Negotiable Naruto Shape
@@ -43,11 +45,13 @@ or fail-closed behavior.
 - Naruto, Sasuke, Shikamaru, and Sakura solve the same complete task
 - no candidate sees peer work before the commit barrier
 - one byte-identical reveal and one same-thread revision only
-- Kakashi moderates but never competes or chooses a winner
-- Oskar alone synthesizes and owns the Loop Protocol stop decision
+- Kakashi creates one common non-solution brief, then moderates without
+  competing or choosing a winner
+- Yamato provides process-only safety control and never coaches a candidate
+- Hokage alone synthesizes and owns the Loop Protocol stop decision
 - no provider, upload, write, install, push, delete, or protected permission
   is inherited from deliberation
 
-Adding another platform, agent, debate phase, vote, shared memory layer, or
+Adding another platform, profile, debate phase, vote, shared memory layer, or
 automatic loop requires a separate future review. It is not an implied next
 step from this assimilation.

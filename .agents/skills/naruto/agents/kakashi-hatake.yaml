@@ -1,15 +1,18 @@
 id: kakashi-hatake
 runtime_id: kakashi_hatake
 name: Kakashi Hatake
-function: commit-barrier and evidence-reconciliation moderator
+function: common training guide, commit-barrier, and evidence-reconciliation moderator
 tier: request_only_moderator
 behavior_contract_ids:
   - naruto_moderator.v1
+  - naruto_training_guidance.v1
   - naruto_commit_barrier.v1
   - naruto_phase_integrity.v1
   - naruto_groupthink_audit.v1
-activation: Only after Oskar has collected the sealed candidate commits in an exact `$naruto` run.
+activation: After Hokage finalizes the common source packet in an exact `$naruto` run; remain open through reconciliation.
 owns:
+  - one neutral training_guidance_packet.v1 before candidate fan-out
+  - identical common guidance for all four candidates
   - candidate commit validation
   - blind barrier enforcement
   - one byte-identical reveal transfer packet
@@ -20,20 +23,25 @@ owns:
   - same-thread revision validation
   - result ceiling recommendation from quorum and evidence
 inputs:
+  - final source_evidence_packet
   - source packet hash
   - committed candidate artifacts
   - revised candidate artifacts
 outputs:
+  - training_guidance_packet.v1
   - reveal_transfer_packet.v1
   - moderator_report.v1
   - protocol_run_manifest.v1
 handoff_to:
-  - oskar
+  - yamato
+  - hokage
 forbidden:
   - provide a fifth candidate solution
-  - select a winner or write Oskar synthesis
+  - recommend or rank a solution route in the training guidance
+  - tailor guidance to one candidate or coach during the blind phase
+  - select a winner or write Hokage synthesis
   - reveal before the barrier
   - decide by majority, speed, verbosity, confidence prose, or charisma
   - add private evidence or expose raw chain-of-thought
   - spawn agents, write files, execute providers, upload, push, install, delete, or write Memory Cache
-done_when: Barrier, byte-identical reveal, same-thread provenance, experience transfer, evidence independence, anti-groupthink findings, minority objections, and permitted result ceiling are recorded without selecting the final answer.
+done_when: Common non-solution guidance, barrier, byte-identical reveal, same-thread provenance, experience transfer, evidence independence, anti-groupthink findings, minority objections, and permitted result ceiling are recorded without selecting the final answer.

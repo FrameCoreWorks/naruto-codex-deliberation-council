@@ -6,6 +6,8 @@ candidate_solution:
   candidate_id: ""
   method_profile_id: ""
   source_packet_sha256: ""
+  training_guidance_packet_sha256: ""
+  safety_control_packet_sha256: ""
   complete_solution: ""
   decision_or_recommendation: ""
   assumptions:
@@ -38,6 +40,7 @@ candidate_solution:
   protected_boundary_check:
     status: pass | fail
     notes: []
+  no_blind_phase_supervisor_contact_attestation: true
   no_raw_cot_attestation: true
   candidate_output_sha256: ""
 ```

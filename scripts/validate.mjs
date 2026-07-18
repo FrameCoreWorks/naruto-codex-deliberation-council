@@ -8,6 +8,7 @@ const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, "..");
 const commands = [
   [join(repoRoot, ".agents/skills/naruto/scripts/validate-naruto.mjs")],
+  [join(repoRoot, "scripts/test-install-security.mjs")],
   [join(repoRoot, "scripts/checksums.mjs"), "--check"],
 ];
 

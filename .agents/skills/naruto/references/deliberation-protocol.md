@@ -14,7 +14,7 @@
 
 ## Purpose
 
-This protocol implements a request-only deliberation adapter under Oskar. Four
+This protocol implements a request-only deliberation adapter under Hokage. Four
 different candidate agents solve one identical complete problem, inspect the
 same committed peer artifacts once, revise their own solution in the same
 thread, and return evidence for a final synthesis.
@@ -40,7 +40,7 @@ The local design assimilates, rather than directly adopts, these public ideas:
   adapted here to one bounded reveal/revision cycle with no conversational
   transcript: https://arxiv.org/abs/2305.14325
 - Mixture-of-Agents: aggregate outputs from multiple agents, adapted here to a
-  local moderator and Oskar synthesis without provider infrastructure:
+  local moderator and Hokage synthesis without provider infrastructure:
   https://arxiv.org/abs/2406.04692
 - Voting or Consensus?: voting and deliberative consensus have different
   failure modes, motivating explicit evidence and minority preservation:
@@ -60,7 +60,7 @@ compatible with the existing Naruto shape were assimilated:
 - pre-reveal self-audit and blind evidence review instead of extra debate rounds
 - same-thread experience-transfer records instead of shared free-form memory
 - evidence-lineage checks, quick-surrender detection, and minority preservation
-- traceable Oskar synthesis plus role-blind, reproducible Olga QA
+- traceable Hokage synthesis plus role-blind, reproducible Olga QA
 
 Adopted patterns:
 
@@ -96,12 +96,14 @@ Use these phases in order:
 ```text
 inactive
   -> packet_build
+  -> training_control
   -> blind_candidates
   -> commit_barrier
   -> reveal
   -> same_thread_revision
   -> moderation_reconcile
-  -> oskar_synthesis
+  -> safety_report
+  -> hokage_synthesis
   -> olga_qa (when required)
   -> closed
 ```
@@ -109,28 +111,32 @@ inactive
 Allowed terminal exits from any active phase are `blocked` and
 `structured_dispute`. Do not skip from blind candidates directly to synthesis.
 Maintain `protocol_run_manifest.v1` as a local sidecar across the phases. It is
-not a new phase and is excluded from the common source packet hash. Append a
-canonical checkpoint hash after packet, barrier, reveal, revision, reconcile,
-synthesis, and QA. Kakashi binds its report to the reconcile checkpoint; the
-final consensus binds to the post-QA manifest hash and moderator report hash.
+excluded from the common source packet hash. Preserve one immutable
+`protocol_checkpoint.v1` after packet, training control, barrier, reveal,
+revision, reconcile, safety report, synthesis, and QA. Each checkpoint contains
+the projected manifest snapshot and previous-checkpoint digest; the manifest
+stores its hash. Kakashi's moderator report digest is present before the
+reconcile checkpoint. Yamato binds its safety report to that checkpoint. The
+final consensus binds to the post-QA manifest, moderator report, and safety
+report hashes.
 
 ## Loop Protocol Integration
 
 The Naruto state machine is a bounded projection of the workspace Loop
-Protocol. Oskar opens `loop_control_fit` before fan-out and owns its stop
+Protocol. Hokage opens `loop_control_fit` before fan-out and owns its stop
 decision. Hipson may compile the checklist and packet; Olga evaluates evidence
 when QA is required. No Naruto candidate becomes a loop owner.
 
 | Loop phase | State-machine evidence |
 |---|---|
 | brief | normalized task, objective, constraints, and exclusions |
-| checklist | acceptance criteria and evidence requirements fixed before source packet hashing |
+| checklist | acceptance criteria fixed, common guidance created, and Yamato safety control passed before fan-out |
 | execute | four sealed complete candidate artifacts |
 | evaluate | valid commit set, hash/schema checks, and criterion findings |
 | critique | one common reveal packet with evidence, failures, and questions |
 | repair | one same-thread revised solution from every valid candidate |
-| repeat | failed criteria and previous passes rechecked by Kakashi/Oskar |
-| stop | result ceiling, Olga QA when required, and Oskar stop decision |
+| repeat | failed criteria and previous passes rechecked by Kakashi/Hokage |
+| stop | result ceiling, Olga QA when required, and Hokage stop decision |
 
 The optimizer budget is exactly one reveal/revision cycle. The pre-reveal
 technical retry is a transport recovery and does not consume or extend that
@@ -140,7 +146,7 @@ resolution need.
 
 ### Packet Build
 
-Oskar owns the task. Hipson compiles one source packet. Eryk verifies current
+Hokage owns the task. Hipson compiles one source packet. Eryk verifies current
 facts when required. The packet is complete enough that every candidate can
 solve the whole task without hidden parent context.
 
@@ -154,11 +160,38 @@ agents repeating one source are one evidence lineage, not four confirmations.
 Do not put method instructions inside the common packet. Bind the common packet
 hash and a separate method-profile ID in each candidate envelope.
 
+The packet also fixes the supervision contract: common non-solution guidance,
+byte identity, no candidate-specific blind-phase coaching, required Yamato
+access to the full final source packet plus its verified hash, required Yamato
+preflight, and one permitted common-packet repair after a `hold`.
+
+### Training Control
+
+Hokage starts Kakashi with the final source packet and no candidate output.
+Kakashi derives one `training_guidance_packet.v1` that restates only the common
+objective, acceptance observables, evidence discipline, falsification targets,
+protected boundaries, full-solution requirement, and stop conditions. It must
+not recommend an answer, rank methods, add evidence, or tailor a message.
+
+Yamato receives that guidance, the full final `source_evidence_packet.v1`, and
+its `source_packet_sha256`. Yamato recomputes the digest before checking whether
+the guidance is derived only from the common packet and respects its protected
+boundaries. A missing packet or mismatched hash blocks. Yamato then returns
+`safety_control_packet.v1` with `pass`, `hold`, or `blocked`. Candidate fan-out
+requires `pass`. One `hold` may return to Hokage for a bounded common-packet
+repair; a second non-pass result or any solution direction blocks the run.
+
+Hash both supervision packets and record them in the run manifest. Send the
+same bytes to all four candidates. Kakashi and Yamato remain open, but neither
+may send candidate-specific content feedback during blind work. Yamato may
+receive phase metadata and protected-boundary attestations only.
+
 ### Blind Candidates
 
 Start all four dedicated candidate profiles with independent threads. Provide
-the same common packet bytes and candidate output schema. Do not provide peer
-names, status, output snippets, ranking hints, or a preferred answer.
+the same source, training-guidance, and safety-control bytes plus the candidate
+output schema. Do not provide peer names, status, output snippets, ranking
+hints, a preferred answer, or private supervisor content.
 
 Method diversity is legitimate. Task, sources, constraints, acceptance
 criteria, and evidence rules are not allowed to differ.
@@ -173,12 +206,15 @@ request for hidden reasoning.
 A commit is valid only when:
 
 - `source_packet_sha256` equals the parent packet hash
+- `training_guidance_packet_sha256` and `safety_control_packet_sha256` equal the
+  common supervision hashes
 - `candidate_id` matches the dedicated runtime profile
 - the output solves the complete task
 - all required concise fields are present
 - claim evidence classes, independence keys, falsification checks, and the
   pre-reveal self-audit are present
 - protected boundaries pass
+- `no_blind_phase_supervisor_contact_attestation` is true
 - no raw reasoning transcript appears
 - `candidate_output_sha256` matches the canonical concise output
 
@@ -222,8 +258,13 @@ unverifiable, or unequal hashes block the run; never store a raw thread ID.
 
 ## Reconciliation
 
-Kakashi validates revisions and prepares a final matrix. Kakashi may identify
-agreement and conflict but may not choose the final route.
+Kakashi validates revisions and finalizes `moderator_report.v1`. Kakashi may
+identify agreement and conflict but may not choose the final route. Record its
+digest in the manifest and preserve the `reconcile` checkpoint. Yamato receives
+that checkpoint plus final guidance-integrity, phase-order, forbidden-action,
+and boundary metadata, then emits `safety_report.v1`; it never inspects or edits
+solution content. Record the safety digest and preserve the `safety_report`
+checkpoint before Hokage synthesis.
 
 Reconciliation reruns failed criteria and protects every previous pass. Record
 new regressions and whether the revision produced material improvement. Do not
@@ -235,7 +276,7 @@ evidence or a corrected assumption is not automatically improvement. Preserve
 material unchanged claims as evidence that a candidate considered and rejected
 peer feedback, not as a failure to conform.
 
-Oskar applies claim-appropriate authority:
+Hokage applies claim-appropriate authority:
 
 - canonical workspace files govern workspace policy
 - current primary or official sources govern external current facts
@@ -246,8 +287,8 @@ Oskar applies claim-appropriate authority:
 The synthesis must preserve the strongest unresolved objection and name the
 test, source, or user decision that would resolve it.
 
-Oskar records synthesis provenance from final claims back to revision claim IDs
-and evidence. Any critical or major claim introduced by Oskar must be verified,
+Hokage records synthesis provenance from final claims back to revision claim IDs
+and evidence. Any critical or major claim introduced by Hokage must be verified,
 demoted, or rejected before delivery. For consequential results Olga receives
 only the final artifact, criteria, and evidence, without candidate identities,
 role prestige, completion order, or vote counts. Every QA failure must include
@@ -261,12 +302,17 @@ an observable mismatch and reproducible next check.
 | 3 valid candidates after one pre-reveal retry | `provisional_consensus` or `structured_dispute` |
 | Fewer than 3 valid candidates | `blocked` |
 | Kakashi unavailable | `blocked` |
+| Yamato unavailable or preflight not `pass` | `blocked` |
+| Yamato lacks the full final source packet or its hash does not match | `blocked` |
+| Guidance contains solution direction or differs by candidate | `blocked` |
+| Candidate-specific blind-phase supervisor contact | `blocked` |
+| Protected-boundary or phase-integrity supervision failure | `blocked` |
 | Same-thread revision unavailable | `blocked` |
 | Reveal bytes differ between valid candidates | `blocked` |
 | Same-thread runtime-handle hashes differ or are unverifiable | `blocked` |
 | Critical evidence-backed objection unresolved | `structured_dispute` |
 | Critical agreement depends on one shared lineage only | at most `provisional_consensus` |
-| Unsupported critical or major Oskar-introduced claim | at most `provisional_consensus` |
+| Unsupported critical or major Hokage-introduced claim | at most `provisional_consensus` |
 | Consequential Olga QA missing or non-reproducible | `blocked` |
 | Required protected action lacks permission | `blocked` |
 
@@ -279,6 +325,7 @@ token limits inside this skill. A timeout is partial evidence, not a vote.
 Record only concise protocol artifacts:
 
 - source packet hash
+- training guidance, safety control, and final safety report hashes
 - candidate and revision output hashes
 - phase transitions
 - valid/invalid/timeout state per candidate
@@ -292,6 +339,9 @@ Record only concise protocol artifacts:
 - experience-transfer claim map and evidence deltas
 - evidence-independence and anti-groupthink findings
 - synthesis provenance and reproducible QA findings
+- supervision status, hold count, no-contact attestations, and result-ceiling
+  effects
+- all nine immutable checkpoint artifacts and their previous-checkpoint chain
 
 Never record raw chain-of-thought, private scratchpads, full debate transcripts,
 secrets, credentials, or provider data. The protocol is read-only. Any later

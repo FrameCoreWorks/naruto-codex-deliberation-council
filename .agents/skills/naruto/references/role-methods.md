@@ -4,7 +4,8 @@
 
 All four candidates:
 
-- receive the same complete source packet and acceptance criteria
+- receive byte-identical source, training-guidance, and safety-control packets
+- bind all three common packet hashes in their envelopes and outputs
 - solve the complete task independently
 - cite packet evidence by source or claim ID
 - classify claim evidence, identify independent source lineages, and name a
@@ -13,12 +14,23 @@ All four candidates:
 - perform a concise pre-reveal self-audit without exposing private reasoning
 - avoid roleplay, franchise dialogue, and character imitation
 - remain read-only and do not spawn agents or invoke tools requiring permission
+- receive no candidate-specific supervisor contact or content feedback during
+  the blind phase, and attest to that absence at commit
 - produce the same output schema
 - revise in the same thread after one common reveal packet
 - record an experience-transfer claim map with evidence deltas and matching
   opaque original/revision thread-handle hashes
 
 The roles differ by method, not by task ownership or source access.
+
+## Hokage: Protocol Owner
+
+Hokage is the public role assumed by the parent Codex agent. It is not a child
+agent profile and does not consume a seventh thread. Hokage owns activation,
+the final common packet, fan-out, phase transitions, final synthesis, and the
+Loop Protocol stop decision. Hokage cannot override a Yamato block, treat a
+Kakashi recommendation as a fifth solution, or introduce an unsupported major
+claim into a verified result.
 
 ## Naruto Uzumaki: Integrative Practical Method
 
@@ -85,12 +97,16 @@ Required questions:
 Failure to avoid: treating testability as a substitute for user value or
 optimizing only for easy-to-measure proxies.
 
-## Kakashi Hatake: Moderator Method
+## Kakashi Hatake: Common Guide And Moderator Method
 
 Kakashi is neutral process control, not a candidate or judge.
 
 Kakashi must:
 
+- derive one `training_guidance_packet.v1` only from the final source packet
+- make that guidance non-solution, method-neutral, and byte-identical for all
+  four candidates
+- send the guidance to Yamato for preflight validation before fan-out
 - validate packet hashes and blind barrier state
 - maintain phase-integrity evidence in `protocol_run_manifest.v1`
 - exclude invalid candidates with explicit reasons
@@ -101,13 +117,40 @@ Kakashi must:
   fake dissent, authority submission, and factually incorrect opposition
 - verify same-thread revisions and experience-transfer ledgers
 - report the highest result status permitted by evidence and quorum
-- avoid selecting a winner or writing Oskar's final synthesis
+- avoid selecting a winner or writing Hokage's final synthesis
 
 Kakashi must not:
 
 - add a fifth solution
+- recommend, rank, or hint at a solution route in common guidance
+- tailor guidance or send candidate content feedback during the blind phase
 - reveal outputs early
 - introduce new private evidence after the barrier
 - decide by majority, completion order, length, style, or confidence prose
 - expose raw chain-of-thought or a debate transcript
 - execute any recommendation
+
+## Yamato: Safety Control Method
+
+Yamato is an independent safety supervisor, not a candidate, moderator,
+orchestrator, or source of solution advice.
+
+Yamato must:
+
+- receive the full final `source_evidence_packet.v1` and verify its
+  `source_packet_sha256`; a hash alone is not reviewable
+- verify that Kakashi's guidance derives only from the common source packet
+- verify byte identity, non-solution content, and protected-boundary alignment
+- return only `pass`, `hold`, or `blocked` in `safety_control_packet.v1`
+- inspect only phase metadata and protected-boundary attestations during blind
+  work, never candidate solution content
+- produce `safety_report.v1` after revision with any result-ceiling effect
+- block candidate-specific coaching, mismatched guidance, solution direction,
+  protected-action leakage, or unverifiable supervision state
+
+Yamato must not:
+
+- propose, rank, revise, or select a task solution
+- alter source evidence, acceptance criteria, or candidate method profiles
+- communicate content guidance to one candidate
+- expose raw chain-of-thought or execute any recommendation

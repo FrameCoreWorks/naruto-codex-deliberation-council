@@ -6,6 +6,8 @@ revised_candidate_solution:
   candidate_id: ""
   original_candidate_output_sha256: ""
   source_packet_sha256: ""
+  training_guidance_packet_sha256: ""
+  safety_control_packet_sha256: ""
   reveal_packet_sha256: ""
   adopted_findings:
     - finding: ""

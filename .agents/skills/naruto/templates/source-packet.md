@@ -28,6 +28,15 @@ source_evidence_packet:
     - no_installs
     - no_destructive_actions
     - no_memory_cache_writes
+  supervision_contract:
+    common_training_guidance_required: true
+    guidance_byte_identical_required: true
+    guidance_must_be_non_solution: true
+    yamato_safety_control_required: true
+    yamato_full_source_packet_required: true
+    candidate_specific_coaching_forbidden: true
+    blind_phase_content_feedback_forbidden: true
+    preflight_hold_repairs_allowed: 1
   loop_control:
     gate: loop_control_fit
     loop_id: ""

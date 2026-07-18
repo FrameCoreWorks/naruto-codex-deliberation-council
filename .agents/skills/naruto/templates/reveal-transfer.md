@@ -4,6 +4,8 @@
 reveal_transfer_packet:
   schema: reveal_transfer_packet.v1
   source_packet_sha256: ""
+  training_guidance_packet_sha256: ""
+  safety_control_packet_sha256: ""
   commit_set_sha256: ""
   valid_candidate_ids: []
   concise_candidates:
@@ -43,7 +45,7 @@ reveal_transfer_packet:
       evidence_refs: []
       severity: critical | major | minor | cosmetic | unverifiable
       root_cause: ""
-      loopback_target: same_thread_revision | oskar_synthesis | normal_route | user
+      loopback_target: same_thread_revision | hokage_synthesis | normal_route | user
   revision_questions: []
   raw_reasoning_included: false
 ```

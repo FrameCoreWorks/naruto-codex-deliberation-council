@@ -10,18 +10,150 @@ import {
   readdirSync,
 } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join, relative, resolve } from "node:path";
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, "..");
-const profileNames = [
+const packageManifestPath = join(repoRoot, "manifest/package-manifest.json");
+const checksumPath = join(repoRoot, "SHA256SUMS");
+const allowedProfileNames = Object.freeze([
   "naruto_uzumaki.toml",
   "sasuke_uchiha.toml",
   "shikamaru_nara.toml",
   "sakura_haruno.toml",
   "kakashi_hatake.toml",
-];
+  "yamato.toml",
+]);
+
+function toPackagePath(path) {
+  return relative(repoRoot, path).split(sep).join("/");
+}
+
+function isPathWithin(boundary, candidate) {
+  const rel = relative(resolve(boundary), resolve(candidate));
+  return rel === "" || (!isAbsolute(rel) && rel !== ".." && !rel.startsWith(`..${sep}`));
+}
+
+function sha256(path) {
+  return createHash("sha256").update(readFileSync(path)).digest("hex");
+}
+
+function loadChecksums() {
+  if (!existsSync(checksumPath)) {
+    console.error("SHA256SUMS is missing. Refusing a partial or unverified install.");
+    process.exit(2);
+  }
+  const expected = new Map();
+  for (const line of readFileSync(checksumPath, "utf8").split(/\r?\n/).filter(Boolean)) {
+    const match = line.match(/^([a-f0-9]{64})  (.+)$/);
+    if (!match || expected.has(match[2])) {
+      console.error(`Invalid SHA256SUMS entry: ${line}`);
+      process.exit(2);
+    }
+    expected.set(match[2], match[1]);
+  }
+  return expected;
+}
+
+const expectedChecksums = loadChecksums();
+const manifestPackagePath = toPackagePath(packageManifestPath);
+const manifestIntegrityErrors = [];
+let packageManifestBytes;
+if (!isPathWithin(repoRoot, packageManifestPath)) {
+  manifestIntegrityErrors.push(`manifest path escapes package root: ${packageManifestPath}`);
+} else if (!existsSync(packageManifestPath)) {
+  manifestIntegrityErrors.push(`missing manifest: ${manifestPackagePath}`);
+} else if (lstatSync(packageManifestPath).isSymbolicLink()) {
+  manifestIntegrityErrors.push(`symlink manifest: ${manifestPackagePath}`);
+} else if (!lstatSync(packageManifestPath).isFile()) {
+  manifestIntegrityErrors.push(`missing or non-file manifest: ${manifestPackagePath}`);
+} else if (!expectedChecksums.has(manifestPackagePath)) {
+  manifestIntegrityErrors.push(`missing checksum entry: ${manifestPackagePath}`);
+} else {
+  packageManifestBytes = readFileSync(packageManifestPath);
+  const actualManifestHash = createHash("sha256").update(packageManifestBytes).digest("hex");
+  if (expectedChecksums.get(manifestPackagePath) !== actualManifestHash) {
+    manifestIntegrityErrors.push(`checksum mismatch: ${manifestPackagePath}`);
+  }
+}
+if (manifestIntegrityErrors.length > 0) {
+  console.log(
+    JSON.stringify(
+      {
+        status: "blocked",
+        reason: "manifest_integrity_failed",
+        errors: manifestIntegrityErrors,
+      },
+      null,
+      2,
+    ),
+  );
+  process.exit(2);
+}
+
+function parseJson(contents, label) {
+  try {
+    return JSON.parse(contents.toString("utf8"));
+  } catch (error) {
+    console.error(`${label} is invalid: ${error.message}`);
+    process.exit(2);
+  }
+}
+
+const packageManifest = parseJson(packageManifestBytes, "Package manifest");
+const profileNames = packageManifest.required_profiles;
+const profileContractErrors = [];
+if (!Array.isArray(profileNames)) {
+  profileContractErrors.push("required_profiles must be an array");
+} else {
+  if (profileNames.length !== allowedProfileNames.length) {
+    profileContractErrors.push(`required_profiles must contain exactly ${allowedProfileNames.length} entries`);
+  }
+  const seen = new Set();
+  const allowed = new Set(allowedProfileNames);
+  for (const profile of profileNames) {
+    if (typeof profile !== "string") {
+      profileContractErrors.push("every required profile must be a string basename");
+      continue;
+    }
+    if (
+      profile.length === 0 ||
+      profile !== basename(profile) ||
+      profile.includes("/") ||
+      profile.includes("\\") ||
+      isAbsolute(profile)
+    ) {
+      profileContractErrors.push(`profile must be a basename without path traversal: ${profile}`);
+    }
+    if (seen.has(profile)) profileContractErrors.push(`duplicate required profile: ${profile}`);
+    seen.add(profile);
+    if (!allowed.has(profile)) profileContractErrors.push(`profile is not in the exact allowlist: ${profile}`);
+  }
+  for (const requiredProfile of allowedProfileNames) {
+    if (!seen.has(requiredProfile)) profileContractErrors.push(`missing required profile: ${requiredProfile}`);
+  }
+}
+if (packageManifest.bundled_profile_count !== allowedProfileNames.length) {
+  profileContractErrors.push(`bundled_profile_count must be ${allowedProfileNames.length}`);
+}
+if (packageManifest.parent_role_profile_bundled !== false) {
+  profileContractErrors.push("parent_role_profile_bundled must be false");
+}
+if (profileContractErrors.length > 0) {
+  console.log(
+    JSON.stringify(
+      {
+        status: "blocked",
+        reason: "invalid_profile_bundle_contract",
+        errors: profileContractErrors,
+      },
+      null,
+      2,
+    ),
+  );
+  process.exit(2);
+}
 
 function usage(exitCode = 0) {
   console.log(`Usage:
@@ -55,6 +187,8 @@ if (!new Set(["project", "user"]).has(scope)) {
 let skillDestination;
 let profileDestination;
 let targetRoot;
+let skillBoundary;
+let profileBoundary;
 
 if (scope === "project") {
   const target = argumentValue("--target");
@@ -69,17 +203,24 @@ if (scope === "project") {
   }
   skillDestination = join(targetRoot, ".agents/skills/naruto");
   profileDestination = join(targetRoot, ".codex/agents");
+  skillBoundary = targetRoot;
+  profileBoundary = targetRoot;
 } else {
   targetRoot = homedir();
   const codexHome = resolve(process.env.CODEX_HOME || join(targetRoot, ".codex"));
   skillDestination = join(targetRoot, ".agents/skills/naruto");
   profileDestination = join(codexHome, "agents");
+  skillBoundary = targetRoot;
+  profileBoundary = codexHome;
 }
 
 function listFiles(directory, base = "") {
   const files = [];
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
     if (entry.name === ".DS_Store" || entry.name.startsWith("._")) continue;
+    if (entry.isSymbolicLink()) {
+      throw new Error(`Symlink is not allowed in package sources: ${join(directory, entry.name)}`);
+    }
     const fullPath = join(directory, entry.name);
     const relativePath = base ? join(base, entry.name) : entry.name;
     if (entry.isDirectory()) files.push(...listFiles(fullPath, relativePath));
@@ -88,14 +229,14 @@ function listFiles(directory, base = "") {
   return files.sort();
 }
 
-function sha256(path) {
-  return createHash("sha256").update(readFileSync(path)).digest("hex");
-}
-
 function hasSymlinkInExistingPath(path, stopAt) {
   let current = resolve(path);
   const boundary = resolve(stopAt);
-  while (current.startsWith(boundary)) {
+  const rel = relative(boundary, current);
+  if (rel === ".." || rel.startsWith(`..${process.platform === "win32" ? "\\" : "/"}`)) {
+    return `path escapes destination boundary: ${boundary}`;
+  }
+  while (true) {
     if (existsSync(current) && lstatSync(current).isSymbolicLink()) return current;
     if (current === boundary) break;
     current = dirname(current);
@@ -105,23 +246,81 @@ function hasSymlinkInExistingPath(path, stopAt) {
 
 const plan = [];
 const sourceSkill = join(repoRoot, ".agents/skills/naruto");
+const sourceProfiles = join(repoRoot, ".codex/agents");
+const sourceRootErrors = [];
+for (const sourceRoot of [sourceSkill, sourceProfiles]) {
+  if (!isPathWithin(repoRoot, sourceRoot)) {
+    sourceRootErrors.push(`source root escapes package root: ${sourceRoot}`);
+    continue;
+  }
+  if (!existsSync(sourceRoot) || !lstatSync(sourceRoot).isDirectory()) {
+    sourceRootErrors.push(`missing or non-directory source root: ${sourceRoot}`);
+    continue;
+  }
+  const symlink = hasSymlinkInExistingPath(sourceRoot, repoRoot);
+  if (symlink) sourceRootErrors.push(`symlink in source root path: ${symlink}`);
+}
+if (sourceRootErrors.length > 0) {
+  console.log(
+    JSON.stringify(
+      {
+        status: "blocked",
+        reason: "source_root_preflight_failed",
+        errors: sourceRootErrors,
+      },
+      null,
+      2,
+    ),
+  );
+  process.exit(2);
+}
+
+function addPlanItem(sourceBase, destinationBase, relativePath, boundary) {
+  const source = resolve(sourceBase, relativePath);
+  const destination = resolve(destinationBase, relativePath);
+  if (!isPathWithin(sourceBase, source)) {
+    console.error(`Package source escapes its allowed root: ${source}`);
+    process.exit(2);
+  }
+  if (!isPathWithin(destinationBase, destination) || !isPathWithin(boundary, destination)) {
+    console.error(`Install destination escapes its allowed root: ${destination}`);
+    process.exit(2);
+  }
+  plan.push({ source, destination, boundary });
+}
+
 for (const relativePath of listFiles(sourceSkill)) {
-  plan.push({
-    source: join(sourceSkill, relativePath),
-    destination: join(skillDestination, relativePath),
-  });
+  addPlanItem(sourceSkill, skillDestination, relativePath, skillBoundary);
 }
 for (const profile of profileNames) {
-  plan.push({
-    source: join(repoRoot, ".codex/agents", profile),
-    destination: join(profileDestination, profile),
-  });
+  addPlanItem(sourceProfiles, profileDestination, profile, profileBoundary);
+}
+const sourceErrors = [];
+for (const item of plan) {
+  if (!existsSync(item.source) || !lstatSync(item.source).isFile()) {
+    sourceErrors.push(`missing or non-file source: ${item.source}`);
+    continue;
+  }
+  if (lstatSync(item.source).isSymbolicLink()) {
+    sourceErrors.push(`symlink source: ${item.source}`);
+    continue;
+  }
+  const packagePath = toPackagePath(item.source);
+  if (!expectedChecksums.has(packagePath)) {
+    sourceErrors.push(`missing checksum entry: ${packagePath}`);
+  } else if (expectedChecksums.get(packagePath) !== sha256(item.source)) {
+    sourceErrors.push(`checksum mismatch: ${packagePath}`);
+  }
+}
+if (sourceErrors.length > 0) {
+  console.log(JSON.stringify({ status: "blocked", reason: "source_preflight_failed", errors: sourceErrors }, null, 2));
+  process.exit(2);
 }
 
 const actions = [];
 const conflicts = [];
 for (const item of plan) {
-  const symlink = hasSymlinkInExistingPath(item.destination, targetRoot);
+  const symlink = hasSymlinkInExistingPath(item.destination, item.boundary);
   if (symlink) {
     conflicts.push({ path: item.destination, reason: `symlink in destination path: ${symlink}` });
     continue;

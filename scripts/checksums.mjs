@@ -38,6 +38,9 @@ function listFiles(directory, base = "") {
   const files = [];
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
     if (entry.name.startsWith("._")) continue;
+    if (entry.isSymbolicLink()) {
+      throw new Error(`Symlink is not allowed in the package: ${join(directory, entry.name)}`);
+    }
     if (entry.isDirectory() && ignoredDirectories.has(entry.name)) continue;
     if (entry.isFile() && ignoredFiles.has(entry.name)) continue;
 

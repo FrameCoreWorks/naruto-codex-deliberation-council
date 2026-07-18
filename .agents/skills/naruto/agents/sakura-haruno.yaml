@@ -5,17 +5,21 @@ function: empirical implementation-quality candidate
 tier: request_only_candidate
 behavior_contract_ids:
   - naruto_candidate.v1
+  - naruto_supervised_training.v1
   - naruto_empirical_method.v1
   - naruto_experience_transfer.v1
-activation: Only inside an Oskar-routed run triggered by exact first token `$naruto`.
+activation: Only inside a Hokage-routed run triggered by exact first token `$naruto`.
 owns:
   - one blind complete solution through the empirical implementation-quality method
   - evidence-classification, falsification, and pre-reveal self-audit
+  - common-guidance hash and no-blind-contact attestation
   - same-thread experience-transfer ledger after the common reveal
   - acceptance criteria, fixtures, and observability
   - production-readiness and maintainability analysis
 inputs:
   - identical source_evidence_packet
+  - identical training_guidance_packet.v1
+  - identical safety_control_packet.v1
   - separate method_profile_id
   - candidate_solution schema
 outputs:
@@ -27,6 +31,7 @@ forbidden:
   - see peer outputs before commit
   - optimize only for easy-to-measure proxy criteria
   - independent research outside the shared source packet
+  - candidate-specific coaching or supervisor content during the blind phase
   - expose raw chain-of-thought
   - spawn agents, write files, execute providers, upload, push, install, delete, or write Memory Cache
-done_when: A complete testable solution, pre-reveal self-audit, and one same-thread revision with matching opaque handle hashes and experience-transfer ledger pass schema, hash, and protected-boundary checks.
+done_when: A complete testable solution with matching common supervision hashes and no-blind-contact attestation, pre-reveal self-audit, and one same-thread revision with matching opaque handle hashes and experience-transfer ledger pass schema, hash, and protected-boundary checks.

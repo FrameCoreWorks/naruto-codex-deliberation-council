@@ -2,7 +2,7 @@
 
 The standalone package does not require the FrameCore Workspace. This adapter
 documents optional integration points for a workspace that already uses named
-Oskar, Hipson, Eryk, Olga, and Marta roles.
+research, packet-building, QA, and delivery roles.
 
 Do not copy a workspace's global governance files into this repository.
 
@@ -12,13 +12,15 @@ In the target workspace:
 
 1. Add a global routing rule that activates `.agents/skills/naruto/SKILL.md`
    only when the first non-empty token is exact, case-sensitive `$naruto`.
-2. Keep Oskar as the parent orchestrator and final synthesizer.
+2. Map the workspace's existing parent orchestrator to the public **Hokage**
+   role for every Naruto artifact. Do not add a separate Hokage profile.
 3. Use Hipson and Eryk only before candidate fan-out to compile one common
    evidence packet. Close those preparation threads before opening candidates.
-4. Keep the five bundled profiles outside the permanent core roster. They are
+4. Keep the six bundled profiles outside the permanent core roster. They are
    request-only.
-5. Use Olga after the five deliberation threads close when the conclusion
-   affects implementation, governance, or external action.
+5. Keep Kakashi and Yamato open through the bounded protocol, then close all
+   six child threads before opening the workspace's final QA role when the
+   conclusion affects implementation, governance, or external action.
 6. Register a workspace test command that runs the installed skill validator.
 7. If the workspace maintains its own skill checksum registry, generate the
    entry from the installed files. Do not copy another workspace's registry.
@@ -26,8 +28,11 @@ In the target workspace:
 ## Invariants
 
 - No implicit activation or alias.
-- No generic replacement for a missing candidate or moderator profile.
-- The four candidates receive the same packet bytes and hash.
+- No generic replacement for a missing candidate, Kakashi, or Yamato profile.
+- The four candidates receive the same source, guidance, and safety packet
+  bytes and hashes.
+- Kakashi guidance is common and non-solution; Yamato safety control passes
+  before fan-out and cannot become candidate coaching.
 - One common reveal and one same-thread revision only.
 - Evidence and supported minority objections outrank majority and style.
 - Deliberation does not inherit provider, upload, write, push, install,
@@ -41,7 +46,7 @@ Keep two levels separate:
 
 - Package validation: `npm test` in this repository.
 - Workspace integration validation: target-workspace checks for global routing,
-  skill registry entries, named Oskar/Olga integration, and live same-thread
+  skill registry entries, parent-Hokage and QA integration, and live same-thread
   behavior.
 
 Package validation must not fail merely because the target workspace does not

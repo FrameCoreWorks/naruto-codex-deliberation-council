@@ -32,7 +32,7 @@ profiles are configuration layers; test them after restart or in a new task.
 - Keep `agents/openai.yaml` limited to interface metadata and explicit-only
   invocation policy.
 - Use dependency-free Node scripts for offline validation and installation.
-- Do not add a plugin wrapper that could imply the five custom-agent TOML files
+- Do not add a plugin wrapper that could imply the six custom-agent TOML files
   are automatically installed. A future plugin may bundle the skill, but the
   profile installation contract must remain explicit.
 - Treat same-thread revision as a runtime capability to verify after install,
@@ -73,7 +73,12 @@ Rejected patterns:
 - The custom-agent file format may evolve as Codex agent authoring matures.
 - Static tests cannot prove that a specific Codex build can re-contact the same
   four open candidate threads after reveal.
-- A target environment may cap concurrent agent threads below the five required
-  by this protocol.
-- If either capability is unavailable, return `blocked`; do not emulate the run
-  with replacement agents.
+- A target environment may cap concurrent child threads below the six required
+  at peak: four candidates, Kakashi, and Yamato. Hokage remains the parent role
+  and does not consume a child profile.
+- If same-thread follow-up, Kakashi, Yamato, or the required capacity is
+  unavailable, return `blocked`; do not emulate the run with replacement
+  agents.
+- Package `0.3.0` intentionally remains pre-1.0 until a live post-install run
+  proves all six profiles, Yamato preflight, one byte-identical reveal, and
+  same-thread revision in a target Codex build.

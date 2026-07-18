@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "name": "naruto",
   "activation": {
     "mode": "exact_first_token",
@@ -7,8 +7,18 @@
     "case_sensitive": true,
     "allow_implicit_invocation": false
   },
-  "owner_runtime_id": "oskar",
+  "owner_role_id": "hokage",
   "qa_runtime_id": "olga",
+  "supervision": {
+    "common_training_guidance_required": true,
+    "guidance_byte_identical_required": true,
+    "guidance_must_be_non_solution": true,
+    "yamato_safety_control_required": true,
+    "yamato_full_source_packet_required": true,
+    "candidate_specific_coaching_forbidden": true,
+    "blind_phase_content_feedback_forbidden": true,
+    "preflight_hold_repairs_allowed": 1
+  },
   "moderation": {
     "commit_barrier": true,
     "reveal_cycles": 1,
@@ -39,7 +49,7 @@
       "name": "Naruto Uzumaki",
       "function": "integrative practical candidate",
       "tier": "request_only_candidate",
-      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_integrative_method.v1", "naruto_experience_transfer.v1"]
+      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_supervised_training.v1", "naruto_integrative_method.v1", "naruto_experience_transfer.v1"]
     },
     {
       "id": "sasuke-uchiha",
@@ -47,7 +57,7 @@
       "name": "Sasuke Uchiha",
       "function": "adversarial risk-first candidate",
       "tier": "request_only_candidate",
-      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_adversarial_method.v1", "naruto_experience_transfer.v1"]
+      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_supervised_training.v1", "naruto_adversarial_method.v1", "naruto_experience_transfer.v1"]
     },
     {
       "id": "shikamaru-nara",
@@ -55,7 +65,7 @@
       "name": "Shikamaru Nara",
       "function": "systems efficiency candidate",
       "tier": "request_only_candidate",
-      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_systems_method.v1", "naruto_experience_transfer.v1"]
+      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_supervised_training.v1", "naruto_systems_method.v1", "naruto_experience_transfer.v1"]
     },
     {
       "id": "sakura-haruno",
@@ -63,15 +73,23 @@
       "name": "Sakura Haruno",
       "function": "empirical implementation-quality candidate",
       "tier": "request_only_candidate",
-      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_empirical_method.v1", "naruto_experience_transfer.v1"]
+      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_supervised_training.v1", "naruto_empirical_method.v1", "naruto_experience_transfer.v1"]
     },
     {
       "id": "kakashi-hatake",
       "runtime_id": "kakashi_hatake",
       "name": "Kakashi Hatake",
-      "function": "commit-barrier and evidence-reconciliation moderator",
+      "function": "common training guide, commit-barrier, and evidence-reconciliation moderator",
       "tier": "request_only_moderator",
-      "behavior_contract_ids": ["naruto_moderator.v1", "naruto_commit_barrier.v1", "naruto_phase_integrity.v1", "naruto_groupthink_audit.v1"]
+      "behavior_contract_ids": ["naruto_moderator.v1", "naruto_training_guidance.v1", "naruto_commit_barrier.v1", "naruto_phase_integrity.v1", "naruto_groupthink_audit.v1"]
+    },
+    {
+      "id": "yamato",
+      "runtime_id": "yamato",
+      "name": "Yamato",
+      "function": "guidance-integrity and protected-boundary safety supervisor",
+      "tier": "request_only_safety_supervisor",
+      "behavior_contract_ids": ["naruto_safety_controller.v1", "naruto_boundary_guard.v1", "naruto_guidance_integrity.v1", "naruto_phase_integrity.v1"]
     }
   ]
 }

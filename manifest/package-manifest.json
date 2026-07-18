@@ -1,8 +1,11 @@
 {
-  "schema": "codex_deliberation_package.v1",
+  "schema": "codex_deliberation_package.v2",
   "package_name": "codex-deliberation-council",
-  "package_version": "0.2.0",
+  "package_version": "0.3.0",
   "skill_name": "naruto",
+  "public_parent_role_id": "hokage",
+  "bundled_profile_count": 6,
+  "parent_role_profile_bundled": false,
   "activation": {
     "mode": "exact_first_token",
     "token": "$naruto",
@@ -24,7 +27,8 @@
     "sasuke_uchiha.toml",
     "shikamaru_nara.toml",
     "sakura_haruno.toml",
-    "kakashi_hatake.toml"
+    "kakashi_hatake.toml",
+    "yamato.toml"
   ],
   "required_skill_directories": [
     "agents",
@@ -35,12 +39,17 @@
   ],
   "required_protocol_artifacts": [
     "references/prior-art-assimilation.md",
-    "templates/protocol-run-manifest.md"
+    "templates/protocol-run-manifest.md",
+    "templates/training-guidance.md",
+    "templates/safety-control.md",
+    "templates/candidate-solution.md",
+    "templates/consensus-report.md",
+    "templates/protocol-checkpoint.md"
   ],
   "portable_transformations": [
     "standalone_dependency_free_validator",
     "workspace_checks_replaced_with_package_checks",
-    "phase_integrity_and_loop_fixtures_preserved",
+    "phase_integrity_checkpoint_supervision_and_loop_fixtures_preserved",
     "package_checksum_verification",
     "project_and_user_scope_installer",
     "workspace_integration_moved_to_optional_documentation"

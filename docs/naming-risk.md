@@ -14,8 +14,8 @@ trademark-clearance opinion.
   commercially licensed entertainment franchise. Using the franchise name as
   repository, product, icon, or marketing identity can create a source or
   endorsement concern.
-- Full character names are safer as internal mnemonic labels than as public
-  branding, but they are not risk-free.
+- Full character names and the Hokage title are safer as mnemonic protocol
+  labels than as public branding, but they are not risk-free.
 - No complete USPTO, WIPO, or country-by-country clearance search has been
   performed.
 
@@ -45,9 +45,9 @@ Primary references:
 
 Choose one route:
 
-1. Lowest practical risk: rename the public skill trigger and all five role
-   labels to neutral names, then update profiles, fixtures, docs, hashes, and
-   live acceptance tests together.
+1. Lowest practical risk: rename the public skill trigger, all six profile
+   labels, and the Hokage parent role to neutral names, then update profiles,
+   fixtures, docs, hashes, and live acceptance tests together.
 2. Compatibility route: retain `$naruto` and the current internal labels, keep
    the neutral repository branding and notice, and obtain legal review if the
    repository will be promoted or distributed commercially.

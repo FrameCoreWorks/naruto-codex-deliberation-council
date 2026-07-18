@@ -7,6 +7,7 @@ consensus_report:
   source_packet_sha256: ""
   protocol_run_manifest_sha256: ""
   moderator_report_sha256: ""
+  safety_report_sha256: ""
   result_status: verified_consensus | provisional_consensus | structured_dispute | blocked
   valid_candidate_count: 0
   evidence_basis: []
@@ -20,16 +21,16 @@ consensus_report:
       positions: []
       exact_resolution_need: ""
   critical_minority_objections: []
-  oskar_synthesis: ""
+  hokage_synthesis: ""
   synthesis_provenance:
     source_revision_hashes: []
     accepted_claim_trace:
       - final_claim_id: ""
         source_claim_ids: []
         evidence_refs: []
-        oskar_introduced: false
+        hokage_introduced: false
     rejected_claim_trace: []
-    oskar_introduced_claims:
+    hokage_introduced_claims:
       - claim_id: ""
         claim: ""
         impact: critical | major | minor
@@ -73,4 +74,7 @@ consensus_report:
 
 User-facing delivery should summarize the decision, decisive evidence,
 remaining uncertainty, Loop Protocol stop decision, and next normal route
-without exposing raw transcripts.
+without exposing raw transcripts. After Olga returns, freeze the complete report
+with `protocol_run_manifest_sha256` still empty. Record QA in the manifest,
+compute the QA checkpoint and final manifest digest, then fill only that one
+hash field. Any other post-QA edit requires QA again.

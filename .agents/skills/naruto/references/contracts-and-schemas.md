@@ -5,13 +5,16 @@
 1. Canonicalization
 2. Loop control projection
 3. Source packet
-4. Candidate envelope and solution
-5. Commit record
-6. Reveal transfer
-7. Revised solution
-8. Protocol run manifest
-9. Moderator report
-10. Consensus report
+4. Training guidance
+5. Safety control
+6. Candidate envelope and solution
+7. Commit record
+8. Reveal transfer
+9. Revised solution
+10. Protocol run manifest
+11. Moderator report
+12. Consensus report
+13. Safety report
 
 ## Canonicalization
 
@@ -23,6 +26,71 @@ Hash protocol artifacts as canonical JSON:
 4. Normalize text line endings to LF before constructing JSON.
 5. Exclude volatile timestamps, raw thread IDs, nicknames, and runtime status.
 6. Use lowercase hexadecimal SHA-256.
+
+### Artifact Digest Projection
+
+Hash the inner artifact object identified by its `schema`, not the Markdown or
+YAML wrapper. For an artifact that stores its own digest, deep-copy the object,
+delete exactly the self-digest field listed below, canonicalize the remaining
+object, and hash those bytes. Deleting the field is required; replacing it with
+an empty string is a different projection.
+
+| Schema | Self-digest field omitted from its own projection |
+|---|---|
+| `source_evidence_packet.v1` | `source_packet_sha256` |
+| `training_guidance_packet.v1` | `training_guidance_packet_sha256` |
+| `safety_control_packet.v1` | `safety_control_packet_sha256` |
+| `candidate_solution.v1` | `candidate_output_sha256` |
+| `revised_candidate_solution.v1` | `revision_output_sha256` |
+| `protocol_checkpoint.v1` | `checkpoint_sha256` |
+| `protocol_run_manifest.v1` | `manifest_sha256` |
+| `safety_report.v1` | `safety_report_sha256` |
+
+Every other SHA-256 field is a dependency reference and remains in the
+projection. Schemas without a self-digest field, including commit, reveal,
+moderator, and consensus artifacts, hash all their fields. Verification repeats
+the same projection and compares the result with the stored self digest.
+
+### Manifest Checkpoints And Acyclic Order
+
+Checkpoint order is fixed:
+
+```text
+source_packet -> training_control -> commit_barrier -> reveal -> revision
+              -> reconcile -> safety_report -> synthesis -> qa
+```
+
+After every phase, create and preserve `protocol_checkpoint.v1` from
+`templates/protocol-checkpoint.md`. Its `manifest_snapshot` is a deep copy of
+the inner manifest at that moment with the entire `checkpoint_hashes` object and
+`manifest_sha256` removed. The checkpoint records its phase, sequence, and the
+digest of the immediately preceding checkpoint; sequence 1 uses `null`. Compute
+the checkpoint digest with only `checkpoint_sha256` omitted, then store it both
+in the preserved checkpoint artifact and the matching manifest
+`checkpoint_hashes` entry. Verification uses the preserved artifact, never a
+reconstruction from later mutable manifest state.
+
+Build final artifacts in this order:
+
+1. Hash the source packet, common guidance, and preflight safety control using
+   their schema projections.
+2. Commit candidates, reveal once, revise in the same threads, and finalize
+   Kakashi's moderator report digest.
+3. Add that digest to the manifest, then create and preserve the `reconcile`
+   checkpoint.
+4. Build `safety_report.v1`, bind it to the preserved reconcile checkpoint,
+   omit its own digest field, and compute `safety_report_sha256`.
+5. Add that digest to the manifest, mark the safety report complete, then create
+   and preserve the `safety_report` checkpoint.
+6. Record Hokage synthesis and create the `synthesis` checkpoint.
+7. After Olga returns, finalize every semantic and QA field in the consensus
+   draft while leaving `protocol_run_manifest_sha256` empty. Freeze that draft,
+   record QA in the manifest, and create the `qa` checkpoint.
+8. Compute final `manifest_sha256` with only its own field omitted.
+9. Fill only `protocol_run_manifest_sha256` in the frozen consensus draft. The
+   moderator and safety report digests are already fixed. The manifest and
+   safety report never reference the consensus report, so the dependency graph
+   remains acyclic.
 
 The common source packet excludes candidate method profiles. Each candidate
 envelope records both the common packet hash and its method profile ID.
@@ -61,6 +129,15 @@ source_evidence_packet:
   constraints: []
   exclusions: []
   protected_boundaries: []
+  supervision_contract:
+    common_training_guidance_required: true
+    guidance_byte_identical_required: true
+    guidance_must_be_non_solution: true
+    yamato_safety_control_required: true
+    yamato_full_source_packet_required: true
+    candidate_specific_coaching_forbidden: true
+    blind_phase_content_feedback_forbidden: true
+    preflight_hold_repairs_allowed: 1
   loop_control:
     gate: loop_control_fit
     loop_id:
@@ -93,6 +170,65 @@ source_evidence_packet:
   source_packet_sha256:
 ```
 
+## Training Guidance
+
+```yaml
+training_guidance_packet:
+  schema: training_guidance_packet.v1
+  source_packet_sha256:
+  objective_frame:
+  full_solution_requirement:
+  acceptance_focus:
+    - criterion_id:
+      observable:
+  evidence_discipline: []
+  falsification_targets: []
+  protected_boundary_reminders: []
+  stop_conditions: []
+  candidate_specific_content: false
+  solution_recommendation_included: false
+  preferred_route_included: false
+  private_evidence_included: false
+  raw_reasoning_included: false
+  training_guidance_packet_sha256:
+```
+
+The packet is derived only from the final source packet. Its canonical bytes
+must be identical for Yamato and all four candidates.
+
+## Safety Control
+
+```yaml
+safety_control_packet:
+  schema: safety_control_packet.v1
+  source_packet_sha256:
+  training_guidance_packet_sha256:
+  supervisor_id: yamato
+  status: pass | hold | blocked
+  checks:
+    source_packet_present_and_hash_valid: pass | fail | unverifiable
+    guidance_common_and_byte_identical: pass | fail | unverifiable
+    guidance_non_solution: pass | fail | unverifiable
+    no_candidate_specific_content: pass | fail | unverifiable
+    no_private_evidence: pass | fail | unverifiable
+    protected_boundaries_complete: pass | fail | unverifiable
+    read_only_profiles_required: pass | fail | unverifiable
+    no_blind_phase_content_feedback: pass | fail | unverifiable
+  findings:
+    - check:
+      observed:
+      expected:
+      result_ceiling_effect: none | hold | blocked
+  hold_count: 0 | 1
+  candidate_specific_coaching_forbidden: true
+  content_feedback_during_blind_phase_forbidden: true
+  raw_reasoning_included: false
+  safety_control_packet_sha256:
+```
+
+Only `pass` permits candidate fan-out. A `hold` allows one bounded repair to the
+common packet or common guidance; it never permits tailored candidate contact.
+
 ## Candidate Envelope And Solution
 
 The envelope may differ only in candidate identity and method profile:
@@ -103,6 +239,8 @@ candidate_envelope:
   candidate_id:
   method_profile_id:
   source_packet_sha256:
+  training_guidance_packet_sha256:
+  safety_control_packet_sha256:
   blind_phase: true
   peer_visibility: none
 ```
@@ -115,6 +253,8 @@ candidate_solution:
   candidate_id:
   method_profile_id:
   source_packet_sha256:
+  training_guidance_packet_sha256:
+  safety_control_packet_sha256:
   complete_solution:
   decision_or_recommendation:
   assumptions:
@@ -147,6 +287,7 @@ candidate_solution:
   protected_boundary_check:
     status: pass | fail
     notes: []
+  no_blind_phase_supervisor_contact_attestation: true
   no_raw_cot_attestation: true
   candidate_output_sha256:
 ```
@@ -163,10 +304,13 @@ candidate_output_commit:
   schema: candidate_output_commit.v1
   candidate_id:
   source_packet_sha256:
+  training_guidance_packet_sha256:
+  safety_control_packet_sha256:
   candidate_output_sha256:
   complete_solution_present: true
   schema_valid: true
   protected_boundaries_pass: true
+  no_blind_phase_supervisor_contact: true
   raw_reasoning_absent: true
   commit_status: valid | invalid | timed_out
   invalid_reason:
@@ -178,6 +322,8 @@ candidate_output_commit:
 reveal_transfer_packet:
   schema: reveal_transfer_packet.v1
   source_packet_sha256:
+  training_guidance_packet_sha256:
+  safety_control_packet_sha256:
   commit_set_sha256:
   valid_candidate_ids: []
   concise_candidates:
@@ -217,7 +363,7 @@ reveal_transfer_packet:
       evidence_refs: []
       severity: critical | major | minor | cosmetic | unverifiable
       root_cause:
-      loopback_target: same_thread_revision | oskar_synthesis | normal_route | user
+      loopback_target: same_thread_revision | hokage_synthesis | normal_route | user
   revision_questions: []
   raw_reasoning_included: false
 ```
@@ -230,6 +376,8 @@ revised_candidate_solution:
   candidate_id:
   original_candidate_output_sha256:
   source_packet_sha256:
+  training_guidance_packet_sha256:
+  safety_control_packet_sha256:
   reveal_packet_sha256:
   adopted_findings:
     - finding:
@@ -283,13 +431,20 @@ protocol_run_manifest:
   run_id:
   task_id:
   source_packet_sha256:
+  training_guidance_packet_sha256:
+  safety_control_packet_sha256:
   phase_integrity:
     source_packet_hashed: pass | fail | not_reached
+    common_guidance_hashed: pass | fail | not_reached
+    yamato_preflight_passed: pass | fail | not_reached
+    guidance_byte_identity_verified: pass | fail | not_reached
+    blind_supervisor_contact_absent: pass | fail | not_reached
     blind_commits_recorded: pass | partial | fail | not_reached
     commit_barrier_closed: pass | fail | not_reached
     reveal_byte_identical: pass | fail | not_reached
     same_thread_revisions_verified: pass | partial | fail | not_reached
     moderator_reconcile_complete: pass | fail | not_reached
+    safety_report_complete: pass | fail | not_reached
     synthesis_provenance_checked: pass | fail | not_reached
     olga_qa_complete_or_not_required: pass | fail | not_reached
   candidates:
@@ -299,15 +454,25 @@ protocol_run_manifest:
       same_thread_verified: true | false | unverifiable
       commit_status: valid | invalid | timed_out
       revision_status: valid | invalid | unavailable
+      no_blind_phase_supervisor_contact: true | false | unverifiable
   moderator:
     thread_handle_sha256:
     reveal_packet_sha256:
+    moderator_report_sha256:
+  safety_supervisor:
+    thread_handle_sha256:
+    preflight_status: pass | hold | blocked
+    hold_count: 0 | 1
+    report_complete: true | false
+    safety_report_sha256:
   checkpoint_hashes:
     source_packet:
+    training_control:
     commit_barrier:
     reveal:
     revision:
     reconcile:
+    safety_report:
     synthesis:
     qa:
   retries: []
@@ -319,9 +484,14 @@ protocol_run_manifest:
 
 This sidecar is excluded from `source_packet_sha256` so runtime state cannot
 change the common task. It proves phase order and identity without exposing raw
-thread identifiers, timestamps, secrets, or provider data. Every checkpoint
-hashes the canonical manifest snapshot after its named phase. The final
-`manifest_sha256` is calculated only after required QA.
+thread identifiers, timestamps, secrets, or provider data. Compute every
+checkpoint and final digest with the projections and acyclic order defined in
+`Manifest Checkpoints And Acyclic Order`; `manifest_sha256` is calculated only
+after required QA.
+
+Each `checkpoint_hashes` value is the digest of a separately preserved
+`protocol_checkpoint.v1` artifact. A hash without its matching immutable
+checkpoint artifact is unverifiable.
 
 ## Moderator Report
 
@@ -330,7 +500,8 @@ moderator_report:
   schema: moderator_report.v1
   moderator_id: kakashi_hatake
   source_packet_sha256:
-  protocol_run_manifest_reconcile_checkpoint_sha256:
+  training_guidance_packet_sha256:
+  safety_control_packet_sha256:
   barrier_status: pass | fail
   reveal_byte_identity_status: pass | fail
   same_thread_revision_status: pass | fail
@@ -368,6 +539,7 @@ consensus_report:
   source_packet_sha256:
   protocol_run_manifest_sha256:
   moderator_report_sha256:
+  safety_report_sha256:
   result_status: verified_consensus | provisional_consensus | structured_dispute | blocked
   valid_candidate_count:
   evidence_basis: []
@@ -380,16 +552,16 @@ consensus_report:
       positions: []
       exact_resolution_need:
   critical_minority_objections: []
-  oskar_synthesis:
+  hokage_synthesis:
   synthesis_provenance:
     source_revision_hashes: []
     accepted_claim_trace:
       - final_claim_id:
         source_claim_ids: []
         evidence_refs: []
-        oskar_introduced: false
+        hokage_introduced: false
     rejected_claim_trace: []
-    oskar_introduced_claims:
+    hokage_introduced_claims:
       - claim_id:
         claim:
         impact: critical | major | minor
@@ -431,11 +603,43 @@ consensus_report:
   next_action:
 ```
 
+Before Olga QA, `protocol_run_manifest_sha256` remains empty. After Olga returns,
+freeze all semantic, provenance, result, QA, and stop fields, create the QA
+checkpoint and final manifest digest, then fill only that one manifest-hash
+field. Any other post-QA change invalidates the QA result.
+
+## Safety Report
+
+`safety_report.v1` binds the final guidance-integrity, phase-order,
+forbidden-action, protected-boundary, and no-contact checks to the same run:
+
+```yaml
+safety_report:
+  schema: safety_report.v1
+  supervisor_id: yamato
+  source_packet_sha256:
+  training_guidance_packet_sha256:
+  safety_control_packet_sha256:
+  protocol_run_manifest_reconcile_checkpoint_sha256:
+  phase_order_status: pass | fail | unverifiable
+  guidance_integrity_status: pass | fail | unverifiable
+  no_candidate_specific_coaching_status: pass | fail | unverifiable
+  blind_phase_content_feedback_absent: true | false | unverifiable
+  protected_boundary_status: pass | fail | unverifiable
+  forbidden_action_status: pass | fail | unverifiable
+  findings: []
+  permitted_result_ceiling: verified_consensus | provisional_consensus | structured_dispute | blocked
+  safety_report_sha256:
+```
+
+The report contains no candidate solution advice and can only preserve or lower
+the result ceiling.
+
 Do not add fields for raw reasoning traces, private scratchpads, hidden debate,
 or a numerical personality score.
 
-Critical or major claims introduced by Oskar must be independently verified,
-demoted, or rejected. An unsupported Oskar-introduced claim cannot support
+Critical or major claims introduced by Hokage must be independently verified,
+demoted, or rejected. An unsupported Hokage-introduced claim cannot support
 `verified_consensus`. Olga receives the final artifact, acceptance criteria,
 and evidence only; candidate identities, role prestige, completion order, and
 vote counts are excluded from the QA packet.
