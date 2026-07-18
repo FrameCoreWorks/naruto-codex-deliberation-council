@@ -1,6 +1,6 @@
 ---
 name: naruto
-description: Request-only blind multi-agent deliberation for difficult creative, technical, governance, or decision-support tasks. Use only when the current user message begins with the exact case-sensitive first token `$naruto`; never invoke implicitly, from an alias, from quoted/code text, or merely because a task is complex. Runs four distinct read-only candidate agents on the same complete task under one common Kakashi training brief and Yamato safety control, followed by one moderated reveal and same-thread repair cycle, Hokage synthesis, evidence-based QA, regression checking, and a bounded Loop Protocol stop decision.
+description: Request-only blind multi-agent deliberation for difficult creative, technical, governance, or decision-support tasks. Use only when the current user message begins with the exact case-sensitive first token `$naruto`; never invoke implicitly, from an alias, from quoted/code text, or merely because a task is complex. Runs four method-diverse read-only shadow-clone training instances of one shared Naruto identity on the same complete task under one common Kakashi training brief and Yamato safety control, followed by one moderated reveal and same-thread repair cycle, Hokage synthesis, evidence-based QA, regression checking, and a bounded Loop Protocol stop decision.
 ---
 
 # Naruto Deliberation
@@ -29,19 +29,21 @@ activate from prior turns, Memory Cache, a fixture, or an agent suggestion.
 - Hokage owns `loop_control_fit`, the acceptance checklist, loop state, loopback,
   and the final stop decision. Naruto does not create a second loop owner.
 - The normal task router remains authoritative before and after deliberation.
-- Naruto, Sasuke, Shikamaru, and Sakura are candidate agents. Each solves the
-  same complete task independently through a different method.
+- Four shadow-clone training instances share one `naruto_uzumaki` actor
+  identity. Integrator, Challenger, Strategist, and Verifier each solve the
+  same complete task independently through a different fixed method. They are
+  not four characters and are not four identical approaches.
 - Kakashi is the common training guide and evidence moderator. Before fan-out,
   Kakashi prepares one neutral, non-solution guidance packet for all four
-  candidates. After commit, Kakashi enforces the barrier, prepares the reveal,
+  instances. After commit, Kakashi enforces the barrier, prepares the reveal,
   and records agreements and disputes. Kakashi does not submit a fifth answer.
 - Yamato is the independent safety supervisor. Yamato validates the common
   guidance, protected boundaries, and phase-control metadata, then returns only
   `pass`, `hold`, or `blocked` safety findings. Yamato never coaches one
-  candidate, proposes a solution, or becomes a second moderator.
+  instance, proposes a solution, or becomes a second moderator.
 - Olga performs final QA when the result affects implementation, workflow
   governance, external execution, or another consequential decision.
-- Candidate agents are read-only and cannot spawn children, edit files, run
+- Training instances are read-only and cannot spawn children, edit files, run
   providers, upload, push, install, delete, write Memory Cache, or execute the
   proposed solution.
 - `$naruto` grants no provider activation, cost approval, upload approval,
@@ -51,13 +53,16 @@ activate from prior turns, Memory Cache, a fixture, or an agent suggestion.
 ## Core Learning Invariant
 
 Preserve the user's Volume 35-inspired training concept without copying story
-text or roleplaying the franchise: Kakashi sets one common training frame,
-Yamato holds one common safety boundary, four distinct agents independently
+text or roleplaying the franchise: one Naruto identity is instantiated as four
+method-diverse shadow-clone training paths. Kakashi sets one common training
+frame, Yamato holds one common safety boundary, all four instances independently
 practice the same complete task, all blind work is sealed, one shared evidence
-packet is revealed, and every original agent thread updates its own complete
-solution. Only then may Kakashi reconcile and Hokage synthesize. Tailored
-coaching, splitting the problem into four subtasks, candidate communication
-before commit, or fresh agents after reveal invalidates the run.
+packet is revealed, and every original instance thread updates its own complete
+solution. Only then may Kakashi reconcile and Hokage accumulate the experience
+into one synthesis. Identity drift, duplicate methods, character-persona
+substitution, tailored coaching, splitting the problem into four subtasks,
+pre-commit instance communication, or fresh instances after reveal invalidate
+the run.
 
 ## Loop Protocol Integration
 
@@ -68,10 +73,10 @@ cycle. It does not add a second debate round or a second automatic panel run.
 |---|---|
 | brief | normalized user task and shared source inventory |
 | checklist | source criteria, common guidance, and safety control fixed before fan-out |
-| execute | four blind complete candidate solutions |
+| execute | four blind complete shadow-clone solutions |
 | evaluate | commit barrier, schema/hash checks, and Kakashi evidence matrix |
 | critique | one byte-identical reveal packet with criterion gaps |
-| repair | one complete revision in the same four candidate threads |
+| repair | one complete revision in the same four instance threads |
 | repeat | rerun failed criteria and regression checks during reconciliation |
 | stop | Olga QA when required and Hokage's explicit stop decision |
 
@@ -94,24 +99,27 @@ Open `loop_control_fit` with the objective, exclusions, checklist version,
 
 Use Hipson to compile the packet and Eryk to verify current or external facts
 when those facts matter. Finish and close those preparatory agents before the
-candidate phase so runtime capacity remains bounded.
+training-instance phase so runtime capacity remains bounded.
 
 Create `source_evidence_packet` from `templates/source-packet.md`. It must
 contain the complete task, source inventory, constraints, protected boundaries,
 acceptance criteria, loop-control binding, evidence rules, output schema, and
 canonical SHA-256. Acceptance criteria are the loop checklist and must exist
-before candidate execution.
+before training-instance execution.
 
 Assign one `independence_key` to every underlying source. Mirrors, summaries,
 or excerpts derived from the same underlying source reuse that key. Candidate
 count never increases evidence independence.
 
 Canonicalize as UTF-8 JSON with recursively sorted object keys, preserved array
-order, LF line endings, and no volatile timestamps. Candidate method profiles
-are recorded separately and are not part of the common packet hash.
+order, LF line endings, and no volatile timestamps. Build `method_matrix.v1`
+from `templates/method-matrix.md` and the canonical agent manifest. It records
+one shared `actor_identity_id`, four unique instance IDs, and four unique fixed
+method IDs. Every participant receives identical matrix bytes. The matrix is
+separate from the source packet hash so method diversity cannot alter evidence.
 
-If a required evidence gap remains, expose the same gap to all candidates.
-Do not let one candidate privately gain a different source set.
+If a required evidence gap remains, expose the same gap to all instances.
+Do not let one instance privately gain a different source set.
 Create `protocol_run_manifest.v1` from
 `templates/protocol-run-manifest.md` as a local runtime sidecar. Keep it outside
 the common packet hash and store only hashes of opaque runtime handles. Preserve
@@ -120,55 +128,67 @@ store its digest in the manifest.
 
 ### 3. Establish Common Training Control
 
-Start `kakashi_hatake` with the final source packet and no candidate output.
+Start `kakashi_hatake` with the final source packet, the method matrix, and no
+instance output.
 Kakashi creates `training_guidance_packet.v1` from
 `templates/training-guidance.md`. It may clarify the objective, acceptance
 criteria, evidence discipline, full-solution requirement, and stop conditions.
-It must not recommend an answer, rank routes, add private evidence, or address
-one candidate differently.
+It must not recommend an answer, rank routes, add private evidence, alter the
+method matrix, or address one instance differently.
+
+Create four `naruto_training_instance_envelope.v1` artifacts from
+`templates/training-instance-envelope.md`. All bind the same actor identity,
+source hash, method-matrix hash, and guidance hash. Only the instance ID,
+assigned fixed method ID, and resulting envelope hash may differ.
 
 Start `yamato` with the full final `source_evidence_packet`, its
-`source_packet_sha256`, and Kakashi guidance. A hash alone is insufficient for
-this review. Yamato verifies the source bytes against the hash, then creates
-`safety_control_packet.v1` from `templates/safety-control.md`, confirming that
-the guidance is common, non-solution, read-only, derived only from that source,
-and compatible with every protected boundary. Record both canonical packet
-hashes in `protocol_run_manifest.v1`. Do not start candidates unless Yamato returns
+`source_packet_sha256`, the full method matrix, all four envelopes, and Kakashi
+guidance. Hashes alone are insufficient for this review. Yamato verifies the
+source and matrix bytes, shared identity, unique instance and method IDs, fixed
+assignments, and the envelope difference allowlist, then creates
+`safety_control_packet.v1` from `templates/safety-control.md`. The guidance must
+remain common, non-solution, read-only, derived only from the source, and
+compatible with every protected boundary. Record all canonical hashes in
+`protocol_run_manifest.v1`. Do not start instances unless Yamato returns
 `pass`. A `hold` returns to Hokage before fan-out for one bounded common-packet
 repair; a second non-pass result blocks the run.
 
-Send byte-identical guidance and safety packets to all four candidates. Keep
-the Kakashi and Yamato threads open, but prohibit candidate-specific coaching
+Send byte-identical source, method-matrix, guidance, and safety packets to all
+four instances plus each instance's manifest-bound routing envelope. Keep the
+Kakashi and Yamato threads open, but prohibit instance-specific coaching
 or content feedback during the blind phase. Supervisors may report integrity
 state only to Hokage.
 
-### 4. Run Four Blind Complete Solutions
+### 4. Run Four Blind Shadow-Clone Paths
 
-Open the four dedicated runtime agents with the same source, guidance, and
-safety packet hashes:
+Open the four dedicated runtime agents with one shared actor identity and the
+same source, method-matrix, guidance, and safety packet hashes:
 
-| Runtime agent | Method lens |
+| Runtime instance | Fixed method lens |
 |---|---|
-| `naruto_uzumaki` | Integrative and practical: maximize user value and find a workable synthesis. |
-| `sasuke_uchiha` | Adversarial and risk-first: attack assumptions, failure modes, and hidden costs. |
-| `shikamaru_nara` | Systems and efficiency: map dependencies, simplify the route, and protect maintainability. |
-| `sakura_haruno` | Empirical and implementation-focused: require testability, evidence, and operational quality. |
+| `naruto_clone_integrator` | Integrative and practical: maximize user value and find a workable synthesis. |
+| `naruto_clone_challenger` | Adversarial and risk-first: attack assumptions, failure modes, and hidden costs. |
+| `naruto_clone_strategist` | Systems strategy: map dependencies, simplify the route, and protect maintainability. |
+| `naruto_clone_verifier` | Empirical verification: require testability, evidence, and operational quality. |
 
-Each agent must return a full `candidate_solution`, not a subtask, critique-only
-note, or roleplay. Do not reveal peer outputs, completion status, partial
-conclusions, or supervisor content updates before all valid candidates commit
-or the pre-reveal retry policy is exhausted.
+These are four training instances of the same Naruto identity, not four
+characters. Each must return a full `candidate_solution`, not a subtask,
+critique-only note, identical-method duplicate, or roleplay. Do not reveal peer
+outputs, completion status, partial conclusions, or supervisor content updates
+before all valid instances commit or the pre-reveal retry policy is exhausted.
 
 Every claim must identify its evidence class, source independence keys, and a
-falsification check. Each agent also returns a concise pre-reveal self-audit of
+falsification check. Each instance also returns a concise pre-reveal self-audit of
 its strongest claim, least defensible claim, likely failing assumption, and
 possible blind spot. This is not a request for raw reasoning.
 
 ### 5. Enforce The Commit Barrier
 
-Require each candidate to return:
+Require each training instance to return:
 
-- candidate ID
+- shared `actor_identity_id: naruto_uzumaki`
+- unique instance ID and fixed method profile ID
+- method-matrix and training-instance-envelope hashes
 - common source packet hash
 - common training guidance and safety control packet hashes
 - full solution
@@ -184,15 +204,16 @@ Require each candidate to return:
 
 Reject hash mismatch, missing full solution, raw reasoning traces, forbidden
 actions, or peer-dependent output as invalid. Permit one technical retry before
-reveal. Never replace a failed dedicated candidate with a generic worker.
+reveal. Identity or method drift is invalid. Never replace a failed dedicated
+instance with a generic worker.
 
 ### 6. Moderate One Reveal
 
-After the barrier, provide the four committed candidate artifacts to the same
+After the barrier, provide the four committed instance artifacts to the same
 `kakashi_hatake` thread. Kakashi creates one `reveal_transfer_packet`
 containing:
 
-- concise candidate solutions
+- concise anonymized solution references
 - claim/evidence ledger
 - agreements
 - conflicts
@@ -202,14 +223,14 @@ containing:
   and factually incorrect opposition checks
 - missing evidence
 - criterion-level failures with evidence, severity, and root cause
-- questions every candidate must resolve
+- questions every instance must resolve
 
 Do not include raw chain-of-thought or a conversational debate transcript.
 
 ### 7. Revise In The Same Four Threads
 
-Send the identical reveal packet back to the same four candidate threads. Each
-candidate returns one complete revised solution and records:
+Send the identical reveal packet back to the same four instance threads. Each
+instance returns one complete revised solution and records:
 
 - adopted peer findings
 - rejected peer findings with evidence
@@ -219,15 +240,16 @@ candidate returns one complete revised solution and records:
 - an `experience_transfer` claim map showing what changed, why, and which peer
   claims or evidence were adopted or rejected
 
-If the runtime cannot re-contact the same open candidate threads, stop as
+If the runtime cannot re-contact the same open instance threads, stop as
 `blocked`. Do not respawn replacements and pretend learning occurred.
-Record a SHA-256 hash of each candidate thread's opaque runtime handle at first
+Record a SHA-256 hash of each instance thread's opaque runtime handle at first
 commit and revision. The two hashes must match; missing, unverifiable, or
-unequal proofs block the run. Never record the raw handle.
+unequal proofs block the run. The actor identity and method assignment must also
+remain unchanged. Never record the raw handle.
 
 Yamato receives phase metadata and protected-boundary attestations only. Yamato
 may return `hold` or `blocked` to Hokage for a concrete contract breach, but may
-not send solution guidance into candidate threads.
+not send solution guidance into instance threads.
 
 ### 8. Reconcile And Synthesize
 
@@ -250,8 +272,9 @@ ordering in `references/contracts-and-schemas.md`; never hash a stored digest
 field into itself, reconstruct an old checkpoint from later state, or change
 semantic output after QA without running QA again.
 
-Kakashi verifies the experience-transfer ledgers, reveal byte identity,
-same-thread proofs, evidence independence, and bounded anti-groupthink checks.
+Kakashi verifies shared actor identity, unique fixed methods, the
+experience-transfer ledgers, reveal byte identity, same-thread proofs, evidence
+independence, and bounded anti-groupthink checks.
 Agreement derived from one shared source remains one evidence lineage. Genuine
 evidence-backed minority objections are preserved, while unsupported dissent
 is rejected rather than rewarded.
@@ -273,7 +296,7 @@ verified, demoted, or rejected; it cannot silently support a verified result.
 The final consensus report binds the post-QA protocol manifest hash and Kakashi
 moderator report hash.
 When Olga QA is required, provide only the final artifact, acceptance criteria,
-and evidence. Exclude candidate identities, role prestige, completion order,
+and evidence. Exclude training-instance identities, role prestige, completion order,
 and vote counts. Every failed QA finding must include an observable mismatch
 and a reproducible next check.
 
@@ -285,19 +308,20 @@ that a criterion passed.
 
 Use exactly one result:
 
-- `verified_consensus`: four valid revisions, required evidence is present,
+- `verified_consensus`: four valid shadow-clone revisions, required evidence is present,
   critical objections are resolved, and the solution passes its checks.
 - `provisional_consensus`: useful convergence exists, but only three valid
-  candidates remain or a non-critical evidence gap is unresolved.
+  instances remain or a non-critical evidence gap is unresolved.
 - `structured_dispute`: two or more evidence-backed options remain materially
   incompatible. Preserve the dispute and state what would resolve it.
-- `blocked`: fewer than three valid candidates, Kakashi or Yamato unavailable,
-  shared guidance or safety hashes differ, candidate-specific coaching occurs,
+- `blocked`: fewer than three valid instances, Kakashi or Yamato unavailable,
+  shared guidance or safety hashes differ, instance-specific coaching occurs,
+  shared identity or fixed method assignments drift,
   same-thread revision provenance is unavailable, reveal bytes differ,
   consequential Olga QA is missing or non-reproducible, required evidence is
   inaccessible, or a protected gate prevents the next step.
 
-Four valid candidates are mandatory for `verified_consensus`. After one
+Four valid instances are mandatory for `verified_consensus`. After one
 pre-reveal technical retry, three may yield only `provisional_consensus` or
 `structured_dispute`. Fewer than three blocks.
 
@@ -326,9 +350,9 @@ normal Loop Protocol with its own owner, acceptance test, and stop condition.
 ## Runtime Capacity
 
 The documented default supports six open child-agent threads. This protocol
-uses all six at peak: four candidates, Kakashi, and Yamato. Finish and close
-Eryk/Hipson before training control; close candidates and both supervisors
-before Olga. Never nest candidate spawning.
+uses all six at peak: four Naruto shadow-clone instances, Kakashi, and Yamato.
+Finish and close Eryk/Hipson before training control; close instances and both supervisors
+before Olga. Never nest training-instance spawning.
 
 ## Load On Demand
 
@@ -348,9 +372,10 @@ before Olga. Never nest candidate spawning.
 
 ## Done When
 
-The exact trigger is proven, the common Kakashi guidance and Yamato safety
-control are byte-identical and non-solution, all required packet hashes and
-barriers are valid, four complete methods were independently attempted, one
+The exact trigger is proven, the common Naruto identity, four fixed methods,
+Kakashi guidance, and Yamato safety control are byte-identical where required
+and non-solution, all required packet hashes and barriers are valid, four
+complete methods were independently attempted, one
 same-thread revision cycle completed, the acceptance matrix and regression
 check are evidenced, the experience-transfer ledger and phase-integrity
 manifest are valid, evidence independence and minority objections were

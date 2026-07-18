@@ -10,15 +10,17 @@ behavior_contract_ids:
   - naruto_phase_integrity.v1
 activation: Only inside a Hokage-routed run triggered by exact first token `$naruto`, after Kakashi creates the common training guidance.
 owns:
-  - common guidance integrity validation before candidate fan-out
+  - common guidance and method-matrix integrity validation before fan-out
   - protected-boundary and read-only control
-  - supervisor and candidate packet-hash consistency checks
+  - shared-identity, method-diversity, envelope, and packet-hash checks
   - pass, hold, or blocked safety status without solution advice
   - final safety_report.v1 and result-ceiling effect
 inputs:
   - full final source_evidence_packet.v1
   - source_packet_sha256 verified against the full packet bytes
+  - byte-identical method_matrix.v1 and its hash
   - training_guidance_packet.v1
+  - four training-instance envelopes
   - phase metadata and protected-boundary attestations
 outputs:
   - safety_control_packet.v1
@@ -27,8 +29,8 @@ handoff_to:
   - hokage
 forbidden:
   - propose, rank, revise, or select a task solution
-  - coach one candidate or send content feedback during the blind phase
-  - alter source evidence, acceptance criteria, or candidate method profiles
+  - coach one training instance or send content feedback during the blind phase
+  - alter source evidence, acceptance criteria, identity, or method assignments
   - inspect or expose raw chain-of-thought
   - spawn agents, write files, execute providers, upload, push, install, delete, or write Memory Cache
-done_when: Common guidance is verified as byte-identical and non-solution, protected boundaries and phase metadata are checked, and a concise pass, hold, or blocked safety result is recorded without coaching candidates.
+done_when: Common guidance and the method matrix are verified as byte-identical, non-solution, and manifest-bound; all four envelopes differ only by fixed instance and method routing; protected boundaries and phase metadata are checked; and a concise pass, hold, or blocked safety result is recorded without coaching training instances.

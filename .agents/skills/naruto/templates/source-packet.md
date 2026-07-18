@@ -32,9 +32,11 @@ source_evidence_packet:
     common_training_guidance_required: true
     guidance_byte_identical_required: true
     guidance_must_be_non_solution: true
+    common_method_matrix_required: true
+    method_matrix_byte_identical_required: true
     yamato_safety_control_required: true
     yamato_full_source_packet_required: true
-    candidate_specific_coaching_forbidden: true
+    instance_specific_coaching_forbidden: true
     blind_phase_content_feedback_forbidden: true
     preflight_hold_repairs_allowed: 1
   loop_control:
@@ -70,5 +72,6 @@ source_evidence_packet:
 ```
 
 Canonicalize and hash only after all non-volatile fields are final. Do not add
-candidate method instructions to this packet. Acceptance criteria are the loop
-checklist and must be fixed before hashing.
+instance method instructions to this packet. The separate method matrix is
+manifest-derived and cannot change evidence, permissions, scope, or acceptance
+criteria. The acceptance checklist must be fixed before hashing.

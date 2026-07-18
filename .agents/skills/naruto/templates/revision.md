@@ -3,9 +3,13 @@
 ```yaml
 revised_candidate_solution:
   schema: revised_candidate_solution.v1
+  actor_identity_id: naruto_uzumaki
   candidate_id: ""
+  method_profile_id: ""
   original_candidate_output_sha256: ""
   source_packet_sha256: ""
+  method_matrix_sha256: ""
+  training_instance_envelope_sha256: ""
   training_guidance_packet_sha256: ""
   safety_control_packet_sha256: ""
   reveal_packet_sha256: ""
@@ -48,7 +52,8 @@ revised_candidate_solution:
   revision_output_sha256: ""
 ```
 
-Revise in the original candidate thread. Return the complete solution again,
+Revise in the original training-instance thread with the same actor identity
+and method assignment. Return the complete solution again,
 not only a diff. The two opaque thread-handle hashes must match; if the runtime
 cannot provide this proof, stop as blocked. Record only concise claim changes
 and evidence deltas, never private reasoning. This is the only Naruto optimizer

@@ -14,8 +14,9 @@ In the target workspace:
    only when the first non-empty token is exact, case-sensitive `$naruto`.
 2. Map the workspace's existing parent orchestrator to the public **Hokage**
    role for every Naruto artifact. Do not add a separate Hokage profile.
-3. Use Hipson and Eryk only before candidate fan-out to compile one common
-   evidence packet. Close those preparation threads before opening candidates.
+3. Use Hipson and Eryk only before training-instance fan-out to compile one
+   common evidence packet. Close those preparation threads before opening the
+   four instances.
 4. Keep the six bundled profiles outside the permanent core roster. They are
    request-only.
 5. Keep Kakashi and Yamato open through the bounded protocol, then close all
@@ -28,11 +29,14 @@ In the target workspace:
 ## Invariants
 
 - No implicit activation or alias.
-- No generic replacement for a missing candidate, Kakashi, or Yamato profile.
-- The four candidates receive the same source, guidance, and safety packet
-  bytes and hashes.
+- No generic replacement for a missing training instance, Kakashi, or Yamato.
+- The four instances share `actor_identity_id: naruto_uzumaki`, receive the same
+  source, `method_matrix.v1`, guidance, and safety bytes, and keep four fixed
+  methods through revision.
+- Each `naruto_training_instance_envelope.v1` differs only in allowlisted
+  routing fields and its resulting digest.
 - Kakashi guidance is common and non-solution; Yamato safety control passes
-  before fan-out and cannot become candidate coaching.
+  before fan-out and cannot become instance-specific coaching.
 - One common reveal and one same-thread revision only.
 - Evidence and supported minority objections outrank majority and style.
 - Deliberation does not inherit provider, upload, write, push, install,

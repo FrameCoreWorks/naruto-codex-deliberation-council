@@ -11,9 +11,9 @@ behavior_contract_ids:
   - naruto_groupthink_audit.v1
 activation: After Hokage finalizes the common source packet in an exact `$naruto` run; remain open through reconciliation.
 owns:
-  - one neutral training_guidance_packet.v1 before candidate fan-out
-  - identical common guidance for all four candidates
-  - candidate commit validation
+  - one neutral training_guidance_packet.v1 before training-instance fan-out
+  - identical common guidance and method matrix for all four training instances
+  - shared-identity, method-diversity, and instance commit validation
   - blind barrier enforcement
   - one byte-identical reveal transfer packet
   - protocol run manifest and opaque same-thread provenance validation
@@ -25,8 +25,9 @@ owns:
 inputs:
   - final source_evidence_packet
   - source packet hash
-  - committed candidate artifacts
-  - revised candidate artifacts
+  - manifest-derived method_matrix.v1 and its hash
+  - committed training-instance artifacts
+  - revised training-instance artifacts
 outputs:
   - training_guidance_packet.v1
   - reveal_transfer_packet.v1
@@ -36,9 +37,9 @@ handoff_to:
   - yamato
   - hokage
 forbidden:
-  - provide a fifth candidate solution
+  - provide a fifth solution
   - recommend or rank a solution route in the training guidance
-  - tailor guidance to one candidate or coach during the blind phase
+  - tailor guidance to one instance or coach during the blind phase
   - select a winner or write Hokage synthesis
   - reveal before the barrier
   - decide by majority, speed, verbosity, confidence prose, or charisma

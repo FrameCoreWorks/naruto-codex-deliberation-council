@@ -5,16 +5,17 @@
 1. Canonicalization
 2. Loop control projection
 3. Source packet
-4. Training guidance
-5. Safety control
-6. Candidate envelope and solution
-7. Commit record
-8. Reveal transfer
-9. Revised solution
-10. Protocol run manifest
-11. Moderator report
-12. Consensus report
-13. Safety report
+4. Method matrix
+5. Training guidance
+6. Safety control
+7. Training-instance envelope and candidate solution
+8. Commit record
+9. Reveal transfer
+10. Revised solution
+11. Protocol run manifest
+12. Moderator report
+13. Consensus report
+14. Safety report
 
 ## Canonicalization
 
@@ -38,6 +39,8 @@ an empty string is a different projection.
 | Schema | Self-digest field omitted from its own projection |
 |---|---|
 | `source_evidence_packet.v1` | `source_packet_sha256` |
+| `method_matrix.v1` | `method_matrix_sha256` |
+| `naruto_training_instance_envelope.v1` | `envelope_sha256` |
 | `training_guidance_packet.v1` | `training_guidance_packet_sha256` |
 | `safety_control_packet.v1` | `safety_control_packet_sha256` |
 | `candidate_solution.v1` | `candidate_output_sha256` |
@@ -72,9 +75,11 @@ reconstruction from later mutable manifest state.
 
 Build final artifacts in this order:
 
-1. Hash the source packet, common guidance, and preflight safety control using
-   their schema projections.
-2. Commit candidates, reveal once, revise in the same threads, and finalize
+1. Hash the source packet, method matrix, common guidance, four routing
+   envelopes, and preflight safety control in that order using their schema
+   projections.
+2. Commit candidate solutions from the four training instances, reveal once,
+   revise in the same threads, and finalize
    Kakashi's moderator report digest.
 3. Add that digest to the manifest, then create and preserve the `reconcile`
    checkpoint.
@@ -92,8 +97,10 @@ Build final artifacts in this order:
    safety report never reference the consensus report, so the dependency graph
    remains acyclic.
 
-The common source packet excludes candidate method profiles. Each candidate
-envelope records both the common packet hash and its method profile ID.
+The common source packet excludes private method instructions. A separate,
+byte-identical `method_matrix.v1` exposes all four fixed assignments to every
+participant. Each routing envelope binds one training instance to exactly one
+matrix assignment and the common packet hashes.
 Runtime provenance uses only SHA-256 hashes of opaque runtime handles. Never
 store the raw handles in a protocol artifact.
 
@@ -132,10 +139,12 @@ source_evidence_packet:
   supervision_contract:
     common_training_guidance_required: true
     guidance_byte_identical_required: true
+    common_method_matrix_required: true
+    method_matrix_byte_identical_required: true
     guidance_must_be_non_solution: true
     yamato_safety_control_required: true
     yamato_full_source_packet_required: true
-    candidate_specific_coaching_forbidden: true
+    instance_specific_coaching_forbidden: true
     blind_phase_content_feedback_forbidden: true
     preflight_hold_repairs_allowed: 1
   loop_control:
@@ -170,6 +179,39 @@ source_evidence_packet:
   source_packet_sha256:
 ```
 
+## Method Matrix
+
+```yaml
+method_matrix:
+  schema: method_matrix.v1
+  actor_identity_id: naruto_uzumaki
+  instance_kind: shadow_clone
+  task_scope: complete
+  assignments:
+    - instance_id: naruto_clone_integrator
+      method_profile_id: naruto_integrative_method.v1
+      method_label: integrative_practical
+    - instance_id: naruto_clone_challenger
+      method_profile_id: naruto_adversarial_method.v1
+      method_label: adversarial_risk_first
+    - instance_id: naruto_clone_strategist
+      method_profile_id: naruto_systems_method.v1
+      method_label: systems_strategy
+    - instance_id: naruto_clone_verifier
+      method_profile_id: naruto_empirical_method.v1
+      method_label: empirical_verification
+  method_assignment_fixed_before_fanout: true
+  unique_instance_ids_verified: true
+  unique_method_profile_ids_verified: true
+  subtask_partition_forbidden: true
+  method_matrix_sha256:
+```
+
+Build the matrix from the canonical agent manifest before fan-out. Its bytes
+are identical for Hokage, Kakashi, Yamato, and all four training instances.
+Each instance sees all assignments, while its routing envelope selects exactly
+one fixed method. The matrix defines method diversity, not private coaching.
+
 ## Training Guidance
 
 ```yaml
@@ -185,7 +227,7 @@ training_guidance_packet:
   falsification_targets: []
   protected_boundary_reminders: []
   stop_conditions: []
-  candidate_specific_content: false
+  instance_specific_content: false
   solution_recommendation_included: false
   preferred_route_included: false
   private_evidence_included: false
@@ -194,7 +236,8 @@ training_guidance_packet:
 ```
 
 The packet is derived only from the final source packet. Its canonical bytes
-must be identical for Yamato and all four candidates.
+must be identical for Yamato and all four training instances. The method matrix
+is a separate common artifact and cannot be altered by guidance.
 
 ## Safety Control
 
@@ -202,14 +245,20 @@ must be identical for Yamato and all four candidates.
 safety_control_packet:
   schema: safety_control_packet.v1
   source_packet_sha256:
+  method_matrix_sha256:
   training_guidance_packet_sha256:
   supervisor_id: yamato
   status: pass | hold | blocked
   checks:
     source_packet_present_and_hash_valid: pass | fail | unverifiable
+    method_matrix_present_and_hash_valid: pass | fail | unverifiable
+    shared_actor_identity_valid: pass | fail | unverifiable
+    unique_instance_ids_valid: pass | fail | unverifiable
+    unique_fixed_method_ids_valid: pass | fail | unverifiable
+    envelope_difference_allowlist_valid: pass | fail | unverifiable
     guidance_common_and_byte_identical: pass | fail | unverifiable
     guidance_non_solution: pass | fail | unverifiable
-    no_candidate_specific_content: pass | fail | unverifiable
+    no_instance_specific_content: pass | fail | unverifiable
     no_private_evidence: pass | fail | unverifiable
     protected_boundaries_complete: pass | fail | unverifiable
     read_only_profiles_required: pass | fail | unverifiable
@@ -220,29 +269,32 @@ safety_control_packet:
       expected:
       result_ceiling_effect: none | hold | blocked
   hold_count: 0 | 1
-  candidate_specific_coaching_forbidden: true
+  instance_specific_coaching_forbidden: true
   content_feedback_during_blind_phase_forbidden: true
   raw_reasoning_included: false
   safety_control_packet_sha256:
 ```
 
-Only `pass` permits candidate fan-out. A `hold` allows one bounded repair to the
-common packet or common guidance; it never permits tailored candidate contact.
+Only `pass` permits training-instance fan-out. A `hold` allows one bounded
+repair to the common packet, method matrix, envelopes, or common guidance; it
+never permits tailored instance contact.
 
-## Candidate Envelope And Solution
+## Training-Instance Envelope And Candidate Solution
 
-The envelope may differ only in candidate identity and method profile:
+All four envelopes share one actor identity and common hashes. They may differ
+only in `instance_id`, `assigned_method_profile_id`, and the resulting digest:
 
 ```yaml
-candidate_envelope:
-  schema: candidate_envelope.v1
-  candidate_id:
-  method_profile_id:
+training_instance_envelope:
+  schema: naruto_training_instance_envelope.v1
+  actor_identity_id: naruto_uzumaki
+  instance_id:
+  assigned_method_profile_id:
+  task_scope: complete
   source_packet_sha256:
+  method_matrix_sha256:
   training_guidance_packet_sha256:
-  safety_control_packet_sha256:
-  blind_phase: true
-  peer_visibility: none
+  envelope_sha256:
 ```
 
 Required candidate output:
@@ -250,9 +302,12 @@ Required candidate output:
 ```yaml
 candidate_solution:
   schema: candidate_solution.v1
+  actor_identity_id: naruto_uzumaki
   candidate_id:
   method_profile_id:
   source_packet_sha256:
+  method_matrix_sha256:
+  training_instance_envelope_sha256:
   training_guidance_packet_sha256:
   safety_control_packet_sha256:
   complete_solution:
@@ -292,18 +347,24 @@ candidate_solution:
   candidate_output_sha256:
 ```
 
-`complete_solution` must be independently usable. A candidate output containing
-only critique, research notes, a subtask, questions for peers, or a partial plan
-is invalid. The self-audit records concise conclusions and checks only. It must
-not contain private reasoning or a hidden scratchpad.
+`candidate_id` identifies a candidate solution slot and must equal the dedicated
+training-instance runtime ID; it does not represent a different character.
+`complete_solution` must be independently usable. An output containing only
+critique, research notes, a subtask, questions for peers, or a partial plan is
+invalid. The self-audit records concise conclusions and checks only. It must not
+contain private reasoning or a hidden scratchpad.
 
 ## Commit Record
 
 ```yaml
 candidate_output_commit:
   schema: candidate_output_commit.v1
+  actor_identity_id: naruto_uzumaki
   candidate_id:
+  method_profile_id:
   source_packet_sha256:
+  method_matrix_sha256:
+  training_instance_envelope_sha256:
   training_guidance_packet_sha256:
   safety_control_packet_sha256:
   candidate_output_sha256:
@@ -322,6 +383,7 @@ candidate_output_commit:
 reveal_transfer_packet:
   schema: reveal_transfer_packet.v1
   source_packet_sha256:
+  method_matrix_sha256:
   training_guidance_packet_sha256:
   safety_control_packet_sha256:
   commit_set_sha256:
@@ -373,9 +435,13 @@ reveal_transfer_packet:
 ```yaml
 revised_candidate_solution:
   schema: revised_candidate_solution.v1
+  actor_identity_id: naruto_uzumaki
   candidate_id:
+  method_profile_id:
   original_candidate_output_sha256:
   source_packet_sha256:
+  method_matrix_sha256:
+  training_instance_envelope_sha256:
   training_guidance_packet_sha256:
   safety_control_packet_sha256:
   reveal_packet_sha256:
@@ -418,10 +484,12 @@ revised_candidate_solution:
   revision_output_sha256:
 ```
 
-The original and revision runtime-handle hashes must be equal. Missing,
-unavailable, or unequal proofs mean the same-thread learning requirement was
-not established and the run is blocked. Experience transfer records changed
-claims and evidence deltas, not private reasoning.
+The original and revision runtime-handle hashes must be equal, and the actor
+identity, instance ID, method profile, matrix digest, and envelope digest must
+remain unchanged. Missing, unavailable, unequal, or drifted proofs mean the
+same-thread learning requirement was not established and the run is blocked.
+Experience transfer records changed claims and evidence deltas, not private
+reasoning.
 
 ## Protocol Run Manifest
 
@@ -430,11 +498,17 @@ protocol_run_manifest:
   schema: protocol_run_manifest.v1
   run_id:
   task_id:
+  actor_identity_id: naruto_uzumaki
   source_packet_sha256:
+  method_matrix_sha256:
   training_guidance_packet_sha256:
   safety_control_packet_sha256:
   phase_integrity:
     source_packet_hashed: pass | fail | not_reached
+    shared_actor_identity_verified: pass | fail | not_reached
+    method_matrix_hashed: pass | fail | not_reached
+    unique_instance_and_method_ids_verified: pass | fail | not_reached
+    method_assignments_frozen: pass | fail | not_reached
     common_guidance_hashed: pass | fail | not_reached
     yamato_preflight_passed: pass | fail | not_reached
     guidance_byte_identity_verified: pass | fail | not_reached
@@ -449,6 +523,9 @@ protocol_run_manifest:
     olga_qa_complete_or_not_required: pass | fail | not_reached
   candidates:
     - candidate_id:
+      actor_identity_id: naruto_uzumaki
+      method_profile_id:
+      training_instance_envelope_sha256:
       original_thread_handle_sha256:
       revision_thread_handle_sha256:
       same_thread_verified: true | false | unverifiable
@@ -500,9 +577,11 @@ moderator_report:
   schema: moderator_report.v1
   moderator_id: kakashi_hatake
   source_packet_sha256:
+  method_matrix_sha256:
   training_guidance_packet_sha256:
   safety_control_packet_sha256:
   barrier_status: pass | fail
+  shared_identity_and_method_assignment_status: pass | fail
   reveal_byte_identity_status: pass | fail
   same_thread_revision_status: pass | fail
   experience_transfer_status: pass | partial | fail
@@ -618,12 +697,14 @@ safety_report:
   schema: safety_report.v1
   supervisor_id: yamato
   source_packet_sha256:
+  method_matrix_sha256:
   training_guidance_packet_sha256:
   safety_control_packet_sha256:
   protocol_run_manifest_reconcile_checkpoint_sha256:
   phase_order_status: pass | fail | unverifiable
   guidance_integrity_status: pass | fail | unverifiable
-  no_candidate_specific_coaching_status: pass | fail | unverifiable
+  shared_identity_and_method_assignment_status: pass | fail | unverifiable
+  no_instance_specific_coaching_status: pass | fail | unverifiable
   blind_phase_content_feedback_absent: true | false | unverifiable
   protected_boundary_status: pass | fail | unverifiable
   forbidden_action_status: pass | fail | unverifiable
@@ -632,7 +713,7 @@ safety_report:
   safety_report_sha256:
 ```
 
-The report contains no candidate solution advice and can only preserve or lower
+The report contains no candidate-solution advice and can only preserve or lower
 the result ceiling.
 
 Do not add fields for raw reasoning traces, private scratchpads, hidden debate,

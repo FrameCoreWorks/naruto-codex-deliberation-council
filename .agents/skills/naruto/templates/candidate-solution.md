@@ -3,9 +3,12 @@
 ```yaml
 candidate_solution:
   schema: candidate_solution.v1
+  actor_identity_id: naruto_uzumaki
   candidate_id: ""
   method_profile_id: ""
   source_packet_sha256: ""
+  method_matrix_sha256: ""
+  training_instance_envelope_sha256: ""
   training_guidance_packet_sha256: ""
   safety_control_packet_sha256: ""
   complete_solution: ""
@@ -45,6 +48,8 @@ candidate_solution:
   candidate_output_sha256: ""
 ```
 
-Return a complete solution. Do not return a roleplay transcript, private
-scratchpad, critique-only note, or assigned subtask. The self-audit is a concise
+`candidate_id` identifies a candidate solution slot and must equal the dedicated
+shadow-clone runtime ID; it does not represent a different character. Return a
+complete solution. Do not return a roleplay transcript, private scratchpad,
+critique-only note, or assigned subtask. The self-audit is a concise
 claim-and-evidence check, never a chain-of-thought transcript.

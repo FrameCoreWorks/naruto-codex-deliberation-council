@@ -4,6 +4,7 @@
 reveal_transfer_packet:
   schema: reveal_transfer_packet.v1
   source_packet_sha256: ""
+  method_matrix_sha256: ""
   training_guidance_packet_sha256: ""
   safety_control_packet_sha256: ""
   commit_set_sha256: ""
@@ -50,7 +51,7 @@ reveal_transfer_packet:
   raw_reasoning_included: false
 ```
 
-Send byte-identical content to every valid candidate. Do not rank candidates
+Send byte-identical content to every valid training instance. Do not rank methods
 or identify a preferred answer. Every non-pass criterion needs evidence or an
 unverifiable reason, severity, root cause, and a bounded loopback target.
 Agreement supported only by one shared source counts as one evidence lineage,

@@ -13,7 +13,7 @@ training_guidance_packet:
   falsification_targets: []
   protected_boundary_reminders: []
   stop_conditions: []
-  candidate_specific_content: false
+  instance_specific_content: false
   solution_recommendation_included: false
   preferred_route_included: false
   private_evidence_included: false
@@ -23,4 +23,5 @@ training_guidance_packet:
 
 Kakashi derives this packet only from the final common source packet. It is a
 shared training frame, not an answer key. Canonicalize it before hashing and
-send byte-identical bytes to Yamato and all four candidates.
+send byte-identical bytes to Yamato and all four training instances. It cannot
+change the manifest-derived method matrix or create private instance guidance.

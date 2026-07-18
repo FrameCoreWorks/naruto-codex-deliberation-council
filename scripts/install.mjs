@@ -18,12 +18,28 @@ const repoRoot = resolve(scriptDir, "..");
 const packageManifestPath = join(repoRoot, "manifest/package-manifest.json");
 const checksumPath = join(repoRoot, "SHA256SUMS");
 const allowedProfileNames = Object.freeze([
+  "naruto_clone_integrator.toml",
+  "naruto_clone_challenger.toml",
+  "naruto_clone_strategist.toml",
+  "naruto_clone_verifier.toml",
+  "kakashi_hatake.toml",
+  "yamato.toml",
+]);
+const legacyProfileNames = Object.freeze([
   "naruto_uzumaki.toml",
   "sasuke_uchiha.toml",
   "shikamaru_nara.toml",
   "sakura_haruno.toml",
-  "kakashi_hatake.toml",
-  "yamato.toml",
+]);
+const legacyAgentCardNames = Object.freeze([
+  "naruto-uzumaki.yaml",
+  "sasuke-uchiha.yaml",
+  "shikamaru-nara.yaml",
+  "sakura-haruno.yaml",
+]);
+const expectedLegacyManifestPaths = Object.freeze([
+  ...legacyProfileNames.map((name) => `.codex/agents/${name}`),
+  ...legacyAgentCardNames.map((name) => `.agents/skills/naruto/agents/${name}`),
 ]);
 
 function toPackagePath(path) {
@@ -140,6 +156,14 @@ if (packageManifest.bundled_profile_count !== allowedProfileNames.length) {
 if (packageManifest.parent_role_profile_bundled !== false) {
   profileContractErrors.push("parent_role_profile_bundled must be false");
 }
+if (
+  packageManifest.migration?.legacy_0_3_installation_policy !== "fail_closed_manual_cleanup" ||
+  packageManifest.migration?.force_bypass_allowed !== false ||
+  JSON.stringify(packageManifest.migration?.legacy_profile_paths) !==
+    JSON.stringify(expectedLegacyManifestPaths)
+) {
+  profileContractErrors.push("legacy 0.3 migration contract must match the exact fail-closed allowlist");
+}
 if (profileContractErrors.length > 0) {
   console.log(
     JSON.stringify(
@@ -242,6 +266,54 @@ function hasSymlinkInExistingPath(path, stopAt) {
     current = dirname(current);
   }
   return null;
+}
+
+function lstatEntry(path) {
+  try {
+    return lstatSync(path);
+  } catch (error) {
+    if (error?.code === "ENOENT" || error?.code === "ENOTDIR") return null;
+    throw error;
+  }
+}
+
+const legacyDestinations = [
+  ...legacyProfileNames.map((name) => ({
+    path: join(profileDestination, name),
+    boundary: profileBoundary,
+  })),
+  ...legacyAgentCardNames.map((name) => ({
+    path: join(skillDestination, "agents", name),
+    boundary: skillBoundary,
+  })),
+];
+const detectedLegacyPaths = [];
+for (const legacy of legacyDestinations) {
+  const entry = lstatEntry(legacy.path);
+  if (!entry) continue;
+  const symlink = hasSymlinkInExistingPath(legacy.path, legacy.boundary);
+  detectedLegacyPaths.push({
+    path: legacy.path,
+    reason: symlink ? `symlink in legacy path: ${symlink}` : "legacy 0.3 file exists",
+  });
+}
+if (detectedLegacyPaths.length > 0) {
+  console.log(
+    JSON.stringify(
+      {
+        status: "blocked",
+        reason: "legacy_0_3_installation_detected",
+        scope,
+        dry_run: dryRun,
+        force_bypass_allowed: false,
+        legacy_paths: detectedLegacyPaths,
+        next_step: "Review and manually remove only the listed legacy 0.3 files, then rerun the installer.",
+      },
+      null,
+      2,
+    ),
+  );
+  process.exit(2);
 }
 
 const plan = [];

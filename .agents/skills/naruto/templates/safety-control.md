@@ -5,13 +5,19 @@ safety_control_packet:
   schema: safety_control_packet.v1
   supervisor_id: yamato
   source_packet_sha256: ""
+  method_matrix_sha256: ""
   training_guidance_packet_sha256: ""
   status: pass | hold | blocked
   checks:
     source_packet_present_and_hash_valid: pass | fail | unverifiable
+    method_matrix_present_and_hash_valid: pass | fail | unverifiable
+    shared_actor_identity_valid: pass | fail | unverifiable
+    unique_instance_ids_valid: pass | fail | unverifiable
+    unique_fixed_method_ids_valid: pass | fail | unverifiable
+    envelope_difference_allowlist_valid: pass | fail | unverifiable
     guidance_common_and_byte_identical: pass | fail | unverifiable
     guidance_non_solution: pass | fail | unverifiable
-    no_candidate_specific_content: pass | fail | unverifiable
+    no_instance_specific_content: pass | fail | unverifiable
     no_private_evidence: pass | fail | unverifiable
     protected_boundaries_complete: pass | fail | unverifiable
     read_only_profiles_required: pass | fail | unverifiable
@@ -25,7 +31,7 @@ safety_control_packet:
     - common_preflight_hold
     - blocked
   hold_count: 0
-  candidate_specific_coaching_forbidden: true
+  instance_specific_coaching_forbidden: true
   content_feedback_during_blind_phase_forbidden: true
   raw_reasoning_included: false
   safety_control_packet_sha256: ""
@@ -33,19 +39,21 @@ safety_control_packet:
 
 Yamato returns process control only. A `hold` permits one bounded repair by
 Hokage before fan-out. Yamato never supplies task content, evidence, a preferred
-route, or individual candidate advice.
+route, or individual instance advice.
 
 ```yaml
 safety_report:
   schema: safety_report.v1
   supervisor_id: yamato
   source_packet_sha256: ""
+  method_matrix_sha256: ""
   training_guidance_packet_sha256: ""
   safety_control_packet_sha256: ""
   protocol_run_manifest_reconcile_checkpoint_sha256: ""
   phase_order_status: pass | fail | unverifiable
   guidance_integrity_status: pass | fail | unverifiable
-  no_candidate_specific_coaching_status: pass | fail | unverifiable
+  shared_identity_and_method_assignment_status: pass | fail | unverifiable
+  no_instance_specific_coaching_status: pass | fail | unverifiable
   blind_phase_content_feedback_absent: true | false | unverifiable
   protected_boundary_status: pass | fail | unverifiable
   forbidden_action_status: pass | fail | unverifiable
@@ -59,4 +67,4 @@ safety_report:
 ```
 
 The final report contains protocol metadata only. It cannot introduce task
-evidence, evaluate candidate solution quality, or raise a result ceiling.
+evidence, evaluate solution quality, or raise a result ceiling.

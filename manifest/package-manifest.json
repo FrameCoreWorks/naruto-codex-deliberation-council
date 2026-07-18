@@ -1,7 +1,7 @@
 {
-  "schema": "codex_deliberation_package.v2",
+  "schema": "codex_deliberation_package.v3",
   "package_name": "codex-deliberation-council",
-  "package_version": "0.3.0",
+  "package_version": "0.4.0",
   "skill_name": "naruto",
   "public_parent_role_id": "hokage",
   "bundled_profile_count": 6,
@@ -11,6 +11,17 @@
     "token": "$naruto",
     "case_sensitive": true,
     "implicit_invocation": false
+  },
+  "training_instance_model": {
+    "actor_identity_id": "naruto_uzumaki",
+    "instance_kind": "shadow_clone",
+    "task_scope": "complete",
+    "assignments": [
+      ["naruto_clone_integrator", "naruto_integrative_method.v1"],
+      ["naruto_clone_challenger", "naruto_adversarial_method.v1"],
+      ["naruto_clone_strategist", "naruto_systems_method.v1"],
+      ["naruto_clone_verifier", "naruto_empirical_method.v1"]
+    ]
   },
   "distribution": {
     "kind": "standalone_skill_with_custom_agents",
@@ -23,10 +34,10 @@
     "checksums": "SHA256SUMS"
   },
   "required_profiles": [
-    "naruto_uzumaki.toml",
-    "sasuke_uchiha.toml",
-    "shikamaru_nara.toml",
-    "sakura_haruno.toml",
+    "naruto_clone_integrator.toml",
+    "naruto_clone_challenger.toml",
+    "naruto_clone_strategist.toml",
+    "naruto_clone_verifier.toml",
     "kakashi_hatake.toml",
     "yamato.toml"
   ],
@@ -39,6 +50,8 @@
   ],
   "required_protocol_artifacts": [
     "references/prior-art-assimilation.md",
+    "templates/method-matrix.md",
+    "templates/training-instance-envelope.md",
     "templates/protocol-run-manifest.md",
     "templates/training-guidance.md",
     "templates/safety-control.md",
@@ -54,6 +67,20 @@
     "project_and_user_scope_installer",
     "workspace_integration_moved_to_optional_documentation"
   ],
+  "migration": {
+    "legacy_0_3_installation_policy": "fail_closed_manual_cleanup",
+    "force_bypass_allowed": false,
+    "legacy_profile_paths": [
+      ".codex/agents/naruto_uzumaki.toml",
+      ".codex/agents/sasuke_uchiha.toml",
+      ".codex/agents/shikamaru_nara.toml",
+      ".codex/agents/sakura_haruno.toml",
+      ".agents/skills/naruto/agents/naruto-uzumaki.yaml",
+      ".agents/skills/naruto/agents/sasuke-uchiha.yaml",
+      ".agents/skills/naruto/agents/shikamaru-nara.yaml",
+      ".agents/skills/naruto/agents/sakura-haruno.yaml"
+    ]
+  },
   "excluded_patterns": [
     "._*",
     ".DS_Store",

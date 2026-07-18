@@ -5,11 +5,17 @@ protocol_run_manifest:
   schema: protocol_run_manifest.v1
   run_id: ""
   task_id: ""
+  actor_identity_id: naruto_uzumaki
   source_packet_sha256: ""
+  method_matrix_sha256: ""
   training_guidance_packet_sha256: ""
   safety_control_packet_sha256: ""
   phase_integrity:
     source_packet_hashed: pass | fail | not_reached
+    shared_actor_identity_verified: pass | fail | not_reached
+    method_matrix_hashed: pass | fail | not_reached
+    unique_instance_and_method_ids_verified: pass | fail | not_reached
+    method_assignments_frozen: pass | fail | not_reached
     common_guidance_hashed: pass | fail | not_reached
     yamato_preflight_passed: pass | fail | not_reached
     guidance_byte_identity_verified: pass | fail | not_reached
@@ -24,6 +30,9 @@ protocol_run_manifest:
     olga_qa_complete_or_not_required: pass | fail | not_reached
   candidates:
     - candidate_id: ""
+      actor_identity_id: naruto_uzumaki
+      method_profile_id: ""
+      training_instance_envelope_sha256: ""
       original_thread_handle_sha256: ""
       revision_thread_handle_sha256: ""
       same_thread_verified: true | false | unverifiable

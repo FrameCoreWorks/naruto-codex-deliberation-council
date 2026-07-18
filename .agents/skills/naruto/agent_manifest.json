@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "name": "naruto",
   "activation": {
     "mode": "exact_first_token",
@@ -9,13 +9,25 @@
   },
   "owner_role_id": "hokage",
   "qa_runtime_id": "olga",
+  "training_instance_model": {
+    "shared_actor_identity_id": "naruto_uzumaki",
+    "instance_kind": "shadow_clone",
+    "instance_count": 4,
+    "method_diversity_required": true,
+    "unique_instance_ids_required": true,
+    "unique_method_profile_ids_required": true,
+    "method_assignment_fixed_before_fanout": true,
+    "subtask_partition_forbidden": true
+  },
   "supervision": {
     "common_training_guidance_required": true,
     "guidance_byte_identical_required": true,
     "guidance_must_be_non_solution": true,
+    "common_method_matrix_required": true,
+    "method_matrix_byte_identical_required": true,
     "yamato_safety_control_required": true,
     "yamato_full_source_packet_required": true,
-    "candidate_specific_coaching_forbidden": true,
+    "instance_specific_coaching_forbidden": true,
     "blind_phase_content_feedback_forbidden": true,
     "preflight_hold_repairs_allowed": 1
   },
@@ -44,36 +56,48 @@
   },
   "agents": [
     {
-      "id": "naruto-uzumaki",
-      "runtime_id": "naruto_uzumaki",
-      "name": "Naruto Uzumaki",
-      "function": "integrative practical candidate",
-      "tier": "request_only_candidate",
-      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_supervised_training.v1", "naruto_integrative_method.v1", "naruto_experience_transfer.v1"]
+      "id": "naruto-clone-integrator",
+      "runtime_id": "naruto_clone_integrator",
+      "name": "Naruto Clone: Integrator",
+      "actor_identity_id": "naruto_uzumaki",
+      "training_instance_id": "naruto_clone_integrator",
+      "method_profile_id": "naruto_integrative_method.v1",
+      "function": "integrative practical shadow-clone instance",
+      "tier": "request_only_training_instance",
+      "behavior_contract_ids": ["naruto_training_instance.v1", "naruto_supervised_training.v1", "naruto_integrative_method.v1", "naruto_experience_transfer.v1"]
     },
     {
-      "id": "sasuke-uchiha",
-      "runtime_id": "sasuke_uchiha",
-      "name": "Sasuke Uchiha",
-      "function": "adversarial risk-first candidate",
-      "tier": "request_only_candidate",
-      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_supervised_training.v1", "naruto_adversarial_method.v1", "naruto_experience_transfer.v1"]
+      "id": "naruto-clone-challenger",
+      "runtime_id": "naruto_clone_challenger",
+      "name": "Naruto Clone: Challenger",
+      "actor_identity_id": "naruto_uzumaki",
+      "training_instance_id": "naruto_clone_challenger",
+      "method_profile_id": "naruto_adversarial_method.v1",
+      "function": "adversarial risk-first shadow-clone instance",
+      "tier": "request_only_training_instance",
+      "behavior_contract_ids": ["naruto_training_instance.v1", "naruto_supervised_training.v1", "naruto_adversarial_method.v1", "naruto_experience_transfer.v1"]
     },
     {
-      "id": "shikamaru-nara",
-      "runtime_id": "shikamaru_nara",
-      "name": "Shikamaru Nara",
-      "function": "systems efficiency candidate",
-      "tier": "request_only_candidate",
-      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_supervised_training.v1", "naruto_systems_method.v1", "naruto_experience_transfer.v1"]
+      "id": "naruto-clone-strategist",
+      "runtime_id": "naruto_clone_strategist",
+      "name": "Naruto Clone: Strategist",
+      "actor_identity_id": "naruto_uzumaki",
+      "training_instance_id": "naruto_clone_strategist",
+      "method_profile_id": "naruto_systems_method.v1",
+      "function": "systems strategy shadow-clone instance",
+      "tier": "request_only_training_instance",
+      "behavior_contract_ids": ["naruto_training_instance.v1", "naruto_supervised_training.v1", "naruto_systems_method.v1", "naruto_experience_transfer.v1"]
     },
     {
-      "id": "sakura-haruno",
-      "runtime_id": "sakura_haruno",
-      "name": "Sakura Haruno",
-      "function": "empirical implementation-quality candidate",
-      "tier": "request_only_candidate",
-      "behavior_contract_ids": ["naruto_candidate.v1", "naruto_supervised_training.v1", "naruto_empirical_method.v1", "naruto_experience_transfer.v1"]
+      "id": "naruto-clone-verifier",
+      "runtime_id": "naruto_clone_verifier",
+      "name": "Naruto Clone: Verifier",
+      "actor_identity_id": "naruto_uzumaki",
+      "training_instance_id": "naruto_clone_verifier",
+      "method_profile_id": "naruto_empirical_method.v1",
+      "function": "empirical verification shadow-clone instance",
+      "tier": "request_only_training_instance",
+      "behavior_contract_ids": ["naruto_training_instance.v1", "naruto_supervised_training.v1", "naruto_empirical_method.v1", "naruto_experience_transfer.v1"]
     },
     {
       "id": "kakashi-hatake",

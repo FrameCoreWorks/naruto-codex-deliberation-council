@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "trigger_cases": [
     {"id": "trigger-exact-inline", "message": "$naruto Review this architecture.", "expected": true},
     {"id": "trigger-exact-newline", "message": "  $naruto\nReview this architecture.", "expected": true},
@@ -15,6 +15,68 @@
     {"id": "trigger-list", "message": "- $naruto Review this architecture.", "expected": false},
     {"id": "trigger-natural-language", "message": "Use Naruto deliberation to review this.", "expected": false}
   ],
+  "training_instance_cases": [
+    {
+      "id": "training-instances-ready",
+      "actor_identity_ids": ["naruto_uzumaki", "naruto_uzumaki", "naruto_uzumaki", "naruto_uzumaki"],
+      "instance_ids": ["naruto_clone_integrator", "naruto_clone_challenger", "naruto_clone_strategist", "naruto_clone_verifier"],
+      "method_profile_ids": ["naruto_integrative_method.v1", "naruto_adversarial_method.v1", "naruto_systems_method.v1", "naruto_empirical_method.v1"],
+      "revision_method_profile_ids": ["naruto_integrative_method.v1", "naruto_adversarial_method.v1", "naruto_systems_method.v1", "naruto_empirical_method.v1"],
+      "method_matrix_byte_identical": true,
+      "envelope_difference_allowlist_valid": true,
+      "expected_state": "ready"
+    },
+    {
+      "id": "training-instances-foreign-identity",
+      "actor_identity_ids": ["naruto_uzumaki", "foreign_actor", "naruto_uzumaki", "naruto_uzumaki"],
+      "instance_ids": ["naruto_clone_integrator", "naruto_clone_challenger", "naruto_clone_strategist", "naruto_clone_verifier"],
+      "method_profile_ids": ["naruto_integrative_method.v1", "naruto_adversarial_method.v1", "naruto_systems_method.v1", "naruto_empirical_method.v1"],
+      "revision_method_profile_ids": ["naruto_integrative_method.v1", "naruto_adversarial_method.v1", "naruto_systems_method.v1", "naruto_empirical_method.v1"],
+      "method_matrix_byte_identical": true,
+      "envelope_difference_allowlist_valid": true,
+      "expected_state": "blocked"
+    },
+    {
+      "id": "training-instances-duplicate-instance",
+      "actor_identity_ids": ["naruto_uzumaki", "naruto_uzumaki", "naruto_uzumaki", "naruto_uzumaki"],
+      "instance_ids": ["naruto_clone_integrator", "naruto_clone_integrator", "naruto_clone_strategist", "naruto_clone_verifier"],
+      "method_profile_ids": ["naruto_integrative_method.v1", "naruto_adversarial_method.v1", "naruto_systems_method.v1", "naruto_empirical_method.v1"],
+      "revision_method_profile_ids": ["naruto_integrative_method.v1", "naruto_adversarial_method.v1", "naruto_systems_method.v1", "naruto_empirical_method.v1"],
+      "method_matrix_byte_identical": true,
+      "envelope_difference_allowlist_valid": true,
+      "expected_state": "blocked"
+    },
+    {
+      "id": "training-instances-duplicate-method",
+      "actor_identity_ids": ["naruto_uzumaki", "naruto_uzumaki", "naruto_uzumaki", "naruto_uzumaki"],
+      "instance_ids": ["naruto_clone_integrator", "naruto_clone_challenger", "naruto_clone_strategist", "naruto_clone_verifier"],
+      "method_profile_ids": ["naruto_integrative_method.v1", "naruto_integrative_method.v1", "naruto_systems_method.v1", "naruto_empirical_method.v1"],
+      "revision_method_profile_ids": ["naruto_integrative_method.v1", "naruto_integrative_method.v1", "naruto_systems_method.v1", "naruto_empirical_method.v1"],
+      "method_matrix_byte_identical": true,
+      "envelope_difference_allowlist_valid": true,
+      "expected_state": "blocked"
+    },
+    {
+      "id": "training-instances-method-drift",
+      "actor_identity_ids": ["naruto_uzumaki", "naruto_uzumaki", "naruto_uzumaki", "naruto_uzumaki"],
+      "instance_ids": ["naruto_clone_integrator", "naruto_clone_challenger", "naruto_clone_strategist", "naruto_clone_verifier"],
+      "method_profile_ids": ["naruto_integrative_method.v1", "naruto_adversarial_method.v1", "naruto_systems_method.v1", "naruto_empirical_method.v1"],
+      "revision_method_profile_ids": ["naruto_integrative_method.v1", "naruto_integrative_method.v1", "naruto_systems_method.v1", "naruto_empirical_method.v1"],
+      "method_matrix_byte_identical": true,
+      "envelope_difference_allowlist_valid": true,
+      "expected_state": "blocked"
+    },
+    {
+      "id": "training-instances-envelope-drift",
+      "actor_identity_ids": ["naruto_uzumaki", "naruto_uzumaki", "naruto_uzumaki", "naruto_uzumaki"],
+      "instance_ids": ["naruto_clone_integrator", "naruto_clone_challenger", "naruto_clone_strategist", "naruto_clone_verifier"],
+      "method_profile_ids": ["naruto_integrative_method.v1", "naruto_adversarial_method.v1", "naruto_systems_method.v1", "naruto_empirical_method.v1"],
+      "revision_method_profile_ids": ["naruto_integrative_method.v1", "naruto_adversarial_method.v1", "naruto_systems_method.v1", "naruto_empirical_method.v1"],
+      "method_matrix_byte_identical": true,
+      "envelope_difference_allowlist_valid": false,
+      "expected_state": "blocked"
+    }
+  ],
   "protocol_cases": [
     {
       "id": "full-verified",
@@ -27,7 +89,7 @@
       "expected_max_result": "verified_consensus"
     },
     {
-      "id": "three-candidate-degraded",
+      "id": "three-instance-degraded",
       "valid_commits": 3,
       "valid_same_thread_revisions": 3,
       "barrier": "pass",
@@ -37,7 +99,7 @@
       "expected_max_result": "provisional_consensus"
     },
     {
-      "id": "two-candidate-blocked",
+      "id": "two-instance-blocked",
       "valid_commits": 2,
       "valid_same_thread_revisions": 2,
       "barrier": "pass",
@@ -130,7 +192,7 @@
       "safety_status": "pass",
       "guidance_byte_identical": true,
       "guidance_non_solution": true,
-      "candidate_specific_coaching": false,
+      "instance_specific_coaching": false,
       "protected_boundaries": "pass",
       "hold_count": 0,
       "expected_state": "ready"
@@ -143,7 +205,7 @@
       "safety_status": "hold",
       "guidance_byte_identical": true,
       "guidance_non_solution": true,
-      "candidate_specific_coaching": false,
+      "instance_specific_coaching": false,
       "protected_boundaries": "pass",
       "hold_count": 1,
       "expected_state": "repair_common"
@@ -156,7 +218,7 @@
       "safety_status": "pass",
       "guidance_byte_identical": false,
       "guidance_non_solution": true,
-      "candidate_specific_coaching": false,
+      "instance_specific_coaching": false,
       "protected_boundaries": "pass",
       "hold_count": 0,
       "expected_state": "blocked"
@@ -169,7 +231,7 @@
       "safety_status": "pass",
       "guidance_byte_identical": true,
       "guidance_non_solution": false,
-      "candidate_specific_coaching": false,
+      "instance_specific_coaching": false,
       "protected_boundaries": "pass",
       "hold_count": 0,
       "expected_state": "blocked"
@@ -182,20 +244,20 @@
       "safety_status": "blocked",
       "guidance_byte_identical": true,
       "guidance_non_solution": true,
-      "candidate_specific_coaching": false,
+      "instance_specific_coaching": false,
       "protected_boundaries": "pass",
       "hold_count": 0,
       "expected_state": "blocked"
     },
     {
-      "id": "supervision-candidate-specific-coaching",
+      "id": "supervision-instance-specific-coaching",
       "safety_supervisor": "available",
       "source_packet_available": true,
       "source_packet_hash_matches": true,
       "safety_status": "pass",
       "guidance_byte_identical": true,
       "guidance_non_solution": true,
-      "candidate_specific_coaching": true,
+      "instance_specific_coaching": true,
       "protected_boundaries": "pass",
       "hold_count": 0,
       "expected_state": "blocked"
@@ -208,7 +270,7 @@
       "safety_status": "pass",
       "guidance_byte_identical": true,
       "guidance_non_solution": true,
-      "candidate_specific_coaching": false,
+      "instance_specific_coaching": false,
       "protected_boundaries": "fail",
       "hold_count": 0,
       "expected_state": "blocked"
@@ -221,7 +283,7 @@
       "safety_status": "hold",
       "guidance_byte_identical": true,
       "guidance_non_solution": true,
-      "candidate_specific_coaching": false,
+      "instance_specific_coaching": false,
       "protected_boundaries": "pass",
       "hold_count": 2,
       "expected_state": "blocked"
@@ -234,7 +296,7 @@
       "safety_status": "unverifiable",
       "guidance_byte_identical": true,
       "guidance_non_solution": true,
-      "candidate_specific_coaching": false,
+      "instance_specific_coaching": false,
       "protected_boundaries": "pass",
       "hold_count": 0,
       "expected_state": "blocked"
@@ -247,7 +309,7 @@
       "safety_status": "pass",
       "guidance_byte_identical": true,
       "guidance_non_solution": true,
-      "candidate_specific_coaching": false,
+      "instance_specific_coaching": false,
       "protected_boundaries": "pass",
       "hold_count": 0,
       "expected_state": "blocked"
@@ -260,7 +322,7 @@
       "safety_status": "pass",
       "guidance_byte_identical": true,
       "guidance_non_solution": true,
-      "candidate_specific_coaching": false,
+      "instance_specific_coaching": false,
       "protected_boundaries": "pass",
       "hold_count": 0,
       "expected_state": "blocked"
@@ -271,7 +333,7 @@
       "id": "integrity-full-verified",
       "barrier": "pass",
       "reveal_byte_identical": true,
-      "valid_candidates": 4,
+      "valid_training_instances": 4,
       "pre_reveal_self_audits": 4,
       "same_thread_proofs": 4,
       "experience_transfer_ledgers": 4,
@@ -289,7 +351,7 @@
       "id": "integrity-reveal-byte-mismatch",
       "barrier": "pass",
       "reveal_byte_identical": false,
-      "valid_candidates": 4,
+      "valid_training_instances": 4,
       "pre_reveal_self_audits": 4,
       "same_thread_proofs": 4,
       "experience_transfer_ledgers": 4,
@@ -303,7 +365,7 @@
       "id": "integrity-thread-handle-mismatch",
       "barrier": "pass",
       "reveal_byte_identical": true,
-      "valid_candidates": 4,
+      "valid_training_instances": 4,
       "pre_reveal_self_audits": 4,
       "same_thread_proofs": 2,
       "experience_transfer_ledgers": 4,
@@ -317,7 +379,7 @@
       "id": "integrity-one-missing-pre-audit",
       "barrier": "pass",
       "reveal_byte_identical": true,
-      "valid_candidates": 4,
+      "valid_training_instances": 4,
       "pre_reveal_self_audits": 3,
       "same_thread_proofs": 4,
       "experience_transfer_ledgers": 4,
@@ -331,7 +393,7 @@
       "id": "integrity-shared-source-critical-convergence",
       "barrier": "pass",
       "reveal_byte_identical": true,
-      "valid_candidates": 4,
+      "valid_training_instances": 4,
       "pre_reveal_self_audits": 4,
       "same_thread_proofs": 4,
       "experience_transfer_ledgers": 4,
@@ -346,7 +408,7 @@
       "id": "integrity-canonical-minority-over-unsupported-majority",
       "barrier": "pass",
       "reveal_byte_identical": true,
-      "valid_candidates": 4,
+      "valid_training_instances": 4,
       "pre_reveal_self_audits": 4,
       "same_thread_proofs": 4,
       "experience_transfer_ledgers": 4,
@@ -361,7 +423,7 @@
       "id": "integrity-quick-surrender-without-evidence",
       "barrier": "pass",
       "reveal_byte_identical": true,
-      "valid_candidates": 4,
+      "valid_training_instances": 4,
       "pre_reveal_self_audits": 4,
       "same_thread_proofs": 4,
       "experience_transfer_ledgers": 4,
@@ -376,7 +438,7 @@
       "id": "integrity-fake-dissent-rejected",
       "barrier": "pass",
       "reveal_byte_identical": true,
-      "valid_candidates": 4,
+      "valid_training_instances": 4,
       "pre_reveal_self_audits": 4,
       "same_thread_proofs": 4,
       "experience_transfer_ledgers": 4,
@@ -393,7 +455,7 @@
       "id": "integrity-hokage-unsupported-major-claim",
       "barrier": "pass",
       "reveal_byte_identical": true,
-      "valid_candidates": 4,
+      "valid_training_instances": 4,
       "pre_reveal_self_audits": 4,
       "same_thread_proofs": 4,
       "experience_transfer_ledgers": 4,
@@ -408,7 +470,7 @@
       "id": "integrity-olga-non-reproducible",
       "barrier": "pass",
       "reveal_byte_identical": true,
-      "valid_candidates": 4,
+      "valid_training_instances": 4,
       "pre_reveal_self_audits": 4,
       "same_thread_proofs": 4,
       "experience_transfer_ledgers": 4,
@@ -424,7 +486,7 @@
       "id": "integrity-lost-critical-minority",
       "barrier": "pass",
       "reveal_byte_identical": true,
-      "valid_candidates": 4,
+      "valid_training_instances": 4,
       "pre_reveal_self_audits": 4,
       "same_thread_proofs": 4,
       "experience_transfer_ledgers": 4,
@@ -438,7 +500,7 @@
       "id": "integrity-experience-transfer-missing",
       "barrier": "pass",
       "reveal_byte_identical": true,
-      "valid_candidates": 4,
+      "valid_training_instances": 4,
       "pre_reveal_self_audits": 4,
       "same_thread_proofs": 4,
       "experience_transfer_ledgers": 0,
@@ -452,12 +514,12 @@
       "id": "integrity-blind-supervisor-contact",
       "barrier": "pass",
       "reveal_byte_identical": true,
-      "valid_candidates": 4,
+      "valid_training_instances": 4,
       "pre_reveal_self_audits": 4,
       "same_thread_proofs": 4,
       "experience_transfer_ledgers": 4,
       "no_blind_phase_supervisor_contact_attestations": 4,
-      "candidate_specific_coaching_detected": true,
+      "instance_specific_coaching_detected": true,
       "anti_groupthink_audit": "pass",
       "evidence": "complete_independent",
       "critical_minority": "resolved",
@@ -468,7 +530,7 @@
       "id": "integrity-safety-report-unverifiable",
       "barrier": "pass",
       "reveal_byte_identical": true,
-      "valid_candidates": 4,
+      "valid_training_instances": 4,
       "pre_reveal_self_audits": 4,
       "same_thread_proofs": 4,
       "experience_transfer_ledgers": 4,
@@ -544,9 +606,9 @@
     {"id": "normal-routing-engineering", "message": "Fix the validator test failure.", "naruto_must_activate": false},
     {"id": "normal-routing-provider", "message": "fal active. Check the endpoint schema.", "naruto_must_activate": false},
     {"id": "no-permission-inheritance", "message": "$naruto Decide whether this provider route is suitable.", "provider_execution_allowed": false},
-    {"id": "no-majority-authority", "scenario": "three unsupported candidates agree; one candidate provides decisive canonical evidence", "expected_rule": "evidence_over_vote"},
-    {"id": "no-speed-authority", "scenario": "fastest candidate is wrong", "expected_rule": "completion_order_ignored"},
-    {"id": "no-verbosity-authority", "scenario": "longest candidate is wrong", "expected_rule": "answer_length_ignored"}
+    {"id": "no-majority-authority", "scenario": "three unsupported solution slots agree; one instance provides decisive canonical evidence", "expected_rule": "evidence_over_vote"},
+    {"id": "no-speed-authority", "scenario": "fastest instance is wrong", "expected_rule": "completion_order_ignored"},
+    {"id": "no-verbosity-authority", "scenario": "longest instance is wrong", "expected_rule": "answer_length_ignored"}
   ],
   "frozen_domain_cases": [
     {

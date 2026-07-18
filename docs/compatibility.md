@@ -62,7 +62,7 @@ Assimilated patterns:
 Rejected patterns:
 
 - unbounded debate
-- generic-worker substitution for dedicated candidates
+- generic-worker substitution for dedicated training instances
 - majority vote as truth
 - approval or sandbox bypasses
 - hidden provider dependencies
@@ -72,13 +72,14 @@ Rejected patterns:
 
 - The custom-agent file format may evolve as Codex agent authoring matures.
 - Static tests cannot prove that a specific Codex build can re-contact the same
-  four open candidate threads after reveal.
+  four open training-instance threads after reveal.
 - A target environment may cap concurrent child threads below the six required
-  at peak: four candidates, Kakashi, and Yamato. Hokage remains the parent role
-  and does not consume a child profile.
+  at peak: four Naruto training instances, Kakashi, and Yamato. Hokage remains
+  the parent role and does not consume a child profile.
 - If same-thread follow-up, Kakashi, Yamato, or the required capacity is
   unavailable, return `blocked`; do not emulate the run with replacement
   agents.
-- Package `0.3.0` intentionally remains pre-1.0 until a live post-install run
-  proves all six profiles, Yamato preflight, one byte-identical reveal, and
-  same-thread revision in a target Codex build.
+- Package `0.4.0` intentionally remains pre-1.0 until a live post-install run
+  proves all six profiles, one shared actor identity, four fixed methods,
+  Yamato preflight, one byte-identical reveal, and same-thread revision in a
+  target Codex build.

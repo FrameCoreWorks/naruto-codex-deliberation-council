@@ -24,16 +24,18 @@ or fail-closed behavior.
 
 1. `protocol_run_manifest.v1` proves phase order, byte-identical reveal, and
    same-thread revision through opaque hashes.
-2. Candidate self-audits classify evidence, name falsification checks, and
+2. Training-instance self-audits classify evidence, name falsification checks, and
    expose blind spots before reveal without collecting private reasoning.
 3. `experience_transfer` maps every material claim from original position to
    revised position and records peer/evidence influence.
-4. `independence_key` prevents four agents citing one source from appearing as
-   four independent confirmations.
+4. `independence_key` prevents four training instances citing one source from
+   appearing as four independent confirmations.
 5. Kakashi checks unsupported convergence, quick surrender, fake dissent,
    authority submission, incorrect opposition, and lost minority evidence.
-6. Kakashi first creates one common, non-solution training brief; Yamato
-   validates its byte identity, protected boundaries, and phase safety.
+6. Hokage builds one manifest-derived `method_matrix.v1`; Kakashi creates one
+   common, non-solution training brief while receiving the matrix without change.
+   Yamato validates their byte identity, protected boundaries, four routing
+   envelopes, and phase safety.
 7. Hokage's synthesis traces final claims to revision claims and evidence;
    critical or major new synthesis claims must be verified or demoted.
 8. Olga receives a role-blind final packet and reports only reproducible
@@ -42,12 +44,22 @@ or fail-closed behavior.
 ## Non-Negotiable Naruto Shape
 
 - exact request-only first token `$naruto`
-- Naruto, Sasuke, Shikamaru, and Sakura solve the same complete task
-- no candidate sees peer work before the commit barrier
+- one `naruto_uzumaki` actor identity runs four independent training instances:
+  `naruto_clone_integrator`, `naruto_clone_challenger`,
+  `naruto_clone_strategist`, and `naruto_clone_verifier`
+- every training instance solves the same complete task
+- the four fixed methods are `naruto_integrative_method.v1`,
+  `naruto_adversarial_method.v1`, `naruto_systems_method.v1`, and
+  `naruto_empirical_method.v1`
+- one byte-identical `method_matrix.v1` fixes assignments before fan-out
+- four `naruto_training_instance_envelope.v1` artifacts differ only in the
+  allowlisted routing fields and resulting digest
+- no training instance sees peer work before the commit barrier
 - one byte-identical reveal and one same-thread revision only
 - Kakashi creates one common non-solution brief, then moderates without
   competing or choosing a winner
-- Yamato provides process-only safety control and never coaches a candidate
+- Yamato provides process-only safety control and never coaches an individual
+  training instance
 - Hokage alone synthesizes and owns the Loop Protocol stop decision
 - no provider, upload, write, install, push, delete, or protected permission
   is inherited from deliberation

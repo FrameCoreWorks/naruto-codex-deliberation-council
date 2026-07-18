@@ -1,7 +1,7 @@
 interface:
   display_name: "Naruto Deliberation"
-  short_description: "Four blind candidates with shared guidance and safety control"
-  default_prompt: "$naruto Solve this task through four independent methods under one common non-solution Kakashi brief and Yamato safety control, followed by one byte-identical evidence reveal, proven same-thread experience transfer, groupthink checks, traceable Hokage synthesis, role-blind QA, regression checking, and a bounded stop decision."
+  short_description: "One Naruto, four training paths, one accumulated lesson"
+  default_prompt: "$naruto Solve this task through four independent Naruto shadow-clone training instances with one shared identity, four fixed methods, one common non-solution Kakashi brief, and Yamato safety control, followed by one byte-identical evidence reveal, proven same-thread experience transfer, traceable Hokage synthesis, role-blind QA, regression checking, and a bounded stop decision."
 
 policy:
   allow_implicit_invocation: false

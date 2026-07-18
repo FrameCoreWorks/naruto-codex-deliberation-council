@@ -14,24 +14,32 @@ const checks = [];
 
 const expectedAgents = [
   {
-    card: "naruto-uzumaki.yaml",
-    runtime: "naruto_uzumaki",
-    contracts: ["naruto_candidate.v1", "naruto_supervised_training.v1", "naruto_integrative_method.v1", "naruto_experience_transfer.v1"],
+    card: "naruto-clone-integrator.yaml",
+    runtime: "naruto_clone_integrator",
+    actorIdentity: "naruto_uzumaki",
+    methodProfile: "naruto_integrative_method.v1",
+    contracts: ["naruto_training_instance.v1", "naruto_supervised_training.v1", "naruto_integrative_method.v1", "naruto_experience_transfer.v1"],
   },
   {
-    card: "sasuke-uchiha.yaml",
-    runtime: "sasuke_uchiha",
-    contracts: ["naruto_candidate.v1", "naruto_supervised_training.v1", "naruto_adversarial_method.v1", "naruto_experience_transfer.v1"],
+    card: "naruto-clone-challenger.yaml",
+    runtime: "naruto_clone_challenger",
+    actorIdentity: "naruto_uzumaki",
+    methodProfile: "naruto_adversarial_method.v1",
+    contracts: ["naruto_training_instance.v1", "naruto_supervised_training.v1", "naruto_adversarial_method.v1", "naruto_experience_transfer.v1"],
   },
   {
-    card: "shikamaru-nara.yaml",
-    runtime: "shikamaru_nara",
-    contracts: ["naruto_candidate.v1", "naruto_supervised_training.v1", "naruto_systems_method.v1", "naruto_experience_transfer.v1"],
+    card: "naruto-clone-strategist.yaml",
+    runtime: "naruto_clone_strategist",
+    actorIdentity: "naruto_uzumaki",
+    methodProfile: "naruto_systems_method.v1",
+    contracts: ["naruto_training_instance.v1", "naruto_supervised_training.v1", "naruto_systems_method.v1", "naruto_experience_transfer.v1"],
   },
   {
-    card: "sakura-haruno.yaml",
-    runtime: "sakura_haruno",
-    contracts: ["naruto_candidate.v1", "naruto_supervised_training.v1", "naruto_empirical_method.v1", "naruto_experience_transfer.v1"],
+    card: "naruto-clone-verifier.yaml",
+    runtime: "naruto_clone_verifier",
+    actorIdentity: "naruto_uzumaki",
+    methodProfile: "naruto_empirical_method.v1",
+    contracts: ["naruto_training_instance.v1", "naruto_supervised_training.v1", "naruto_empirical_method.v1", "naruto_experience_transfer.v1"],
   },
   {
     card: "kakashi-hatake.yaml",
@@ -45,6 +53,14 @@ const expectedAgents = [
   },
 ];
 
+const expectedTrainingInstances = expectedAgents
+  .filter(({ actorIdentity }) => actorIdentity)
+  .map(({ runtime, actorIdentity, methodProfile }) => ({
+    instance_id: runtime,
+    actor_identity_id: actorIdentity,
+    method_profile_id: methodProfile,
+  }));
+
 const requiredSkillFiles = [
   "SKILL.md",
   "agent_manifest.json",
@@ -56,6 +72,8 @@ const requiredSkillFiles = [
   "references/examples-and-failure-modes.md",
   "references/prior-art-assimilation.md",
   "templates/source-packet.md",
+  "templates/method-matrix.md",
+  "templates/training-instance-envelope.md",
   "templates/training-guidance.md",
   "templates/safety-control.md",
   "templates/candidate-solution.md",
@@ -215,6 +233,26 @@ function matchesExactTrigger(message) {
   return Boolean(match && match[1] === "$naruto" && match[2]?.trim());
 }
 
+function classifyTrainingInstanceFixture(fixture) {
+  const expectedInstanceIds = expectedTrainingInstances.map(({ instance_id }) => instance_id);
+  const expectedMethodIds = expectedTrainingInstances.map(({ method_profile_id }) => method_profile_id);
+  const actorIdentityIds = fixture.actor_identity_ids ?? [];
+  const instanceIds = fixture.instance_ids ?? [];
+  const methodProfileIds = fixture.method_profile_ids ?? [];
+  const revisionMethodProfileIds = fixture.revision_method_profile_ids ?? [];
+  const valid =
+    actorIdentityIds.length === 4 &&
+    actorIdentityIds.every((identity) => identity === "naruto_uzumaki") &&
+    JSON.stringify(instanceIds) === JSON.stringify(expectedInstanceIds) &&
+    new Set(instanceIds).size === 4 &&
+    JSON.stringify(methodProfileIds) === JSON.stringify(expectedMethodIds) &&
+    new Set(methodProfileIds).size === 4 &&
+    JSON.stringify(revisionMethodProfileIds) === JSON.stringify(methodProfileIds) &&
+    fixture.method_matrix_byte_identical === true &&
+    fixture.envelope_difference_allowlist_valid === true;
+  return valid ? "ready" : "blocked";
+}
+
 function portablePath(path) {
   return path.split(sep).join("/");
 }
@@ -265,7 +303,7 @@ function classifySupervisionFixture(fixture) {
     fixture.source_packet_hash_matches !== true ||
     fixture.guidance_byte_identical !== true ||
     fixture.guidance_non_solution !== true ||
-    fixture.candidate_specific_coaching === true ||
+    fixture.instance_specific_coaching === true ||
     fixture.protected_boundaries !== "pass" ||
     fixture.hold_count > 1
   ) {
@@ -296,12 +334,12 @@ function decideLoopFixture(fixture) {
 }
 
 function classifyIntegrityFixture(fixture) {
-  const usableCandidates = Math.min(
-    fixture.valid_candidates ?? 0,
+  const usableInstances = Math.min(
+    fixture.valid_training_instances ?? 0,
     fixture.pre_reveal_self_audits ?? 0,
     fixture.same_thread_proofs ?? 0,
     fixture.experience_transfer_ledgers ?? 0,
-    fixture.no_blind_phase_supervisor_contact_attestations ?? fixture.valid_candidates ?? 0,
+    fixture.no_blind_phase_supervisor_contact_attestations ?? fixture.valid_training_instances ?? 0,
   );
   if (
     fixture.barrier !== "pass" ||
@@ -310,7 +348,7 @@ function classifyIntegrityFixture(fixture) {
     fixture.experience_transfer_ledgers < 3 ||
     fixture.guidance_byte_identical === false ||
     fixture.safety_control_byte_identical === false ||
-    fixture.candidate_specific_coaching_detected === true ||
+    fixture.instance_specific_coaching_detected === true ||
     fixture.blind_phase_content_feedback_detected === true ||
     (fixture.safety_report != null && fixture.safety_report !== "pass") ||
     fixture.anti_groupthink_audit !== "pass" ||
@@ -324,9 +362,9 @@ function classifyIntegrityFixture(fixture) {
   ) {
     return "structured_dispute";
   }
-  if (usableCandidates < 3) return "blocked";
+  if (usableInstances < 3) return "blocked";
   if (
-    usableCandidates < 4 ||
+    usableInstances < 4 ||
     fixture.critical_shared_lineage_only === true ||
     fixture.quick_surrender_unresolved === true ||
     (fixture.hokage_unverified_critical_or_major_claims ?? 0) > 0 ||
@@ -422,15 +460,22 @@ record(
 );
 record(
   "skill_no_generic_fallback",
-  skillText.includes("Never replace a failed dedicated candidate with a generic worker"),
+  skillText.includes("Never replace a failed dedicated\ninstance with a generic worker"),
   "dedicated-agent fallback guard missing",
 );
 record(
   "skill_learning_invariant",
   skillText.includes("## Core Learning Invariant") &&
     skillText.includes("same complete task") &&
-    skillText.includes("original agent thread"),
+    skillText.includes("original instance thread"),
   "same-task learning invariant missing",
+);
+record(
+  "skill_training_instance_contract",
+  skillText.includes("actor_identity_id: naruto_uzumaki") &&
+    skillText.includes("method_matrix.v1") &&
+    skillText.includes("naruto_training_instance_envelope.v1"),
+  "shared Naruto identity, method matrix, or training-instance envelope missing",
 );
 record("skill_loop_fit", skillText.includes("`loop_control_fit`"), "Loop Protocol gate missing");
 record("skill_loop_budget", skillText.includes("`max_iterations: 1`"), "bounded optimizer budget missing");
@@ -497,6 +542,7 @@ record(
 );
 
 const manifest = parseJson(join(skillRoot, "agent_manifest.json"));
+record("manifest_schema_version", manifest?.schema_version === 3, "manifest schema_version must be 3");
 record("manifest_agent_count", manifest?.agents?.length === 6, "manifest must contain six agents");
 record("manifest_owner_hokage", manifest?.owner_role_id === "hokage", "Hokage must remain the public owner role");
 record("manifest_qa_olga", manifest?.qa_runtime_id === "olga", "Olga must remain QA owner");
@@ -542,16 +588,51 @@ record(
   "evidence independence or anti-groupthink audit missing",
 );
 record(
+  "manifest_training_instance_model",
+  manifest?.training_instance_model?.shared_actor_identity_id === "naruto_uzumaki" &&
+    manifest?.training_instance_model?.instance_kind === "shadow_clone" &&
+    manifest?.training_instance_model?.instance_count === 4 &&
+    manifest?.training_instance_model?.method_diversity_required === true &&
+    manifest?.training_instance_model?.unique_instance_ids_required === true &&
+    manifest?.training_instance_model?.unique_method_profile_ids_required === true &&
+    manifest?.training_instance_model?.method_assignment_fixed_before_fanout === true &&
+    manifest?.training_instance_model?.subtask_partition_forbidden === true,
+  "shared-identity shadow-clone training model missing",
+);
+record(
   "manifest_supervision_contract",
   manifest?.supervision?.common_training_guidance_required === true &&
     manifest?.supervision?.guidance_byte_identical_required === true &&
+    manifest?.supervision?.common_method_matrix_required === true &&
+    manifest?.supervision?.method_matrix_byte_identical_required === true &&
     manifest?.supervision?.guidance_must_be_non_solution === true &&
     manifest?.supervision?.yamato_safety_control_required === true &&
     manifest?.supervision?.yamato_full_source_packet_required === true &&
-    manifest?.supervision?.candidate_specific_coaching_forbidden === true &&
+    manifest?.supervision?.instance_specific_coaching_forbidden === true &&
     manifest?.supervision?.blind_phase_content_feedback_forbidden === true &&
     manifest?.supervision?.preflight_hold_repairs_allowed === 1,
   "common guidance or Yamato supervision contract missing",
+);
+
+const manifestTrainingInstances = (manifest?.agents ?? [])
+  .filter(({ tier }) => tier === "request_only_training_instance")
+  .map(({ runtime_id, actor_identity_id, training_instance_id, method_profile_id }) => ({
+    instance_id: training_instance_id ?? runtime_id,
+    runtime_id,
+    actor_identity_id,
+    method_profile_id,
+  }));
+record(
+  "manifest_training_instance_assignments",
+  JSON.stringify(manifestTrainingInstances) === JSON.stringify(
+    expectedTrainingInstances.map(({ instance_id, actor_identity_id, method_profile_id }) => ({
+      instance_id,
+      runtime_id: instance_id,
+      actor_identity_id,
+      method_profile_id,
+    })),
+  ),
+  "training-instance identity or method assignments differ from the canonical matrix",
 );
 
 for (const expected of expectedAgents) {
@@ -625,10 +706,34 @@ for (const expected of expectedAgents) {
     runtimeText.includes("Do not spawn agents, edit files, call providers/APIs/MCP, upload, push, install, delete"),
     "runtime protected-action boundary missing",
   );
+  if (expected.actorIdentity) {
+    record(
+      `agent_manifest_training_instance:${expected.runtime}`,
+      manifestAgent?.actor_identity_id === expected.actorIdentity &&
+        manifestAgent?.training_instance_id === expected.runtime &&
+        manifestAgent?.method_profile_id === expected.methodProfile,
+      "manifest training-instance identity or method mismatch",
+    );
+    record(
+      `agent_card_training_instance:${expected.runtime}`,
+      yamlScalar(cardText, "actor_identity_id") === expected.actorIdentity &&
+        yamlScalar(cardText, "training_instance_id") === expected.runtime &&
+        yamlScalar(cardText, "method_profile_id") === expected.methodProfile,
+      "card training-instance identity or method mismatch",
+    );
+    record(
+      `agent_runtime_training_instance:${expected.runtime}`,
+      runtimeText.includes(`actor_identity_id=${expected.actorIdentity}`) &&
+        runtimeText.includes(`instance_id=${expected.runtime}`) &&
+        runtimeText.includes(`assigned_method_profile_id=${expected.methodProfile}`),
+      "runtime training-instance identity or method mismatch",
+    );
+  }
   if (expected.runtime === "kakashi_hatake") {
     record(
       "agent_card_moderator_integrity",
-      cardText.includes("training_guidance_packet.v1") &&
+      cardText.includes("method_matrix.v1") &&
+        cardText.includes("training_guidance_packet.v1") &&
         cardText.includes("protocol_run_manifest.v1") &&
         cardText.includes("anti-groupthink") &&
         cardText.includes("experience-transfer"),
@@ -636,7 +741,8 @@ for (const expected of expectedAgents) {
     );
     record(
       "agent_runtime_moderator_integrity",
-      runtimeText.includes("training_guidance_packet.v1") &&
+      runtimeText.includes("method_matrix.v1") &&
+        runtimeText.includes("training_guidance_packet.v1") &&
         runtimeText.includes("protocol_run_manifest.v1") &&
         runtimeText.includes("evidence-independence") &&
         runtimeText.includes("matching thread-handle hashes"),
@@ -646,7 +752,8 @@ for (const expected of expectedAgents) {
     record(
       "agent_card_yamato_safety",
       cardText.includes("full final source_evidence_packet.v1") &&
-        cardText.includes("source_packet_sha256 verified") &&
+        cardText.includes("method_matrix.v1") &&
+        cardText.includes("four training-instance envelopes") &&
         cardText.includes("safety_control_packet.v1") &&
         cardText.includes("safety_report.v1") &&
         cardText.includes("without solution advice"),
@@ -655,16 +762,18 @@ for (const expected of expectedAgents) {
     record(
       "agent_runtime_yamato_safety",
       runtimeText.includes("full final source_evidence_packet.v1") &&
-        runtimeText.includes("Recompute the source packet digest") &&
+        runtimeText.includes("method_matrix.v1") &&
+        runtimeText.includes("all four training-instance envelopes") &&
         runtimeText.includes("status pass, hold, or blocked") &&
         runtimeText.includes("phase metadata") &&
-        runtimeText.includes("Do not send candidates content feedback"),
+        runtimeText.includes("Do not send training instances content feedback"),
       "Yamato runtime lacks full source validation, safety state, or blind-contact guard",
     );
   } else {
     record(
       `agent_card_candidate_learning:${expected.runtime}`,
-      cardText.includes("pre-reveal self-audit") &&
+      cardText.includes("method-matrix hashes") &&
+        cardText.includes("pre-reveal self-audit") &&
         cardText.includes("experience-transfer ledger") &&
         cardText.includes("opaque handle hashes") &&
         cardText.includes("no-blind-contact attestation"),
@@ -672,7 +781,9 @@ for (const expected of expectedAgents) {
     );
     record(
       `agent_runtime_candidate_learning:${expected.runtime}`,
-      runtimeText.includes("pre-reveal self-audit") &&
+      runtimeText.includes("same Naruto identity") &&
+        runtimeText.includes("method_matrix.v1") &&
+        runtimeText.includes("pre-reveal self-audit") &&
         runtimeText.includes("experience-transfer claim map") &&
         runtimeText.includes("opaque thread-handle hashes") &&
         runtimeText.includes("no_blind_phase_supervisor_contact_attestation=true"),
@@ -682,6 +793,7 @@ for (const expected of expectedAgents) {
 }
 
 const fixtures = parseJson(join(skillRoot, "fixtures/naruto-fixtures.json"));
+record("fixtures_schema_version", fixtures?.schema_version === 3, "fixtures schema_version must be 3");
 for (const fixture of fixtures?.trigger_cases ?? []) {
   record(
     `trigger_fixture:${fixture.id}`,
@@ -690,10 +802,34 @@ for (const fixture of fixtures?.trigger_cases ?? []) {
   );
 }
 
+const requiredTrainingInstanceCases = new Set([
+  "training-instances-ready",
+  "training-instances-foreign-identity",
+  "training-instances-duplicate-instance",
+  "training-instances-duplicate-method",
+  "training-instances-method-drift",
+  "training-instances-envelope-drift",
+]);
+const actualTrainingInstanceCases = new Set(
+  (fixtures?.training_instance_cases ?? []).map(({ id }) => id),
+);
+record(
+  "training_instance_fixture_coverage",
+  [...requiredTrainingInstanceCases].every((id) => actualTrainingInstanceCases.has(id)),
+  "required shared-identity, method-diversity, and envelope cases missing",
+);
+for (const fixture of fixtures?.training_instance_cases ?? []) {
+  record(
+    `training_instance_fixture_result:${fixture.id}`,
+    classifyTrainingInstanceFixture(fixture) === fixture.expected_state,
+    `expected ${fixture.expected_state}, got ${classifyTrainingInstanceFixture(fixture)}`,
+  );
+}
+
 const requiredProtocolCases = new Set([
   "full-verified",
-  "three-candidate-degraded",
-  "two-candidate-blocked",
+  "three-instance-degraded",
+  "two-instance-blocked",
   "hash-mismatch-degrades",
   "early-reveal-blocked",
   "same-thread-unavailable",
@@ -722,7 +858,7 @@ const requiredSupervisionCases = new Set([
   "supervision-guidance-byte-mismatch",
   "supervision-solution-direction",
   "supervision-yamato-unavailable",
-  "supervision-candidate-specific-coaching",
+  "supervision-instance-specific-coaching",
   "supervision-protected-boundary-failure",
   "supervision-second-non-pass",
   "supervision-unverifiable",
@@ -806,6 +942,8 @@ record(
 const contractsText = read(join(skillRoot, "references/contracts-and-schemas.md"));
 const priorArtText = read(join(skillRoot, "references/prior-art-assimilation.md"));
 const sourceTemplateText = read(join(skillRoot, "templates/source-packet.md"));
+const methodMatrixTemplateText = read(join(skillRoot, "templates/method-matrix.md"));
+const trainingInstanceEnvelopeTemplateText = read(join(skillRoot, "templates/training-instance-envelope.md"));
 const candidateTemplateText = read(join(skillRoot, "templates/candidate-solution.md"));
 const revealTemplateText = read(join(skillRoot, "templates/reveal-transfer.md"));
 const revisionTemplateText = read(join(skillRoot, "templates/revision.md"));
@@ -817,19 +955,21 @@ const safetyControlTemplateText = read(join(skillRoot, "templates/safety-control
 record("contracts_loop_projection", contractsText.includes("## Loop Control Projection") && contractsText.includes("automatic_second_panel_run: false"), "loop projection contract missing");
 record("template_source_loop", sourceTemplateText.includes("gate: loop_control_fit") && sourceTemplateText.includes("max_iterations: 1"), "source packet loop binding missing");
 record("template_source_independence", sourceTemplateText.includes("independence_key:") && sourceTemplateText.includes("shared_source_counts_once: true"), "source independence fields missing");
-record("template_source_supervision", sourceTemplateText.includes("supervision_contract:") && sourceTemplateText.includes("guidance_must_be_non_solution: true") && sourceTemplateText.includes("yamato_full_source_packet_required: true") && sourceTemplateText.includes("preflight_hold_repairs_allowed: 1"), "source supervision contract missing");
-record("template_training_guidance", trainingGuidanceTemplateText.includes("training_guidance_packet.v1") && trainingGuidanceTemplateText.includes("candidate_specific_content: false") && trainingGuidanceTemplateText.includes("solution_recommendation_included: false") && trainingGuidanceTemplateText.includes("preferred_route_included: false") && trainingGuidanceTemplateText.includes("private_evidence_included: false"), "common non-solution guidance fields missing");
-record("template_safety_control", safetyControlTemplateText.includes("safety_control_packet.v1") && safetyControlTemplateText.includes("source_packet_present_and_hash_valid:") && safetyControlTemplateText.includes("status: pass | hold | blocked") && safetyControlTemplateText.includes("safety_report.v1"), "Yamato source validation, safety control, or report fields missing");
-record("template_candidate_self_audit", candidateTemplateText.includes("pre_reveal_self_audit:") && candidateTemplateText.includes("falsification_check:") && candidateTemplateText.includes("source_independence_keys:") && candidateTemplateText.includes("training_guidance_packet_sha256:") && candidateTemplateText.includes("safety_control_packet_sha256:") && candidateTemplateText.includes("no_blind_phase_supervisor_contact_attestation: true"), "candidate evidence, supervision, or self-audit fields missing");
-record("template_reveal_criteria", revealTemplateText.includes("acceptance_findings:") && revealTemplateText.includes("root_cause:") && revealTemplateText.includes("training_guidance_packet_sha256:") && revealTemplateText.includes("safety_control_packet_sha256:"), "criterion-level critique or supervision binding missing");
+record("template_source_supervision", sourceTemplateText.includes("supervision_contract:") && sourceTemplateText.includes("common_method_matrix_required: true") && sourceTemplateText.includes("method_matrix_byte_identical_required: true") && sourceTemplateText.includes("guidance_must_be_non_solution: true") && sourceTemplateText.includes("yamato_full_source_packet_required: true") && sourceTemplateText.includes("preflight_hold_repairs_allowed: 1"), "source supervision contract missing");
+record("template_method_matrix", methodMatrixTemplateText.includes("method_matrix.v1") && methodMatrixTemplateText.includes("actor_identity_id: naruto_uzumaki") && expectedTrainingInstances.every(({ instance_id, method_profile_id }) => methodMatrixTemplateText.includes(`instance_id: ${instance_id}`) && methodMatrixTemplateText.includes(`method_profile_id: ${method_profile_id}`)), "canonical method matrix assignments missing");
+record("template_training_instance_envelope", trainingInstanceEnvelopeTemplateText.includes("naruto_training_instance_envelope.v1") && trainingInstanceEnvelopeTemplateText.includes("actor_identity_id: naruto_uzumaki") && trainingInstanceEnvelopeTemplateText.includes("method_matrix_sha256:") && trainingInstanceEnvelopeTemplateText.includes("envelope_sha256:"), "training-instance routing envelope fields missing");
+record("template_training_guidance", trainingGuidanceTemplateText.includes("training_guidance_packet.v1") && trainingGuidanceTemplateText.includes("instance_specific_content: false") && trainingGuidanceTemplateText.includes("solution_recommendation_included: false") && trainingGuidanceTemplateText.includes("preferred_route_included: false") && trainingGuidanceTemplateText.includes("private_evidence_included: false"), "common non-solution guidance fields missing");
+record("template_safety_control", safetyControlTemplateText.includes("safety_control_packet.v1") && safetyControlTemplateText.includes("method_matrix_present_and_hash_valid:") && safetyControlTemplateText.includes("shared_actor_identity_valid:") && safetyControlTemplateText.includes("unique_fixed_method_ids_valid:") && safetyControlTemplateText.includes("envelope_difference_allowlist_valid:") && safetyControlTemplateText.includes("status: pass | hold | blocked") && safetyControlTemplateText.includes("safety_report.v1"), "Yamato source, identity, method, envelope, or safety-report validation fields missing");
+record("template_candidate_self_audit", candidateTemplateText.includes("actor_identity_id: naruto_uzumaki") && candidateTemplateText.includes("method_matrix_sha256:") && candidateTemplateText.includes("training_instance_envelope_sha256:") && candidateTemplateText.includes("pre_reveal_self_audit:") && candidateTemplateText.includes("falsification_check:") && candidateTemplateText.includes("source_independence_keys:") && candidateTemplateText.includes("training_guidance_packet_sha256:") && candidateTemplateText.includes("safety_control_packet_sha256:") && candidateTemplateText.includes("no_blind_phase_supervisor_contact_attestation: true"), "candidate evidence, identity, method binding, supervision, or self-audit fields missing");
+record("template_reveal_criteria", revealTemplateText.includes("method_matrix_sha256:") && revealTemplateText.includes("acceptance_findings:") && revealTemplateText.includes("root_cause:") && revealTemplateText.includes("training_guidance_packet_sha256:") && revealTemplateText.includes("safety_control_packet_sha256:"), "criterion-level critique or supervision binding missing");
 record("template_reveal_groupthink", revealTemplateText.includes("anti_groupthink_checks:") && revealTemplateText.includes("fake_dissent_flags:") && revealTemplateText.includes("shared_source_consensus_claims:"), "anti-groupthink reveal fields missing");
 record("template_revision_repair", revisionTemplateText.includes("loop_repair:") && revisionTemplateText.includes("regression_risks:"), "same-thread repair fields missing");
-record("template_revision_experience", revisionTemplateText.includes("experience_transfer:") && revisionTemplateText.includes("original_thread_handle_sha256:") && revisionTemplateText.includes("claim_revision_map:") && revisionTemplateText.includes("training_guidance_packet_sha256:") && revisionTemplateText.includes("safety_control_packet_sha256:"), "same-thread experience-transfer or supervision binding fields missing");
+record("template_revision_experience", revisionTemplateText.includes("actor_identity_id: naruto_uzumaki") && revisionTemplateText.includes("method_profile_id:") && revisionTemplateText.includes("method_matrix_sha256:") && revisionTemplateText.includes("training_instance_envelope_sha256:") && revisionTemplateText.includes("experience_transfer:") && revisionTemplateText.includes("original_thread_handle_sha256:") && revisionTemplateText.includes("claim_revision_map:") && revisionTemplateText.includes("training_guidance_packet_sha256:") && revisionTemplateText.includes("safety_control_packet_sha256:"), "same-thread identity, method, experience-transfer, or supervision binding fields missing");
 record("template_consensus_regression", consensusTemplateText.includes("loop_summary:") && consensusTemplateText.includes("repair_history:") && consensusTemplateText.includes("regression_check:"), "loop summary, repair history, or regression check missing");
 record("template_consensus_provenance", consensusTemplateText.includes("synthesis_provenance:") && consensusTemplateText.includes("hokage_introduced_claims:") && consensusTemplateText.includes("reproducible_next_check:") && consensusTemplateText.includes("protocol_run_manifest_sha256:") && consensusTemplateText.includes("moderator_report_sha256:") && consensusTemplateText.includes("safety_report_sha256:"), "synthesis provenance, safety binding, protocol binding, or reproducible QA fields missing");
 record("template_protocol_checkpoint", protocolCheckpointTemplateText.includes("protocol_checkpoint.v1") && protocolCheckpointTemplateText.includes("previous_checkpoint_sha256:") && protocolCheckpointTemplateText.includes("manifest_snapshot:") && protocolCheckpointTemplateText.includes("checkpoint_sha256:"), "immutable protocol checkpoint schema missing");
-record("template_protocol_run_manifest", runManifestTemplateText.includes("protocol_run_manifest.v1") && runManifestTemplateText.includes("yamato_preflight_passed:") && runManifestTemplateText.includes("blind_supervisor_contact_absent:") && runManifestTemplateText.includes("safety_supervisor:") && runManifestTemplateText.includes("moderator_report_sha256:") && runManifestTemplateText.includes("safety_report_complete:") && runManifestTemplateText.includes("training_control:") && runManifestTemplateText.includes("reveal_byte_identical:") && runManifestTemplateText.includes("same_thread_revisions_verified:") && runManifestTemplateText.includes("checkpoint_hashes:") && runManifestTemplateText.includes("reconcile:") && runManifestTemplateText.includes("safety_report:") && runManifestTemplateText.includes("qa:"), "protocol run manifest supervision, report binding, or phase checkpoints missing");
-record("contracts_integrity_projection", contractsText.includes("### Artifact Digest Projection") && contractsText.includes("### Manifest Checkpoints And Acyclic Order") && contractsText.includes("protocol_checkpoint.v1") && contractsText.includes("## Training Guidance") && contractsText.includes("## Safety Control") && contractsText.includes("## Protocol Run Manifest") && contractsText.includes("safety_report.v1") && contractsText.includes("evidence_independence_findings:") && contractsText.includes("synthesis_provenance:") && contractsText.includes("protocol_run_manifest_reconcile_checkpoint_sha256:"), "digest projection, immutable checkpoint, supervision, integrity contracts, or phase binding missing from schema reference");
+record("template_protocol_run_manifest", runManifestTemplateText.includes("protocol_run_manifest.v1") && runManifestTemplateText.includes("actor_identity_id: naruto_uzumaki") && runManifestTemplateText.includes("method_matrix_sha256:") && runManifestTemplateText.includes("unique_instance_and_method_ids_verified:") && runManifestTemplateText.includes("training_instance_envelope_sha256:") && runManifestTemplateText.includes("yamato_preflight_passed:") && runManifestTemplateText.includes("blind_supervisor_contact_absent:") && runManifestTemplateText.includes("safety_supervisor:") && runManifestTemplateText.includes("moderator_report_sha256:") && runManifestTemplateText.includes("safety_report_complete:") && runManifestTemplateText.includes("training_control:") && runManifestTemplateText.includes("reveal_byte_identical:") && runManifestTemplateText.includes("same_thread_revisions_verified:") && runManifestTemplateText.includes("checkpoint_hashes:") && runManifestTemplateText.includes("reconcile:") && runManifestTemplateText.includes("safety_report:") && runManifestTemplateText.includes("qa:"), "protocol run manifest identity, method, supervision, report binding, or phase checkpoints missing");
+record("contracts_integrity_projection", contractsText.includes("### Artifact Digest Projection") && contractsText.includes("### Manifest Checkpoints And Acyclic Order") && contractsText.includes("method_matrix.v1") && contractsText.includes("naruto_training_instance_envelope.v1") && contractsText.includes("protocol_checkpoint.v1") && contractsText.includes("## Training Guidance") && contractsText.includes("## Safety Control") && contractsText.includes("## Protocol Run Manifest") && contractsText.includes("safety_report.v1") && contractsText.includes("evidence_independence_findings:") && contractsText.includes("synthesis_provenance:") && contractsText.includes("protocol_run_manifest_reconcile_checkpoint_sha256:"), "digest projection, immutable checkpoint, shared-identity supervision, integrity contracts, or phase binding missing from schema reference");
 record(
   "prior_art_assimilation",
   ["Agent Review Panel", "Agent Council", "oh-my-codex", "Captain Claw", "Zeroshot", "Mixture-of-Agents"].every((name) => priorArtText.includes(name)) &&
@@ -925,6 +1065,59 @@ record(
   artifactDigest(candidateDigestA, "candidate_output_sha256") !==
     artifactDigest(candidateDigestChanged, "candidate_output_sha256"),
   "material artifact content did not change its digest",
+);
+
+const methodMatrixDigestA = {
+  schema: "method_matrix.v1",
+  actor_identity_id: "naruto_uzumaki",
+  assignments: expectedTrainingInstances,
+  method_matrix_sha256: "stored-a",
+};
+const methodMatrixDigestB = { ...methodMatrixDigestA, method_matrix_sha256: "stored-b" };
+const methodMatrixDigestChanged = {
+  ...methodMatrixDigestA,
+  assignments: expectedTrainingInstances.map((assignment, index) =>
+    index === 0 ? { ...assignment, method_profile_id: "changed-method.v1" } : assignment),
+};
+record(
+  "method_matrix_self_digest_omitted",
+  artifactDigest(methodMatrixDigestA, "method_matrix_sha256") ===
+    artifactDigest(methodMatrixDigestB, "method_matrix_sha256"),
+  "stored method-matrix digest changed its own projection",
+);
+record(
+  "method_matrix_digest_binds_assignments",
+  artifactDigest(methodMatrixDigestA, "method_matrix_sha256") !==
+    artifactDigest(methodMatrixDigestChanged, "method_matrix_sha256"),
+  "method assignment change did not change the matrix digest",
+);
+
+const envelopeDigestA = {
+  schema: "naruto_training_instance_envelope.v1",
+  actor_identity_id: "naruto_uzumaki",
+  instance_id: "naruto_clone_integrator",
+  assigned_method_profile_id: "naruto_integrative_method.v1",
+  source_packet_sha256: "source-sha",
+  method_matrix_sha256: "matrix-sha",
+  training_guidance_packet_sha256: "guidance-sha",
+  envelope_sha256: "stored-a",
+};
+const envelopeDigestB = { ...envelopeDigestA, envelope_sha256: "stored-b" };
+const envelopeDigestChanged = {
+  ...envelopeDigestA,
+  assigned_method_profile_id: "changed-method.v1",
+};
+record(
+  "training_instance_envelope_self_digest_omitted",
+  artifactDigest(envelopeDigestA, "envelope_sha256") ===
+    artifactDigest(envelopeDigestB, "envelope_sha256"),
+  "stored envelope digest changed its own projection",
+);
+record(
+  "training_instance_envelope_digest_binds_assignment",
+  artifactDigest(envelopeDigestA, "envelope_sha256") !==
+    artifactDigest(envelopeDigestChanged, "envelope_sha256"),
+  "envelope method change did not change its digest",
 );
 
 const digestManifest = {
@@ -1079,10 +1272,12 @@ if (packageMode) {
   record("readme_integrity_contract", readme.includes("`protocol_run_manifest.v1`") && /opaque\s+thread-handle hashes/.test(readme) && readme.includes("experience-transfer"), "phase-integrity contract missing");
   record("readme_epistemic_contract", readme.includes("independence key") && readme.includes("anti-groupthink") && readme.includes("role-blind"), "evidence or QA contract missing");
   record("readme_supervision_contract", readme.includes("`training_guidance_packet.v1`") && readme.includes("`safety_control_packet.v1`") && readme.includes("Hokage") && readme.includes("Kakashi") && readme.includes("Yamato"), "public parent or supervision contract missing");
+  record("readme_training_instance_contract", readme.includes("`actor_identity_id: naruto_uzumaki`") && readme.includes("`method_matrix.v1`") && readme.includes("`naruto_training_instance_envelope.v1`"), "README shared-identity or method-assignment contract missing");
   record("notice_no_affiliation", /not affiliated[\s\S]+not endorsed/i.test(notice), "no-affiliation notice missing");
   record(
     "package_manifest_layout",
-    packageManifest?.layout?.skill_root === ".agents/skills/naruto" &&
+    packageManifest?.schema === "codex_deliberation_package.v3" &&
+      packageManifest?.layout?.skill_root === ".agents/skills/naruto" &&
       packageManifest?.layout?.profile_root === ".codex/agents",
     "package manifest layout mismatch",
   );
@@ -1092,6 +1287,15 @@ if (packageMode) {
       JSON.stringify(expectedAgents.map(({ runtime }) => `${runtime}.toml`).sort()) &&
       packageManifest?.bundled_profile_count === 6,
     "package manifest must list exactly six read-only profiles",
+  );
+  record(
+    "package_manifest_training_instance_model",
+    packageManifest?.training_instance_model?.actor_identity_id === "naruto_uzumaki" &&
+      packageManifest?.training_instance_model?.instance_kind === "shadow_clone" &&
+      packageManifest?.training_instance_model?.task_scope === "complete" &&
+      JSON.stringify(packageManifest?.training_instance_model?.assignments) ===
+        JSON.stringify(expectedTrainingInstances.map(({ instance_id, method_profile_id }) => [instance_id, method_profile_id])),
+    "package manifest training-instance identity or assignments mismatch",
   );
   record(
     "package_profile_files",
@@ -1106,12 +1310,14 @@ if (packageMode) {
         "references/prior-art-assimilation.md",
         "templates/candidate-solution.md",
         "templates/consensus-report.md",
+        "templates/method-matrix.md",
         "templates/protocol-checkpoint.md",
         "templates/protocol-run-manifest.md",
         "templates/safety-control.md",
         "templates/training-guidance.md",
+        "templates/training-instance-envelope.md",
       ].sort()),
-    "package manifest omits or adds protocol artifacts outside the 0.3 contract",
+    "package manifest omits or adds protocol artifacts outside the 0.4 contract",
   );
   record(
     "package_manifest_public_parent",
@@ -1121,9 +1327,15 @@ if (packageMode) {
   );
   record(
     "package_manifest_version",
-    /^0\.3\.\d+$/.test(packageJson?.version ?? "") &&
+    /^0\.4\.\d+$/.test(packageJson?.version ?? "") &&
       packageManifest?.package_version === packageJson?.version,
-    "package must use the 0.3 release line and keep both versions equal",
+    "package must use the 0.4 release line and keep both versions equal",
+  );
+  record(
+    "package_manifest_legacy_migration",
+    packageManifest?.migration?.legacy_0_3_installation_policy === "fail_closed_manual_cleanup" &&
+      packageManifest?.migration?.legacy_profile_paths?.length === 8,
+    "package manifest must declare fail-closed manual cleanup for eight legacy 0.3 paths",
   );
   record("package_private", packageJson?.private === true, "package must not be npm-publishable");
   record("package_no_dependencies", !packageJson?.dependencies && !packageJson?.devDependencies, "package must stay dependency-free");
