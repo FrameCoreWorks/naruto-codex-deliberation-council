@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, "..");
-const releaseVersion = "1.0.1";
+const releaseVersion = "1.1.0";
 const repositoryUrl = "https://github.com/FrameCoreWorks/naruto-codex-deliberation-council";
 const historicalCiUrls = [
   `${repositoryUrl}/actions/runs/29687294043`,
@@ -60,6 +60,7 @@ const migrationInventory = parseJson("scripts/fixtures/install-0.4.0-inventory.j
 const readme = readText("README.md");
 const benchmarkPlan = readText("docs/benchmark-plan.md");
 const compatibility = readText("docs/compatibility.md");
+const namingRisk = readText("docs/naming-risk.md");
 const releaseAcceptance = readText(`docs/release-acceptance-v${releaseVersion}.md`);
 const historicalAcceptance = readText("docs/release-acceptance-v1.0.0.md");
 const historicalReleaseNotes = readText("docs/releases/v1.0.0.md");
@@ -108,10 +109,14 @@ record(
     manifest?.release?.host_event_log_bundled === false &&
     manifest?.release?.live_host_acceptance_report_bundled === false &&
     manifest?.release?.method_output_diversity === "not_measured" &&
+    manifest?.release?.blind_semantic_redundancy_audit ===
+      "required_claim_level_heuristic" &&
+    manifest?.release?.semantic_redundancy_benchmark_calibrated === false &&
     manifest?.release?.behavioral_quality_lift === "not_measured" &&
     manifest?.release?.runtime_cost_latency === "not_benchmarked" &&
     manifest?.release?.benchmark_plan === "docs/benchmark-plan.md" &&
-    manifest?.release?.fan_art_rights_clearance === "not_cleared",
+    manifest?.release?.fan_art_rights_clearance === "not_cleared" &&
+    manifest?.release?.publisher_legal_risk_route_confirmation === "pending",
   JSON.stringify(manifest?.release),
 );
 record(
@@ -150,6 +155,10 @@ record(
   "manifest_validation_surface",
   manifest?.validation_surfaces?.repository_self_check ===
       ".agents/skills/naruto/scripts/validate-naruto.mjs" &&
+    manifest?.validation_surfaces?.stale_opaque_handle_requirement_rejected === true &&
+    manifest?.validation_surfaces?.blind_semantic_redundancy_fixtures === true &&
+    manifest?.validation_surfaces?.semantic_pair_matrix_and_reference_integrity === true &&
+    manifest?.validation_surfaces?.semantic_fixture_status_linkage === true &&
     !("recorded_run_bundle" in (manifest?.validation_surfaces ?? {})),
   JSON.stringify(manifest?.validation_surfaces),
 );
@@ -163,6 +172,11 @@ record(
     finalQaRequirement?.bundled_profile === false &&
     finalQaRequirement?.required_when === "consequential_result" &&
     finalQaRequirement?.review_mode === "role_blind_independent" &&
+    finalQaRequirement?.interoperability_template ===
+      "templates/consensus-report.md#host-provided-final-qa-interoperability-example" &&
+    finalQaRequirement?.request_result_binding_required === true &&
+    finalQaRequirement?.final_artifact_digest_binding_required === true &&
+    finalQaRequirement?.binding_mismatch_policy === "blocked" &&
     finalQaRequirement?.unavailable_policy === "blocked",
   JSON.stringify(manifest?.host_role_requirements),
 );
@@ -223,8 +237,8 @@ record(
     migrationInventory?.expected_counts?.create === 0 &&
     migrationInventory?.expected_counts?.overwrite === historicalOverwriteCount &&
     migrationInventory?.expected_counts?.unchanged === historicalUnchangedCount &&
-    historicalOverwriteCount === 23 &&
-    historicalUnchangedCount === 10 &&
+    historicalOverwriteCount === 24 &&
+    historicalUnchangedCount === 9 &&
     migrationEntryErrors.length === 0,
   migrationEntryErrors.join(", ") || JSON.stringify(migrationInventory?.expected_counts),
 );
@@ -295,6 +309,8 @@ record(
     readme.includes("`NOT BUNDLED`") &&
     readme.includes("Method diversity and quality lift") &&
     readme.includes("`NOT MEASURED`") &&
+    readme.includes("Blind semantic-redundancy audit") &&
+    readme.includes("`BUNDLED, HEURISTIC`") &&
     readme.includes("Fan-art and franchise rights") &&
     readme.includes("`NOT CLEARED`") &&
     readme.includes("repository self-check") &&
@@ -317,8 +333,29 @@ record(
 );
 record(
   "readme_host_final_qa",
-  /final_qa[^\n]{0,100}reviewer/i.test(readme) && /not bundled/i.test(readme),
+  /final_qa[^\n]{0,100}reviewer/i.test(readme) &&
+    /not bundled/i.test(readme) &&
+    /mismatch, replay, or non-pass QA blocks delivery/i.test(readme),
   "README must disclose the conditional host-provided final QA role",
+);
+record(
+  "additive_1_1_compatibility",
+  compatibility.includes("### Additive Artifact Extension Rule") &&
+    compatibility.includes("wire-level parse compatibility") &&
+    compatibility.includes("missing request/result/artifact binding") &&
+    /No `\.v1` field is\s+renamed or removed/.test(compatibility),
+  "1.1 additive artifact compatibility and fail-closed reader rules missing",
+);
+record(
+  "publisher_rights_status_not_inferred",
+  namingRisk.includes("## Current Distribution State") &&
+    namingRisk.includes("Explicit publisher confirmation") &&
+    namingRisk.includes("remains pending") &&
+    !namingRisk.includes("FrameCoreWorks selected route 3") &&
+    releaseAcceptance.includes("publisher legal-risk confirmation remains pending") &&
+    releaseNotes.includes("publisher legal-risk confirmation remains") &&
+    !releaseNotes.includes("explicitly accepting status"),
+  "rights documentation must record NOT CLEARED and pending publisher confirmation without inferred acceptance",
 );
 record(
   "readme_fan_art_scope",
@@ -343,9 +380,17 @@ record(
     releaseAcceptance.includes("`NOT MEASURED`") &&
     releaseAcceptance.includes("`NOT BENCHMARKED`") &&
     releaseAcceptance.includes("`NOT CLEARED`") &&
-    releaseAcceptance.includes("deferred to `1.1.0`") &&
+    releaseAcceptance.includes("Semantic-redundancy Boundary") &&
+    releaseAcceptance.includes("`sufficient` requires verified differences") &&
+    releaseAcceptance.includes("caps the result at") &&
+    releaseAcceptance.includes("`provisional_consensus`") &&
+    releaseAcceptance.includes("Final-QA Boundary") &&
+    /Mismatch or\s+replay is `blocked`/.test(releaseAcceptance) &&
+    releaseAcceptance.includes("frozen consensus projection") &&
+    releaseAcceptance.includes("publisher legal-risk confirmation remains pending") &&
+    /deferred to\s+`1\.2\.0`/.test(releaseAcceptance) &&
     /does not\s+claim rollback or uninstall/i.test(releaseAcceptance),
-  "v1.0.1 acceptance must state its package, host, rights, and deferred-feature boundaries",
+  `v${releaseVersion} acceptance must state its package, host, redundancy, QA, rights, and deferred-feature boundaries`,
 );
 record(
   "benchmark_plan_contract",
@@ -369,18 +414,24 @@ record(
     readme.includes("`42cab91`") &&
     readme.includes("portable `openat` API") &&
     releaseAcceptance.includes("private verified validator snapshot") &&
-    releaseAcceptance.includes("0 creates, 23 overwrites, and 10 unchanged") &&
-    releaseNotes.includes("private verified validator copy") &&
+    /0 creates,\s+24\s+overwrites, and 9 unchanged/.test(releaseAcceptance) &&
+    /private\s+verified validator copy/.test(releaseNotes) &&
     security.includes("descriptor-verified source bytes") &&
     /outside the supported\s+trust boundary/i.test(security),
   "installer snapshot, migration, hard-link, and residual ancestor-swap boundaries must be documented",
 );
 record(
   "release_notes_scope",
-  releaseNotes.includes("# Naruto Codex Deliberation Council 1.0.1") &&
+  releaseNotes.includes(`# Naruto Codex Deliberation Council ${releaseVersion}`) &&
     /package self-check, not[\s\S]{0,120}arbitrary live run/i.test(releaseNotes) &&
+    releaseNotes.includes("opaque thread-handle") &&
+    releaseNotes.includes("Blind Semantic-redundancy Audit") &&
+    releaseNotes.includes("Final-QA Interoperability") &&
+    releaseNotes.includes("request digest") &&
+    releaseNotes.includes("frozen consensus QA-review projection") &&
+    releaseNotes.includes("publisher legal-risk confirmation remains") &&
     !releaseNotes.includes("validate-run-bundle"),
-  "v1.0.1 notes must describe the release without claiming a live-run validator",
+  `v${releaseVersion} notes must describe the release without claiming a live-run validator`,
 );
 record(
   "historical_release_links",

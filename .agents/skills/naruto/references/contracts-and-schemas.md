@@ -15,7 +15,8 @@
 11. Protocol run manifest
 12. Moderator report
 13. Consensus report
-14. Safety report
+14. Final-QA request and result
+15. Safety report
 
 ## Canonicalization
 
@@ -48,11 +49,32 @@ an empty string is a different projection.
 | `protocol_checkpoint.v1` | `checkpoint_sha256` |
 | `protocol_run_manifest.v1` | `manifest_sha256` |
 | `safety_report.v1` | `safety_report_sha256` |
+| `final_qa_review_request.v1` | `request_sha256` |
+| `final_qa_review_result.v1` | `result_sha256` |
 
 Every other SHA-256 field is a dependency reference and remains in the
 projection. Schemas without a self-digest field, including commit, reveal,
 moderator, and consensus artifacts, hash all their fields. Verification repeats
 the same projection and compares the result with the stored self digest.
+
+### Additive 1.1 Extension Rule
+
+The `1.1.0` fields added to existing `.v1` reveal, run-manifest, moderator, and
+consensus artifacts are additive. Readers may ingest a retained `1.0.x`
+artifact that omits them, but must map a missing semantic-redundancy audit to
+`unverifiable` with a `provisional_consensus` ceiling and must map a missing
+required final-QA binding to `blocked`. Producers claiming `1.1.0` emit all new
+fields. No existing `.v1` field is renamed or removed.
+
+### Final-QA Review Artifact Projection
+
+Before QA, deep-copy the inner `consensus_report.v1`, delete exactly
+`protocol_run_manifest_sha256` and the complete `final_qa` object, canonicalize
+the remainder, and hash it as `final_artifact_sha256`. Those two fields are
+filled only after a bound QA result returns. Their later values therefore do not
+change the reviewed-artifact digest; any change elsewhere does and requires QA
+again. This projection prevents a circular dependency between the artifact,
+QA result, QA checkpoint, and final manifest digest.
 
 ### Manifest Checkpoints And Acyclic Order
 
@@ -420,6 +442,26 @@ reveal_transfer_packet:
     factually_incorrect_opposition_flags: []
     critical_minority_resolution_questions: []
     result_ceiling_effect: none | provisional_only | structured_dispute | blocked
+  blind_semantic_redundancy_audit:
+    status: sufficient | insufficient | unverifiable
+    comparison_basis: claim_meaning_and_evidence_lineage
+    known_claim_refs: []
+    known_evidence_refs: []
+    known_evidence_lineage_refs: []
+    pair_assessments:
+      - candidate_ids: []
+        relation: materially_distinct | partially_overlapping | substantially_redundant | unverifiable
+        overlapping_claim_refs: []
+        unique_claim_refs: []
+        evidence_lineage_delta: []
+    unique_verified_contributions:
+      - candidate_id:
+        claim_refs: []
+        evidence_refs: []
+    all_core_claims_materially_equivalent: true | false | unverifiable
+    all_evidence_lineages_equivalent: true | false | unverifiable
+    result_ceiling_effect: none | provisional_only
+    exact_resolution_need:
   missing_evidence: []
   acceptance_findings:
     - criterion_id:
@@ -518,6 +560,7 @@ protocol_run_manifest:
     commit_barrier_closed: pass | fail | not_reached
     reveal_byte_identical: pass | fail | not_reached
     same_target_followup_receipts_verified: pass | partial | fail | not_reached
+    blind_semantic_redundancy_audit_complete: pass | fail | not_reached
     moderator_reconcile_complete: pass | fail | not_reached
     safety_report_complete: pass | fail | not_reached
     synthesis_provenance_checked: pass | fail | not_reached
@@ -544,6 +587,18 @@ protocol_run_manifest:
     hold_count: 0 | 1
     report_complete: true | false
     safety_report_sha256:
+  qa:
+    required: true | false
+    request_id:
+    request_sha256:
+    result_sha256:
+    final_artifact_sha256:
+    reviewer_binding: host_provided | not_required | unavailable
+    request_result_artifact_binding_verified: true | false | not_required
+    independent_reviewer_attestation: true | false | not_required
+    role_blind_attestation: true | false | not_required
+    status: pass | fail | blocked | not_required | not_reached
+    effective_result_status: verified_consensus | provisional_consensus | structured_dispute | blocked | not_reached
   checkpoint_hashes:
     source_packet:
     training_control:
@@ -556,14 +611,27 @@ protocol_run_manifest:
     qa:
   retries: []
   degradation_flags: []
+  blind_semantic_redundancy_status: sufficient | insufficient | unverifiable | not_reached
   result_ceiling_reason:
   protected_boundaries_preserved: true
   manifest_sha256:
 ```
 
+Claim references, evidence references, and evidence-lineage references are
+distinct namespaces. Every pair uses only refs declared in the matching known
+set; overlap and unique-claim refs are disjoint. `substantially_redundant`
+admits no unique claim or lineage delta. `materially_distinct` has no overlap
+and at least one unique claim; `partially_overlapping` has an overlap and at
+least one unique-claim or lineage delta. `sufficient` requires verified
+differences in both claim meaning and evidence lineage plus a candidate-specific
+unique verified contribution citing a known evidence reference. A difference
+in only one dimension is `insufficient`. Audit every unordered pair of the
+three or four valid candidates exactly once.
+
 This sidecar is excluded from `source_packet_sha256` so runtime state cannot
-change the common task. It proves phase order and identity without exposing raw
-thread identifiers, timestamps, secrets, or provider data. Compute every
+change the common task. It records and binds parent-observed phase order and
+identity without exposing raw thread identifiers, timestamps, secrets, or
+provider data; it is not host-enforced or tamper-evident proof. Compute every
 checkpoint and final digest with the projections and acyclic order defined in
 `Manifest Checkpoints And Acyclic Order`; `manifest_sha256` is calculated only
 after required QA.
@@ -595,6 +663,17 @@ moderator_report:
   evidence_authority_findings: []
   evidence_independence_findings: []
   anti_groupthink_findings: []
+  blind_semantic_redundancy:
+    status: sufficient | insufficient | unverifiable
+    reveal_packet_sha256:
+    unique_verified_contribution_refs: []
+    all_core_claims_materially_equivalent: true | false | unverifiable
+    all_evidence_lineages_equivalent: true | false | unverifiable
+    result_ceiling_effect: none | provisional_only
+  post_revision_convergence:
+    status: evidence_backed | mixed | unsupported | unverifiable
+    experience_transfer_claim_refs: []
+    evidence_delta_refs: []
   missing_evidence: []
   acceptance_matrix_results:
     - criterion_id:
@@ -633,6 +712,10 @@ consensus_report:
       positions: []
       exact_resolution_need:
   critical_minority_objections: []
+  deliberation_quality:
+    blind_semantic_redundancy_status: sufficient | insufficient | unverifiable
+    unique_verified_contribution_refs: []
+    post_revision_convergence_status: evidence_backed | mixed | unsupported | unverifiable
   hokage_synthesis:
   synthesis_provenance:
     source_revision_hashes: []
@@ -656,8 +739,17 @@ consensus_report:
   protected_boundaries_preserved: true
   final_qa:
     required: true | false
-    status: pass | fail | not_run
-    review_packet_scope: final_artifact_criteria_evidence_only
+    status: pass | fail | blocked | not_required | not_run
+    effective_result_status: verified_consensus | provisional_consensus | structured_dispute | blocked
+    request_id:
+    request_sha256:
+    result_sha256:
+    final_artifact_sha256:
+    reviewer_binding: host_provided | not_required | unavailable
+    request_result_artifact_binding_verified: true | false | not_required
+    independent_reviewer_attestation: true | false | not_required
+    role_blind_attestation: true | false | not_required
+    review_packet_scope: final_artifact_criteria_evidence_only | not_required
     candidate_role_identities_excluded: true
     findings:
       - criterion_id:
@@ -688,6 +780,42 @@ Before final QA, `protocol_run_manifest_sha256` remains empty. After the final Q
 freeze all semantic, provenance, result, QA, and stop fields, create the QA
 checkpoint and final manifest digest, then fill only that one manifest-hash
 field. Any other post-QA change invalidates the QA result.
+
+## Final-QA Request And Result
+
+For a consequential result, the host builds `final_qa_review_request.v1` with a
+unique request ID, task ID, `consensus_report.qa_review_projection` reference
+and digest, criteria, and evidence. Compute `request_sha256` with that field
+omitted. The independent
+reviewer returns `final_qa_review_result.v1` with the same request ID, task ID,
+request digest, and final-artifact digest, then computes `result_sha256` with
+that field omitted.
+
+Accept the result only when both self-digests recompute, all four binding fields
+match exactly, the request task ID equals the reviewed consensus task ID, the
+reviewer is host-provided and independent, role blindness is
+attested, and every finding has a reproducible next check. A missing or
+mismatched binding, including a replay from another request, is `blocked`.
+Store the request digest, result digest, artifact digest, reviewer binding,
+attestations, and exact result status in both the consensus report and the
+manifest `qa` section before creating the QA checkpoint. A status or reviewer
+binding mismatch invalidates the stored binding.
+The frozen `result_status` is the deliberation result proposed to QA. Record the
+deliverable outcome in `final_qa.effective_result_status`: copy `result_status`
+only after `pass` or when QA is not required; otherwise use `blocked`. Store the
+same effective status in the manifest QA block. Because the complete
+`final_qa` block is outside the review projection, this post-review gate does
+not mutate the artifact that the reviewer assessed.
+`final_qa.effective_result_status` is the sole consumer-facing delivery status.
+When it is `blocked`, the frozen `result_status`, `stop_decision`, and
+`next_action` are non-authoritative proposal history; expose only QA findings
+and the repair/rerun route.
+The v1 request, result, and finding objects are closed message envelopes: reject
+unknown keys instead of treating them as harmless extensions. Also reject a QA
+review projection that carries candidate outputs, role or method assignments,
+completion order, vote counts, role prestige, or raw reasoning/transcripts.
+The final consensus manifest digest must match the self-digest of the same-task
+manifest containing the identical QA record.
 
 ## Safety Report
 
@@ -725,4 +853,6 @@ Critical or major claims introduced by Hokage must be independently verified,
 demoted, or rejected. An unsupported Hokage-introduced claim cannot support
 `verified_consensus`. The role-blind final QA reviewer receives the final artifact, acceptance criteria,
 and evidence only; candidate identities, role prestige, completion order, and
-vote counts are excluded from the QA packet.
+vote counts are excluded from the QA packet. The non-bundled interoperability
+example in `templates/consensus-report.md` defines a minimal request and result
+shape without creating a seventh profile or claiming host availability.

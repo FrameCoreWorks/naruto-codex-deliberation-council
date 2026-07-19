@@ -25,7 +25,7 @@ Clone the specific release tag before opening the directory as a trusted Codex
 project:
 
 ```bash
-git clone --branch v1.0.1 --depth 1 \
+git clone --branch v1.1.0 --depth 1 \
   https://github.com/FrameCoreWorks/naruto-codex-deliberation-council.git
 cd naruto-codex-deliberation-council
 git describe --tags --exact-match
@@ -69,24 +69,25 @@ node scripts/install.mjs --scope project \
 
 | Surface | Status | Meaning |
 |---|---|---|
-| Package contract | `1.0.1` | Stable file, schema, profile-ID, method-ID, and installer contract. |
+| Package contract | `1.1.0` | Stable trigger, profile IDs, method IDs, layout, and installer roots; additive artifact fields follow the compatibility rules below. |
 | Repository self-check | `PASS REQUIRED` | `npm test` must pass on the exact checkout being used. It checks package structure and fixtures, not a real hosted deliberation. |
 | Isolated installer tests | `PASS REQUIRED` | Fresh install, strict CLI, source inventory, path/symlink controls, conflicts, and installed-target validation must pass. |
 | Published repository | `PUBLIC` | [FrameCoreWorks/naruto-codex-deliberation-council](https://github.com/FrameCoreWorks/naruto-codex-deliberation-council). |
 | Hosted CI baseline | `PASS` | Two Node 22/24 runs passed for the published `v1.0.0` commit: [main](https://github.com/FrameCoreWorks/naruto-codex-deliberation-council/actions/runs/29687294043) and [tag](https://github.com/FrameCoreWorks/naruto-codex-deliberation-council/actions/runs/29687369374). Every later release needs its own green evidence. |
 | Target-host discovery and same-thread revision | `NOT PROVEN` | A target Codex build must record live discovery, effective permission, capacity, isolation, and same-target follow-up evidence. |
-| Host orchestration adapter and event log | `NOT BUNDLED` | Version `1.0.1` relies on parent-owned logical artifacts retaining unmodified host-tool target IDs and receipts. No deterministic adapter or tamper-evident, host-enforced event log is included. |
+| Host orchestration adapter and event log | `NOT BUNDLED` | Version `1.1.0` relies on parent-owned logical artifacts retaining unmodified host-tool target IDs and receipts. No deterministic adapter or tamper-evident, host-enforced event log is included. |
 | Current host without that evidence | `BLOCKED` | Dedicated profiles cannot be replaced by generic agents and revisions cannot be recreated in new threads. |
-| Independent final QA | `CONDITIONAL, NOT BUNDLED` | Consequential results require a host-provided, role-blind `final_qa` reviewer. |
+| Independent final QA | `CONDITIONAL, NOT BUNDLED` | Consequential results require a host-provided, role-blind `final_qa` reviewer. The closed-envelope example binds request, result, task, final artifact, manifest, and effective outcome without adding a seventh profile; mismatch, replay, or non-pass QA blocks delivery. |
+| Blind semantic-redundancy audit | `BUNDLED, HEURISTIC` | Kakashi compares claim meaning and evidence lineages before reveal. `sufficient` requires verified differences in both dimensions plus a unique contribution; one-dimensional, redundant, or unverifiable comparison caps the result at `provisional_consensus`. This is not a benchmark or deterministic similarity proof. |
 | Method diversity and quality lift | `NOT MEASURED` | Four fixed instruction-level methods do not prove behavioral diversity or improvement over a single agent or planner-critic baseline. |
 | Runtime cost and latency | `NOT BENCHMARKED` | The multi-agent path is expected to use more turns and resources, but this release makes no quantified efficiency claim. |
 | Fan-art and franchise rights | `NOT CLEARED` | Technical validation, MIT licensing of original project material, and disclaimers do not grant third-party rights. |
 
-See the [1.0.1 acceptance matrix](docs/release-acceptance-v1.0.1.md) for the
+See the [1.1.0 acceptance matrix](docs/release-acceptance-v1.1.0.md) for the
 evidence required before a release or host run may be called accepted. The
 [benchmark plan](docs/benchmark-plan.md) defines how later work can measure
 output diversity, decision quality, latency, tokens, and cost without treating
-method labels as evidence. Version `1.0.1` includes no benchmark results and
+method labels as evidence. Version `1.1.0` includes no benchmark results and
 does not claim superiority over either baseline.
 
 ## Result Shape And Failure Modes
@@ -97,6 +98,8 @@ A successful run ends with one of the protocol statuses
 
 ```text
 result_status: structured_dispute
+final_qa_status: not_required
+effective_result_status: structured_dispute
 stop_decision: ask_user
 supported_route: <claim-level synthesis with evidence references>
 preserved_minority_objections:
@@ -105,6 +108,10 @@ runtime_evidence: <recorded preflight and same-target receipts>
 ```
 
 This is a contract example, not a recorded host execution.
+After QA, consumers must use `effective_result_status` as the sole delivery
+status. When it is `blocked`, the frozen proposal's `result_status`,
+`stop_decision`, and `next_action` are non-authoritative; only QA findings and a
+repair or rerun route may be delivered.
 
 | Condition | Expected behavior |
 |---|---|
@@ -112,6 +119,7 @@ This is a contract example, not a recorded host execution.
 | A required profile, supervisor, permission check, or child slot is unavailable | Return `blocked` before fan-out. |
 | Source isolation or commit barrier cannot be demonstrated | Return `blocked`; do not infer independence. |
 | Same-target follow-up cannot return to all four original instances | Return `blocked`; do not spawn replacement revisions. |
+| Blind outputs differ in fewer than both required semantic dimensions, are redundant, or cannot be verified | Cap at `provisional_consensus`; do not manufacture dissent. |
 | Consequential result lacks independent final QA | Return `blocked`. |
 | Static, checksum, or installer validation fails | Do not install, release, or claim acceptance. |
 | A solution asks for writes, providers, uploads, pushes, or deletion | Deliberation may recommend a later action, but `$naruto` grants no authority to execute it. |
@@ -334,8 +342,9 @@ manifest projections, strictly parsed profile TOML and agent-card YAML, trigger
 and protocol fixtures, fail-closed classifiers, checkpoint projections,
 installer security, release metadata, and checksums. It is not a complete
 validator for arbitrary live-run artifacts and does not prove that a particular
-Codex host performed a run. A full machine-readable recorded-run validator is
-deferred to `1.1.0`.
+Codex host performed a run. The claim-level semantic-redundancy fixture is a
+fail-closed protocol check, not measured behavioral evidence. A full
+machine-readable recorded-run validator is deferred to `1.2.0`.
 
 ## Install And Update
 
@@ -383,13 +392,13 @@ migration gate.
 7. Restart Codex or start a new task and repeat target-host acceptance.
 
 The release suite reproduces the complete `0.4.0` package inventory from commit
-`42cab91`: 23 files are replaced, 10 are unchanged, and no package paths are
+`42cab91`: 24 files are replaced, 9 are unchanged, and no package paths are
 created during that migration.
 
 Copies remain sequential rather than transactional. A filesystem or final
 validation failure can leave a partial set of verified files. Inspect the exact
 reported paths and rerun a dry run before recovery. No automatic rollback or
-uninstall is claimed in `1.0.1`. A concurrent writer can still swap a parent
+uninstall is claimed in `1.1.0`. A concurrent writer can still swap a parent
 directory between pathname checks because Node has no portable `openat` API;
 shared-writable and elevated installs are outside the supported trust boundary.
 
@@ -410,6 +419,7 @@ record the Codex build, scope, and evidence for:
 - one revision with a traceable experience-transfer ledger per instance
 - nine ordered and linked protocol checkpoints
 - evidence-lineage counting and minority-objection preservation
+- blind-output claim/evidence-lineage redundancy status and any result ceiling
 - claim-level Hokage synthesis and consequential independent final QA
 - no authority escalation and stop after one reveal/revision cycle
 - a retained acceptance record for the preflight and same-target receipts

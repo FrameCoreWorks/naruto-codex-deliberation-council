@@ -2,12 +2,12 @@
 
 ## Supported Versions
 
-Security fixes are maintained for the latest `1.0.x` release.
+Security fixes are maintained for the latest `1.x` release.
 
 | Version | Supported |
 |---|---|
-| `1.0.1` | Yes |
-| `1.0.0` | Upgrade to `1.0.1` |
+| `1.1.0` | Yes |
+| `1.0.0`–`1.0.1` | Upgrade to `1.1.0` |
 | `< 1.0` | No |
 
 ## Reporting A Vulnerability
@@ -67,7 +67,7 @@ SLA.
 
 ## Installer Boundaries
 
-The `1.0.1` installer:
+The `1.1.0` installer:
 
 - rejects unknown, duplicated, missing-value, and scope-incompatible options
   before writing
@@ -85,7 +85,7 @@ The `1.0.1` installer:
 Copies are sequential and post-copy verified, but not transactional. A
 filesystem or final-validation failure can leave a partial set of copied
 files. Inspect the reported paths and rerun a dry run before recovery. Version
-`1.0.1` does not claim automatic rollback or uninstall.
+`1.1.0` does not claim automatic rollback or uninstall.
 
 Node.js does not expose a portable `openat`-style API, so checks of destination
 ancestor directories cannot be atomic with the final open on every supported

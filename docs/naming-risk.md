@@ -80,7 +80,22 @@ The publisher should document one of these routes:
    rights risk. The MIT license and disclaimer do not transfer that risk or
    provide the missing permission.
 
-A technical `1.0.1` validation pass is not a legal-clearance result. If names
+## Current Distribution State
+
+As of 2026-07-19, the public package retains the exact `$naruto` compatibility
+trigger, franchise-derived role labels, repository name, and user-selected
+fan-art banner. Rights remain `NOT CLEARED`. This is a factual inventory of the
+current route, not an inference that FrameCoreWorks has knowingly accepted the
+legal risk, obtained permission, received legal clearance, or established fair
+use. Explicit publisher confirmation of route 1, 2, or 3 remains pending.
+
+Obtain and record that confirmation before commercial distribution, paid
+promotion, merchandising, a material branding expansion, or after any
+rights-holder notice. Any review must treat the repository name, runtime IDs,
+documentation, and banner as one coordinated surface rather than changing only
+one label.
+
+A technical `1.1.0` validation pass is not a legal-clearance result. If names
 or artwork change, update the README, notice, manifests, checksums, fixtures,
 profile labels, acceptance tests, repository metadata, and release materials
 together. Do not rename only one layer of the protocol.
