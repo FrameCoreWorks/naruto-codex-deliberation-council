@@ -5,6 +5,42 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-07-19
+
+### Added
+
+- A required pre-reveal semantic-redundancy audit that compares blind outputs at
+  claim and evidence-lineage level, records unique verified contributions, and
+  caps insufficient or unverifiable diversity at `provisional_consensus`.
+- A non-bundled `final_qa` request/result interoperability example that preserves
+  role blindness with closed message envelopes, binds the reviewed task,
+  artifact, same-task manifest, and effective delivery status, rejects replay
+  or mismatch, and retains the six-profile runtime contract.
+- Negative fixtures and reference scans for redundant blind outputs,
+  unverifiable semantic comparison, stale opaque-handle requirements, and
+  overclaimed sidecar proof.
+
+### Changed
+
+- Released this required protocol extension as `1.1.0`, not a patch, and
+  documented additive `.v1` reader behavior for retained `1.0.x` artifacts.
+- Raised the agent manifest and fixture schema versions from `4` to `6` for the
+  semantic-redundancy and final-QA interoperability contracts.
+- Recorded the current user-selected naming and fan-art route with rights status
+  `NOT CLEARED`, while keeping publisher legal-risk confirmation explicitly
+  pending and listing concrete re-review triggers.
+- Kept semantic overlap explicitly heuristic and unbenchmarked; method IDs,
+  wording differences, and invented percentages do not establish diversity.
+
+### Fixed
+
+- Replaced stale requirements for model-visible opaque thread-handle hashes in
+  mandatory references with parent-retained spawn targets and successful
+  host-tool same-target follow-up receipts.
+- Replaced the claim that the logical sidecar "proves" phase order with the
+  narrower statement that it records and binds parent-observed state without
+  host-enforced or tamper-evident guarantees.
+
 ## [1.0.1] - 2026-07-19
 
 ### Added

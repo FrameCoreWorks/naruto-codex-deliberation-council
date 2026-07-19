@@ -2,27 +2,27 @@
   "schema": "naruto_installer_historical_inventory.v1",
   "source_commit": "42cab91",
   "source_version": "0.4.0",
-  "target_version": "1.0.1",
+  "target_version": "1.1.0",
   "expected_counts": {
     "create": 0,
-    "overwrite": 23,
-    "unchanged": 10
+    "overwrite": 24,
+    "unchanged": 9
   },
   "entries": [
     {
       "path": ".agents/skills/naruto/SKILL.md",
       "historical_sha256": "9d8d321cf15e9feebcf63230ebc1fbad1bd6b0f02d3e8edd114c72a3aba040f7",
-      "target_sha256": "0f7ec86bba1dfd52c020002d93ef198cae73fc9fc54cdc3a99bb1640547a813d"
+      "target_sha256": "b497ec6f4792fb806cb35138531118745a536773a24210bda7fd2da812d62a3f"
     },
     {
       "path": ".agents/skills/naruto/agent_manifest.json",
       "historical_sha256": "72f3246068e5f822c3e4ef0124c0e65e5168394bc7d61dd10abf637c3ad63b48",
-      "target_sha256": "b2eafbbc05a5f0f73ab5753869c74e69d6637bec7aa33711fa03c16ca8158da9"
+      "target_sha256": "6eab4d11d3e7327fe5ca0efb24445a191ce081d33e5508f55a2f21a93d1c1da6"
     },
     {
       "path": ".agents/skills/naruto/agents/kakashi-hatake.yaml",
       "historical_sha256": "6bb8a17f87c8efa033faae2edd0ca736bde7ddf382bb0e5d3eea52a1d3be3588",
-      "target_sha256": "8ab7dc2646cb0ac8cc3696d94407399cfdb93a4a65554d86332d33f49054d51d"
+      "target_sha256": "451eb7cceab036c3a3d835a0e62b9458438401b28cd59494f86a47da13d2a7c5"
     },
     {
       "path": ".agents/skills/naruto/agents/naruto-clone-challenger.yaml",
@@ -57,37 +57,37 @@
     {
       "path": ".agents/skills/naruto/fixtures/naruto-fixtures.json",
       "historical_sha256": "08b204e504bec92c8b690c19ace7cfe7d8d04d1a40e9740bcd664060d8664f8c",
-      "target_sha256": "6bdb15537e66989c60fb0e3140632aaaa2e2ea0ae83b2de1d316b5185fb8113d"
+      "target_sha256": "f0ccf303cdd2e00a93ec5bcbf045b9204a245830798189faa0c0b6f669e594d2"
     },
     {
       "path": ".agents/skills/naruto/references/contracts-and-schemas.md",
       "historical_sha256": "8a937e2ea5ffc92e002595d66660658a4f4f8e0543d71e2dab18a512297057b4",
-      "target_sha256": "baae1621e11918a10291c323c2246709aadf3770e1cadafd24c693d218a0df82"
+      "target_sha256": "f2477456329dcb705395b1b014a4be5ea18ed928330a220555ffc41fa37fba04"
     },
     {
       "path": ".agents/skills/naruto/references/deliberation-protocol.md",
       "historical_sha256": "515c3c5338d0d8789249f42435a2154e107d843fe485e4e9feac246a32802b0d",
-      "target_sha256": "50fb42199718d8ee956b651d91da04cc9d1b61488f579d36864b8b616f9fee3f"
+      "target_sha256": "05d6e92c70af6834086e74eb11ee821e628ad467ca91a1b84bdb9af5db847004"
     },
     {
       "path": ".agents/skills/naruto/references/examples-and-failure-modes.md",
       "historical_sha256": "38b62b6063a18a5290298161f9cf8df30c8b1bc03200fa70e02620259184dee1",
-      "target_sha256": "fc0b2ed1bcdda27ba6b7e233b815409eef1d9b03033469d70871c0c310e64759"
+      "target_sha256": "02bd82c65ac4aab415b688ea573a5b8da94f2f4dbc63bb290b05274d3448cb2d"
     },
     {
       "path": ".agents/skills/naruto/references/prior-art-assimilation.md",
       "historical_sha256": "b9e39cb4beb926e29c84c1ae88f65c099dca47b7f5f65c71048f6c8c6e850d51",
-      "target_sha256": "dbff6f8656a3308244de99dccb1a3f5d0ab13a50a25ff353b4b4ab59c5e8bf3b"
+      "target_sha256": "2a091e8db5102c06d594ceca638e3786d4f730133cc13cca1f660337047487e5"
     },
     {
       "path": ".agents/skills/naruto/references/role-methods.md",
       "historical_sha256": "35fa5baaf1bff6a84ef73d2b42ec8fe3f20d5fab79c2ca0e04b6d23e6c04ca54",
-      "target_sha256": "5c442eb7a2e6ba5ab413de47eb02cf9c65f118af7328f36244e03444087c5ecd"
+      "target_sha256": "3712666e003932fa14d5bff5fb103750a09a2742602ff2d7c821339264577517"
     },
     {
       "path": ".agents/skills/naruto/scripts/validate-naruto.mjs",
       "historical_sha256": "c9301e20ccb2bfc77c14f1123a58ccf106044e76ebdb974d8994ce30903c802f",
-      "target_sha256": "7cacb57dc731d9e4f6377126ebcc426d9808a636c29ade4e05a2e738397f9620"
+      "target_sha256": "6c4f9ad51e134f4a090a1fabd3bd6f7474ea935d7a0e3f230e8b2e3d98610631"
     },
     {
       "path": ".agents/skills/naruto/templates/candidate-solution.md",
@@ -97,7 +97,7 @@
     {
       "path": ".agents/skills/naruto/templates/consensus-report.md",
       "historical_sha256": "cb9d54d734446fdd5bf9e252bd23521648a62c802d2b17e1aef83cb8e1c73047",
-      "target_sha256": "3fc9cb08e5bdc680deac44086f724eef8aca8b02adb3bd841fcc35d8ffafb033"
+      "target_sha256": "7a1146f04eaaa7a34ea674a2644df797460d31857d29d2f666d0e755e7fe2b45"
     },
     {
       "path": ".agents/skills/naruto/templates/method-matrix.md",
@@ -112,12 +112,12 @@
     {
       "path": ".agents/skills/naruto/templates/protocol-run-manifest.md",
       "historical_sha256": "5a97b71910f1a6039b7ea4e902db410db615f833ac8e90bd7fe13df339d6d39b",
-      "target_sha256": "f401bd98361471bbca7f44beff849e89952f1870622a0d6f3221c6e41a5d4208"
+      "target_sha256": "06d77ce315c3a6b2744086ecf01f1ffec03b03187958c1aa8c4e51bad83d0dea"
     },
     {
       "path": ".agents/skills/naruto/templates/reveal-transfer.md",
       "historical_sha256": "26669850049389265d242f16d6ccd5c626bf21a77d50412fe3d34bc12f77f1de",
-      "target_sha256": "26669850049389265d242f16d6ccd5c626bf21a77d50412fe3d34bc12f77f1de"
+      "target_sha256": "026d1bb38466a6904db354853302bc60d5cb11ea626352da09254cdbc7435bb1"
     },
     {
       "path": ".agents/skills/naruto/templates/revision.md",
@@ -147,7 +147,7 @@
     {
       "path": ".codex/agents/kakashi_hatake.toml",
       "historical_sha256": "db0da7b683decd58c83f6d92b48007b4ccc24d2fb929e3db961c82b077fcba1f",
-      "target_sha256": "08231fd16881d7e4952a4651bcdacfc7a17b4498bd5adb7153b0b44bbe6ff80e"
+      "target_sha256": "4d97bcce769703aa14dd7910d1f98f87069fce42a82ac7131778f441d74cc5cf"
     },
     {
       "path": ".codex/agents/naruto_clone_challenger.toml",

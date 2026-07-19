@@ -24,6 +24,7 @@ protocol_run_manifest:
     commit_barrier_closed: pass | fail | not_reached
     reveal_byte_identical: pass | fail | not_reached
     same_target_followup_receipts_verified: pass | partial | fail | not_reached
+    blind_semantic_redundancy_audit_complete: pass | fail | not_reached
     moderator_reconcile_complete: pass | fail | not_reached
     safety_report_complete: pass | fail | not_reached
     synthesis_provenance_checked: pass | fail | not_reached
@@ -50,6 +51,18 @@ protocol_run_manifest:
     hold_count: 0
     report_complete: false
     safety_report_sha256: ""
+  qa:
+    required: true | false
+    request_id: ""
+    request_sha256: ""
+    result_sha256: ""
+    final_artifact_sha256: ""
+    reviewer_binding: host_provided | not_required | unavailable
+    request_result_artifact_binding_verified: true | false | not_required
+    independent_reviewer_attestation: true | false | not_required
+    role_blind_attestation: true | false | not_required
+    status: pass | fail | blocked | not_required | not_reached
+    effective_result_status: verified_consensus | provisional_consensus | structured_dispute | blocked | not_reached
   checkpoint_hashes:
     source_packet: ""
     training_control: ""
@@ -62,6 +75,7 @@ protocol_run_manifest:
     qa: ""
   retries: []
   degradation_flags: []
+  blind_semantic_redundancy_status: sufficient | insufficient | unverifiable | not_reached
   result_ceiling_reason: ""
   protected_boundaries_preserved: true
   manifest_sha256: ""

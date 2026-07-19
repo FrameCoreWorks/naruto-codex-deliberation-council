@@ -61,7 +61,7 @@ const expectedAgents = [
   {
     card: "kakashi-hatake.yaml",
     runtime: "kakashi_hatake",
-    contracts: ["naruto_moderator.v1", "naruto_training_guidance.v1", "naruto_commit_barrier.v1", "naruto_phase_integrity.v1", "naruto_groupthink_audit.v1"],
+    contracts: ["naruto_moderator.v1", "naruto_training_guidance.v1", "naruto_commit_barrier.v1", "naruto_phase_integrity.v1", "naruto_groupthink_audit.v1", "naruto_semantic_redundancy_audit.v1"],
   },
   {
     card: "yamato.yaml",
@@ -394,6 +394,303 @@ function artifactDigest(value, selfDigestField) {
   return sha256(projection);
 }
 
+function finalQaReviewArtifactProjection(consensusReport) {
+  const projection = JSON.parse(JSON.stringify(consensusReport));
+  delete projection.protocol_run_manifest_sha256;
+  delete projection.final_qa;
+  return projection;
+}
+
+function finalQaReviewArtifactDigest(consensusReport) {
+  return sha256(finalQaReviewArtifactProjection(consensusReport));
+}
+
+const allowedFinalQaBoundaryKeys = new Set([
+  "candidate_role_identities_excluded",
+  "role_prestige_excluded",
+  "completion_order_excluded",
+  "vote_counts_excluded",
+  "raw_reasoning_included",
+]);
+const finalQaRequestKeys = new Set([
+  "schema",
+  "request_id",
+  "task_id",
+  "consequential_reason",
+  "final_artifact_ref",
+  "final_artifact_sha256",
+  "acceptance_criteria",
+  "evidence_refs",
+  "candidate_role_identities_excluded",
+  "role_prestige_excluded",
+  "completion_order_excluded",
+  "vote_counts_excluded",
+  "raw_reasoning_included",
+  "request_sha256",
+]);
+const finalQaResultKeys = new Set([
+  "schema",
+  "request_id",
+  "task_id",
+  "request_sha256",
+  "final_artifact_sha256",
+  "reviewer_binding",
+  "independent_reviewer_attestation",
+  "role_blind_attestation",
+  "status",
+  "findings",
+  "raw_reasoning_included",
+  "result_sha256",
+]);
+const finalQaFindingKeys = new Set([
+  "criterion_id",
+  "observed",
+  "expected",
+  "evidence_refs",
+  "reproducible_next_check",
+]);
+const consensusFinalQaKeys = new Set([
+  "required",
+  "status",
+  "effective_result_status",
+  "request_id",
+  "request_sha256",
+  "result_sha256",
+  "final_artifact_sha256",
+  "reviewer_binding",
+  "request_result_artifact_binding_verified",
+  "independent_reviewer_attestation",
+  "role_blind_attestation",
+  "review_packet_scope",
+  "candidate_role_identities_excluded",
+  "findings",
+]);
+const manifestFinalQaKeys = new Set([
+  "required",
+  "request_id",
+  "request_sha256",
+  "result_sha256",
+  "final_artifact_sha256",
+  "reviewer_binding",
+  "request_result_artifact_binding_verified",
+  "independent_reviewer_attestation",
+  "role_blind_attestation",
+  "status",
+  "effective_result_status",
+]);
+
+function hasExactKeys(value, allowedKeys) {
+  return (
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    Object.keys(value).every((key) => allowedKeys.has(key))
+  );
+}
+
+function hasForbiddenFinalQaPayloadKey(value) {
+  if (Array.isArray(value)) return value.some(hasForbiddenFinalQaPayloadKey);
+  if (!value || typeof value !== "object") return false;
+  return Object.entries(value).some(([key, nested]) => {
+    const normalized = key
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+    const carriesExcludedContent =
+      /(^|_)(candidate_role_identities|candidate_role_ids|candidate_identities|candidate_outputs?|candidate_profiles?|candidate_methods?|role_assignments?|method_assignments?|actor_identity_ids?|instance_ids?|role_prestige|completion_order|vote_counts?|raw_reasoning|raw_transcripts?|raw_outputs?|blind_outputs?|candidate_transcripts?)(_|$)/.test(
+        normalized,
+      );
+    return (
+      (carriesExcludedContent && !allowedFinalQaBoundaryKeys.has(normalized)) ||
+      hasForbiddenFinalQaPayloadKey(nested)
+    );
+  });
+}
+
+function validatesFinalQaBinding(request, result, consensusReport) {
+  const nonEmpty = (value) => typeof value === "string" && value.length > 0;
+  const sha = (value) => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
+  const stringArray = (value) =>
+    Array.isArray(value) && value.every((item) => typeof item === "string");
+  const requestValid =
+    hasExactKeys(request, finalQaRequestKeys) &&
+    request?.schema === "final_qa_review_request.v1" &&
+    nonEmpty(request.request_id) &&
+    nonEmpty(request.task_id) &&
+    request.task_id === consensusReport?.task_id &&
+    nonEmpty(request.consequential_reason) &&
+    request.final_artifact_ref === "consensus_report.qa_review_projection" &&
+    sha(request.final_artifact_sha256) &&
+    consensusReport?.schema === "consensus_report.v1" &&
+    !hasForbiddenFinalQaPayloadKey(finalQaReviewArtifactProjection(consensusReport)) &&
+    request.final_artifact_sha256 === finalQaReviewArtifactDigest(consensusReport) &&
+    stringArray(request.acceptance_criteria) &&
+    request.acceptance_criteria.length > 0 &&
+    request.acceptance_criteria.every(nonEmpty) &&
+    stringArray(request.evidence_refs) &&
+    request.candidate_role_identities_excluded === true &&
+    request.role_prestige_excluded === true &&
+    request.completion_order_excluded === true &&
+    request.vote_counts_excluded === true &&
+    request.raw_reasoning_included === false &&
+    !hasForbiddenFinalQaPayloadKey(request) &&
+    sha(request.request_sha256) &&
+    request.request_sha256 === artifactDigest(request, "request_sha256");
+  const findingsValid =
+    Array.isArray(result?.findings) &&
+    result.findings.every(
+      (finding) =>
+        hasExactKeys(finding, finalQaFindingKeys) &&
+        nonEmpty(finding?.criterion_id) &&
+        nonEmpty(finding?.observed) &&
+        nonEmpty(finding?.expected) &&
+        stringArray(finding?.evidence_refs) &&
+        nonEmpty(finding?.reproducible_next_check),
+    ) &&
+    ((result?.status === "pass" && result.findings.length === 0) ||
+      (["fail", "blocked"].includes(result?.status) && result.findings.length > 0));
+  const resultValid =
+    hasExactKeys(result, finalQaResultKeys) &&
+    result?.schema === "final_qa_review_result.v1" &&
+    result?.reviewer_binding === "host_provided" &&
+    result?.independent_reviewer_attestation === true &&
+    result?.role_blind_attestation === true &&
+    ["pass", "fail", "blocked"].includes(result?.status) &&
+    findingsValid &&
+    result?.raw_reasoning_included === false &&
+    !hasForbiddenFinalQaPayloadKey(result) &&
+    sha(result?.result_sha256) &&
+    result.result_sha256 === artifactDigest(result, "result_sha256");
+  return (
+    requestValid &&
+    resultValid &&
+    result.request_id === request.request_id &&
+    result.task_id === request.task_id &&
+    result.request_sha256 === request.request_sha256 &&
+    result.final_artifact_sha256 === request.final_artifact_sha256
+  );
+}
+
+function validatesRecordedFinalQaBinding(request, result, consensusReport, runManifest) {
+  if (!validatesFinalQaBinding(request, result, consensusReport)) return false;
+  const consensusQa = consensusReport?.final_qa;
+  const manifestQa = runManifest?.qa;
+  const expectedEffectiveResultStatus =
+    result.status === "pass" ? consensusReport?.result_status : "blocked";
+  const commonBindingMatches = (qa) =>
+    qa?.request_id === request.request_id &&
+    qa?.request_sha256 === request.request_sha256 &&
+    qa?.result_sha256 === result.result_sha256 &&
+    qa?.final_artifact_sha256 === request.final_artifact_sha256 &&
+    qa?.reviewer_binding === result.reviewer_binding &&
+    qa?.request_result_artifact_binding_verified === true &&
+    qa?.independent_reviewer_attestation === result.independent_reviewer_attestation &&
+    qa?.role_blind_attestation === result.role_blind_attestation &&
+    qa?.status === result.status &&
+    qa?.effective_result_status === expectedEffectiveResultStatus;
+  return (
+    hasExactKeys(consensusQa, consensusFinalQaKeys) &&
+    hasExactKeys(manifestQa, manifestFinalQaKeys) &&
+    consensusQa?.required === true &&
+    manifestQa?.required === true &&
+    consensusQa?.review_packet_scope === "final_artifact_criteria_evidence_only" &&
+    consensusQa?.candidate_role_identities_excluded === true &&
+    typeof runManifest?.run_id === "string" &&
+    runManifest.run_id.length > 0 &&
+    runManifest?.task_id === request.task_id &&
+    typeof runManifest?.manifest_sha256 === "string" &&
+    /^[a-f0-9]{64}$/.test(runManifest.manifest_sha256) &&
+    runManifest.manifest_sha256 === artifactDigest(runManifest, "manifest_sha256") &&
+    consensusReport?.protocol_run_manifest_sha256 === runManifest.manifest_sha256 &&
+    runManifest?.phase_integrity?.final_qa_complete_or_not_required === "pass" &&
+    commonBindingMatches(consensusQa) &&
+    commonBindingMatches(manifestQa) &&
+    JSON.stringify(consensusQa.findings) === JSON.stringify(result.findings)
+  );
+}
+
+function validatesNotRequiredFinalQaRecord(consensusReport, runManifest) {
+  const consensusQa = consensusReport?.final_qa;
+  const manifestQa = runManifest?.qa;
+  const qaIsNotRequired = (qa) =>
+    qa?.required === false &&
+    qa?.status === "not_required" &&
+    qa?.effective_result_status === consensusReport?.result_status &&
+    qa?.request_id === "" &&
+    qa?.request_sha256 === "" &&
+    qa?.result_sha256 === "" &&
+    qa?.final_artifact_sha256 === "" &&
+    qa?.reviewer_binding === "not_required" &&
+    qa?.request_result_artifact_binding_verified === "not_required" &&
+    qa?.independent_reviewer_attestation === "not_required" &&
+    qa?.role_blind_attestation === "not_required";
+  return (
+    hasExactKeys(consensusQa, consensusFinalQaKeys) &&
+    hasExactKeys(manifestQa, manifestFinalQaKeys) &&
+    qaIsNotRequired(consensusQa) &&
+    qaIsNotRequired(manifestQa) &&
+    consensusQa.review_packet_scope === "not_required" &&
+    consensusQa.candidate_role_identities_excluded === true &&
+    Array.isArray(consensusQa.findings) &&
+    consensusQa.findings.length === 0 &&
+    runManifest?.task_id === consensusReport?.task_id &&
+    runManifest?.phase_integrity?.final_qa_complete_or_not_required === "pass" &&
+    /^[a-f0-9]{64}$/.test(runManifest?.manifest_sha256 ?? "") &&
+    runManifest.manifest_sha256 === artifactDigest(runManifest, "manifest_sha256") &&
+    consensusReport?.protocol_run_manifest_sha256 === runManifest.manifest_sha256
+  );
+}
+
+function finalDeliveryView(consensusReport) {
+  const qa = consensusReport?.final_qa;
+  const resultStatus = consensusReport?.result_status;
+  const validResultStatuses = new Set([
+    "verified_consensus",
+    "provisional_consensus",
+    "structured_dispute",
+    "blocked",
+  ]);
+  const boundReview =
+    qa?.request_result_artifact_binding_verified === true &&
+    qa?.reviewer_binding === "host_provided" &&
+    qa?.independent_reviewer_attestation === true &&
+    qa?.role_blind_attestation === true;
+  const requiredPass =
+    qa?.required === true &&
+    qa?.status === "pass" &&
+    boundReview &&
+    validResultStatuses.has(qa?.effective_result_status) &&
+    qa.effective_result_status === resultStatus;
+  const notRequired =
+    qa?.required === false &&
+    qa?.status === "not_required" &&
+    qa?.request_result_artifact_binding_verified === "not_required" &&
+    qa?.reviewer_binding === "not_required" &&
+    qa?.independent_reviewer_attestation === "not_required" &&
+    qa?.role_blind_attestation === "not_required" &&
+    validResultStatuses.has(qa?.effective_result_status) &&
+    qa.effective_result_status === resultStatus;
+  if (!requiredPass && !notRequired) {
+    return {
+      result_status: "blocked",
+      stop_decision: "blocked",
+      next_action: "address_final_qa_findings_or_rerun",
+    };
+  }
+  if (qa.effective_result_status === "blocked") {
+    return {
+      result_status: "blocked",
+      stop_decision: "blocked",
+      next_action: "address_final_qa_findings_or_rerun",
+    };
+  }
+  return {
+    result_status: qa.effective_result_status,
+    stop_decision: consensusReport?.stop_decision,
+    next_action: consensusReport?.next_action,
+  };
+}
+
 const protocolCheckpointOrder = [
   "source_packet",
   "training_control",
@@ -434,7 +731,7 @@ function createProtocolCheckpoint(manifest, phase) {
 
 function verifyProtocolCheckpointChain(checkpoints, manifest) {
   if (!Array.isArray(checkpoints) || checkpoints.length !== protocolCheckpointOrder.length) return false;
-  return checkpoints.every((checkpoint, index) => {
+  const chainValid = checkpoints.every((checkpoint, index) => {
     const expectedPrevious = index === 0 ? null : checkpoints[index - 1].checkpoint_sha256;
     const snapshot = checkpoint?.manifest_snapshot;
     return checkpoint.schema === "protocol_checkpoint.v1" &&
@@ -455,6 +752,11 @@ function verifyProtocolCheckpointChain(checkpoints, manifest) {
       !own(snapshot, "checkpoint_hashes") &&
       !own(snapshot, "manifest_sha256");
   });
+  if (!chainValid) return false;
+  const finalManifestSnapshot = JSON.parse(JSON.stringify(manifest));
+  delete finalManifestSnapshot.checkpoint_hashes;
+  delete finalManifestSnapshot.manifest_sha256;
+  return sha256(checkpoints.at(-1)?.manifest_snapshot) === sha256(finalManifestSnapshot);
 }
 
 function rehashCheckpointChainForProbe(checkpoints, manifest) {
@@ -468,6 +770,18 @@ function rehashCheckpointChainForProbe(checkpoints, manifest) {
     manifest.checkpoint_hashes[checkpoints[index].phase] =
       checkpoints[index].checkpoint_sha256;
   }
+}
+
+function rebuildFinalQaCheckpoint(checkpoints, manifest) {
+  const rebuilt = JSON.parse(JSON.stringify(checkpoints));
+  const qaIndex = protocolCheckpointOrder.indexOf("qa");
+  manifest.current_phase = "qa";
+  manifest.manifest_sha256 = "";
+  const qaCheckpoint = createProtocolCheckpoint(manifest, "qa");
+  rebuilt[qaIndex] = qaCheckpoint;
+  manifest.checkpoint_hashes.qa = qaCheckpoint.checkpoint_sha256;
+  manifest.manifest_sha256 = artifactDigest(manifest, "manifest_sha256");
+  return rebuilt;
 }
 
 function matchesExactTrigger(message) {
@@ -566,7 +880,7 @@ function classifyProtocolFixture(fixture) {
     fixture.barrier !== "pass" ||
     fixture.moderator !== "available" ||
     fixture.valid_commits < 3 ||
-    fixture.valid_same_target_followup_receipts < 3
+    fixture.valid_same_target_followup_receipts < 4
   ) {
     return "blocked";
   }
@@ -672,6 +986,11 @@ function classifyIntegrityFixture(fixture) {
     ["pass", "fail"].includes(fixture.barrier) &&
     typeof fixture.reveal_byte_identical === "boolean" &&
     ["pass", "fail"].includes(fixture.anti_groupthink_audit) &&
+    ["sufficient", "insufficient", "unverifiable"].includes(
+      fixture.semantic_redundancy_audit,
+    ) &&
+    typeof fixture.semantic_redundancy_case_id === "string" &&
+    fixture.semantic_redundancy_case_id.length > 0 &&
     typeof fixture.consequential === "boolean" &&
     ["pass_reproducible", "fail_non_reproducible", "fail", "not_required"].includes(
       fixture.final_qa,
@@ -702,8 +1021,8 @@ function classifyIntegrityFixture(fixture) {
   if (
     fixture.barrier !== "pass" ||
     fixture.reveal_byte_identical !== true ||
-    fixture.same_target_followup_receipts < 3 ||
-    fixture.experience_transfer_ledgers < 3 ||
+    fixture.same_target_followup_receipts < 4 ||
+    fixture.experience_transfer_ledgers < 4 ||
     fixture.guidance_byte_identical === false ||
     fixture.safety_control_byte_identical === false ||
     fixture.instance_specific_coaching_detected === true ||
@@ -728,11 +1047,210 @@ function classifyIntegrityFixture(fixture) {
     fixture.critical_shared_lineage_only === true ||
     fixture.quick_surrender_unresolved === true ||
     fixture.hokage_unverified_critical_or_major_claims > 0 ||
+    fixture.semantic_redundancy_audit !== "sufficient" ||
     fixture.evidence !== "complete_independent"
   ) {
     return "provisional_consensus";
   }
   return "verified_consensus";
+}
+
+function classifySemanticRedundancyFixture(fixture) {
+  const stringArray = (value) =>
+    Array.isArray(value) && value.every((item) => typeof item === "string" && item.length > 0);
+  if (!fixture || typeof fixture !== "object") return "invalid";
+  const candidateIds = fixture.candidate_ids;
+  const knownClaimRefs = fixture.known_claim_refs;
+  const knownEvidenceRefs = fixture.known_evidence_refs;
+  const knownEvidenceLineageRefs = fixture.known_evidence_lineage_refs;
+  const pairs = fixture.pair_assessments;
+  const contributions = fixture.unique_verified_contributions;
+  if (
+    !stringArray(candidateIds) ||
+    ![3, 4].includes(candidateIds.length) ||
+    new Set(candidateIds).size !== candidateIds.length ||
+    !stringArray(knownClaimRefs) ||
+    new Set(knownClaimRefs).size !== knownClaimRefs.length ||
+    !stringArray(knownEvidenceRefs) ||
+    new Set(knownEvidenceRefs).size !== knownEvidenceRefs.length ||
+    !stringArray(knownEvidenceLineageRefs) ||
+    new Set(knownEvidenceLineageRefs).size !== knownEvidenceLineageRefs.length ||
+    !Array.isArray(pairs) ||
+    !Array.isArray(contributions) ||
+    ![true, false, "unverifiable"].includes(
+      fixture.all_core_claims_materially_equivalent,
+    ) ||
+    ![true, false, "unverifiable"].includes(
+      fixture.all_evidence_lineages_equivalent,
+    ) ||
+    !["sufficient", "insufficient", "unverifiable"].includes(fixture.status) ||
+    !["none", "provisional_only"].includes(fixture.result_ceiling_effect) ||
+    typeof fixture.exact_resolution_need !== "string"
+  ) {
+    return "invalid";
+  }
+
+  const candidateSet = new Set(candidateIds);
+  const claimSet = new Set(knownClaimRefs);
+  const evidenceSet = new Set(knownEvidenceRefs);
+  const evidenceLineageSet = new Set(knownEvidenceLineageRefs);
+  const expectedPairKeys = new Set();
+  for (let left = 0; left < candidateIds.length; left += 1) {
+    for (let right = left + 1; right < candidateIds.length; right += 1) {
+      expectedPairKeys.add([candidateIds[left], candidateIds[right]].sort().join("::"));
+    }
+  }
+  const actualPairKeys = new Set();
+  for (const pair of pairs) {
+    if (
+      !pair ||
+      typeof pair !== "object" ||
+      !stringArray(pair.candidate_ids) ||
+      pair.candidate_ids.length !== 2 ||
+      pair.candidate_ids[0] === pair.candidate_ids[1] ||
+      !pair.candidate_ids.every((id) => candidateSet.has(id)) ||
+      !["materially_distinct", "partially_overlapping", "substantially_redundant", "unverifiable"].includes(
+        pair.relation,
+      ) ||
+      !stringArray(pair.overlapping_claim_refs) ||
+      !stringArray(pair.unique_claim_refs) ||
+      !stringArray(pair.evidence_lineage_delta) ||
+      !pair.overlapping_claim_refs.every((ref) => claimSet.has(ref)) ||
+      !pair.unique_claim_refs.every((ref) => claimSet.has(ref)) ||
+      !pair.evidence_lineage_delta.every((ref) => evidenceLineageSet.has(ref))
+    ) {
+      return "invalid";
+    }
+    const overlapSet = new Set(pair.overlapping_claim_refs);
+    if (pair.unique_claim_refs.some((ref) => overlapSet.has(ref))) return "invalid";
+    if (
+      pair.relation === "substantially_redundant" &&
+      (pair.overlapping_claim_refs.length === 0 ||
+        pair.unique_claim_refs.length > 0 ||
+        pair.evidence_lineage_delta.length > 0)
+    ) {
+      return "invalid";
+    }
+    if (
+      pair.relation === "materially_distinct" &&
+      (pair.overlapping_claim_refs.length > 0 ||
+        pair.unique_claim_refs.length === 0)
+    ) {
+      return "invalid";
+    }
+    if (
+      pair.relation === "partially_overlapping" &&
+      (pair.overlapping_claim_refs.length === 0 ||
+        (pair.unique_claim_refs.length === 0 && pair.evidence_lineage_delta.length === 0))
+    ) {
+      return "invalid";
+    }
+    if (
+      pair.relation === "unverifiable" &&
+      (pair.overlapping_claim_refs.length > 0 ||
+        pair.unique_claim_refs.length > 0 ||
+        pair.evidence_lineage_delta.length > 0)
+    ) {
+      return "invalid";
+    }
+    actualPairKeys.add([...pair.candidate_ids].sort().join("::"));
+  }
+  if (
+    pairs.length !== expectedPairKeys.size ||
+    actualPairKeys.size !== expectedPairKeys.size ||
+    ![...expectedPairKeys].every((key) => actualPairKeys.has(key))
+  ) {
+    return "invalid";
+  }
+
+  for (const contribution of contributions) {
+    if (
+      !contribution ||
+      typeof contribution !== "object" ||
+      !candidateSet.has(contribution.candidate_id) ||
+      !stringArray(contribution.claim_refs) ||
+      contribution.claim_refs.length === 0 ||
+      !stringArray(contribution.evidence_refs) ||
+      contribution.evidence_refs.length === 0 ||
+      !contribution.claim_refs.every((ref) => claimSet.has(ref)) ||
+      !contribution.evidence_refs.every((ref) => evidenceSet.has(ref))
+    ) {
+      return "invalid";
+    }
+    const candidatePairs = pairs.filter(({ candidate_ids }) =>
+      candidate_ids.includes(contribution.candidate_id),
+    );
+    const otherPairs = pairs.filter(
+      ({ candidate_ids }) => !candidate_ids.includes(contribution.candidate_id),
+    );
+    if (
+      !contribution.claim_refs.every(
+        (ref) =>
+          candidatePairs.every(({ unique_claim_refs }) => unique_claim_refs.includes(ref)) &&
+          otherPairs.every(({ unique_claim_refs }) => !unique_claim_refs.includes(ref)),
+      )
+    ) {
+      return "invalid";
+    }
+  }
+
+  const hasUnverifiableRelation = pairs.some(({ relation }) => relation === "unverifiable");
+  const equivalenceUnverifiable =
+    fixture.all_core_claims_materially_equivalent === "unverifiable" ||
+    fixture.all_evidence_lineages_equivalent === "unverifiable";
+  if (hasUnverifiableRelation || equivalenceUnverifiable) {
+    if (
+      !pairs.every(({ relation }) => relation === "unverifiable") ||
+      fixture.all_core_claims_materially_equivalent !== "unverifiable" ||
+      fixture.all_evidence_lineages_equivalent !== "unverifiable"
+    ) {
+      return "invalid";
+    }
+  } else {
+    const derivedClaimsEquivalent = pairs.every(
+      ({ unique_claim_refs }) => unique_claim_refs.length === 0,
+    );
+    const derivedLineagesEquivalent = pairs.every(
+      ({ evidence_lineage_delta }) => evidence_lineage_delta.length === 0,
+    );
+    if (
+      fixture.all_core_claims_materially_equivalent !== derivedClaimsEquivalent ||
+      fixture.all_evidence_lineages_equivalent !== derivedLineagesEquivalent
+    ) {
+      return "invalid";
+    }
+  }
+  let derivedStatus;
+  let derivedCeiling;
+  if (hasUnverifiableRelation || equivalenceUnverifiable) {
+    if (fixture.exact_resolution_need.trim().length === 0) return "invalid";
+    derivedStatus = "unverifiable";
+    derivedCeiling = "provisional_only";
+  } else if (
+    pairs.every(({ relation }) => relation === "substantially_redundant") &&
+    fixture.all_core_claims_materially_equivalent === true &&
+    fixture.all_evidence_lineages_equivalent === true &&
+    contributions.length === 0
+  ) {
+    derivedStatus = "insufficient";
+    derivedCeiling = "provisional_only";
+  } else if (
+    pairs.some(({ relation }) =>
+      ["materially_distinct", "partially_overlapping"].includes(relation)) &&
+    contributions.length > 0 &&
+    fixture.all_core_claims_materially_equivalent === false &&
+    fixture.all_evidence_lineages_equivalent === false
+  ) {
+    derivedStatus = "sufficient";
+    derivedCeiling = "none";
+  } else {
+    derivedStatus = "insufficient";
+    derivedCeiling = "provisional_only";
+  }
+  if (fixture.status !== derivedStatus || fixture.result_ceiling_effect !== derivedCeiling) {
+    return "invalid";
+  }
+  return `valid_${derivedStatus}`;
 }
 
 const packageJsonPath = join(workspaceRoot, "package.json");
@@ -882,9 +1400,26 @@ record(
   "anti-groupthink balance missing",
 );
 record(
+  "skill_semantic_redundancy",
+  skillText.includes("blind-output semantic-redundancy audit") &&
+    skillText.includes("claim and evidence-lineage level") &&
+    skillText.includes("verified material differences in both core claims and evidence lineages") &&
+    skillText.includes("candidate-specific unique verified contribution") &&
+    skillText.includes("maximum result at `provisional_consensus`") &&
+    skillText.includes("Post-reveal convergence is assessed separately"),
+  "blind semantic-redundancy audit or fail-closed result ceiling missing",
+);
+record(
   "skill_synthesis_provenance",
   skillText.includes("synthesis provenance") && skillText.includes("reproducible next check"),
   "Hokage provenance or reproducible final QA missing",
+);
+record(
+  "skill_final_qa_delivery_authority",
+  skillText.includes("`final_qa.effective_result_status` is the\nonly delivery status") &&
+    skillText.includes("ignore the frozen `result_status`") &&
+    skillText.includes("never the proposed action"),
+  "effective final-QA status is not authoritative for delivery",
 );
 
 const openaiText = read(join(skillRoot, "agents/openai.yaml"));
@@ -935,7 +1470,7 @@ record(
 );
 
 const manifest = parseJson(join(skillRoot, "agent_manifest.json"));
-record("manifest_schema_version", manifest?.schema_version === 4, "manifest schema_version must be 4");
+record("manifest_schema_version", manifest?.schema_version === 6, "manifest schema_version must be 6");
 record("manifest_agent_count", manifest?.agents?.length === 6, "manifest must contain six agents");
 record("manifest_owner_hokage", manifest?.owner_role_id === "hokage", "Hokage must remain the public owner role");
 record(
@@ -955,6 +1490,16 @@ record(
     manifest?.qa_role?.part_of_six_profile_preflight === false &&
     manifest?.qa_role?.required_when === "consequential_result" &&
     manifest?.qa_role?.review_mode === "role_blind_independent" &&
+    manifest?.qa_role?.interoperability_template ===
+      "templates/consensus-report.md#host-provided-final-qa-interoperability-example" &&
+    manifest?.qa_role?.request_result_binding_required === true &&
+    manifest?.qa_role?.final_artifact_digest_binding_required === true &&
+    manifest?.qa_role?.closed_v1_envelope_required === true &&
+    manifest?.qa_role?.effective_result_status_binding_required === true &&
+    manifest?.qa_role?.effective_result_status_is_delivery_authority === true &&
+    manifest?.qa_role?.frozen_proposal_actions_ignored_when_blocked === true &&
+    manifest?.qa_role?.non_pass_effective_result_status === "blocked" &&
+    manifest?.qa_role?.binding_mismatch_policy === "blocked" &&
     manifest?.qa_role?.unavailable_policy === "blocked",
   "final QA must be an explicit host-provided, role-blind, fail-closed role",
 );
@@ -976,6 +1521,7 @@ record(
     manifest?.host_runtime_preflight?.spawn_all_training_instances_before_wait === true &&
     manifest?.host_runtime_preflight?.same_target_followup_capability_required === true &&
     manifest?.host_runtime_preflight?.successful_delivery_receipt_required === true &&
+    manifest?.host_runtime_preflight?.successful_delivery_receipt_count_required === 4 &&
     manifest?.host_runtime_preflight?.unverifiable_policy === "blocked",
   "live host discovery, effective permission, fork, capacity, or receipt preflight mismatch",
 );
@@ -1028,6 +1574,23 @@ record(
     manifest?.moderation?.byte_identical_reveal_required === true &&
     manifest?.moderation?.experience_transfer_required === true,
   "same-thread, reveal, or experience-transfer requirement missing",
+);
+record(
+  "manifest_semantic_redundancy_contract",
+  manifest?.moderation?.blind_semantic_redundancy_audit_required === true &&
+    manifest?.moderation?.semantic_comparison_basis === "claim_meaning_and_evidence_lineage" &&
+    manifest?.moderation?.complete_unordered_pair_matrix_required === true &&
+    manifest?.moderation?.semantic_reference_integrity_required === true &&
+    manifest?.moderation?.sufficient_requires_claim_and_lineage_diversity === true &&
+    manifest?.moderation?.one_dimensional_difference_result_ceiling ===
+      "provisional_consensus" &&
+    manifest?.moderation?.experience_transfer_ledger_count_required === 4 &&
+    manifest?.moderation?.method_ids_prove_output_diversity === false &&
+    manifest?.moderation?.invented_similarity_scores_forbidden === true &&
+    manifest?.moderation?.insufficient_or_unverifiable_result_ceiling ===
+      "provisional_consensus" &&
+    manifest?.moderation?.post_revision_convergence_assessed_separately === true,
+  "blind semantic-redundancy or post-reveal convergence contract mismatch",
 );
 record(
   "manifest_epistemic_contract",
@@ -1197,8 +1760,9 @@ for (const expected of expectedAgents) {
       "agent_card_moderator_integrity",
       cardText.includes("method_matrix.v1") &&
         cardText.includes("training_guidance_packet.v1") &&
-        cardText.includes("protocol_run_manifest.v1") &&
+      cardText.includes("protocol_run_manifest.v1") &&
         cardText.includes("anti-groupthink") &&
+        cardText.includes("semantic redundancy") &&
         cardText.includes("experience-transfer"),
       "Kakashi card lacks common guidance, phase-integrity, groupthink, or transfer ownership",
     );
@@ -1206,8 +1770,10 @@ for (const expected of expectedAgents) {
       "agent_runtime_moderator_integrity",
       runtimeText.includes("method_matrix.v1") &&
         runtimeText.includes("training_guidance_packet.v1") &&
-      runtimeText.includes("protocol_run_manifest.v1") &&
+        runtimeText.includes("protocol_run_manifest.v1") &&
         runtimeText.includes("evidence-independence") &&
+        runtimeText.includes("semantic") &&
+        runtimeText.includes("provisional_consensus") &&
         runtimeText.includes("same-target follow-up receipt"),
       "Kakashi runtime lacks common guidance or integrity enforcement",
     );
@@ -1339,7 +1905,7 @@ record(
 );
 
 const fixtures = parseJson(join(skillRoot, "fixtures/naruto-fixtures.json"));
-record("fixtures_schema_version", fixtures?.schema_version === 4, "fixtures schema_version must be 4");
+record("fixtures_schema_version", fixtures?.schema_version === 6, "fixtures schema_version must be 6");
 for (const fixture of fixtures?.trigger_cases ?? []) {
   record(
     `trigger_fixture:${fixture.id}`,
@@ -1447,6 +2013,9 @@ for (const fixture of fixtures?.supervision_cases ?? []) {
   );
 }
 
+const semanticRedundancyCaseById = new Map(
+  (fixtures?.semantic_redundancy_cases ?? []).map((fixture) => [fixture.id, fixture]),
+);
 const requiredIntegrityCases = new Set([
   "integrity-full-verified",
   "integrity-reveal-byte-mismatch",
@@ -1462,6 +2031,8 @@ const requiredIntegrityCases = new Set([
   "integrity-experience-transfer-missing",
   "integrity-blind-supervisor-contact",
   "integrity-safety-report-unverifiable",
+  "integrity-blind-semantic-redundancy",
+  "integrity-blind-semantic-comparison-unverifiable",
 ]);
 const actualIntegrityCases = new Set((fixtures?.integrity_cases ?? []).map(({ id }) => id));
 record(
@@ -1470,12 +2041,152 @@ record(
   "required phase-integrity cases missing",
 );
 for (const fixture of fixtures?.integrity_cases ?? []) {
+  const semanticFixture = semanticRedundancyCaseById.get(
+    fixture.semantic_redundancy_case_id,
+  );
+  const usableInstanceCount = Math.min(
+    fixture.valid_training_instances,
+    fixture.pre_reveal_self_audits,
+    fixture.same_target_followup_receipts,
+    fixture.experience_transfer_ledgers,
+    fixture.no_blind_phase_supervisor_contact_attestations,
+  );
+  const integrityState = classifyIntegrityFixture(fixture);
+  const semanticFixtureState = classifySemanticRedundancyFixture(semanticFixture);
+  const semanticCandidateCountMatches =
+    integrityState === "blocked" ||
+    semanticFixture?.candidate_ids?.length === usableInstanceCount;
   record(
     `integrity_fixture_result:${fixture.id}`,
-    classifyIntegrityFixture(fixture) === fixture.expected_max_result,
-    `expected ${fixture.expected_max_result}, got ${classifyIntegrityFixture(fixture)}`,
+    integrityState === fixture.expected_max_result &&
+      semanticFixtureState === `valid_${fixture.semantic_redundancy_audit}` &&
+      semanticCandidateCountMatches,
+    `expected ${fixture.expected_max_result} with linked ${fixture.semantic_redundancy_audit} for ${usableInstanceCount} usable instances; got ${integrityState}, ${semanticFixtureState}, and ${semanticFixture?.candidate_ids?.length ?? 0} semantic candidates`,
   );
 }
+
+const requiredSemanticRedundancyCases = new Set([
+  "semantic-distinct-valid",
+  "semantic-distinct-three-valid",
+  "semantic-redundant-valid",
+  "semantic-unverifiable-valid",
+  "semantic-inconsistent-status-rejected",
+  "semantic-missing-pair-rejected",
+  "semantic-unknown-reference-rejected",
+  "semantic-contradictory-pair-rejected",
+]);
+const actualSemanticRedundancyCases = new Set(
+  (fixtures?.semantic_redundancy_cases ?? []).map(({ id }) => id),
+);
+record(
+  "semantic_redundancy_fixture_coverage",
+  [...requiredSemanticRedundancyCases].every((id) => actualSemanticRedundancyCases.has(id)),
+  "required semantic pair, reference, status, and ceiling cases missing",
+);
+for (const fixture of fixtures?.semantic_redundancy_cases ?? []) {
+  const actual = classifySemanticRedundancyFixture(fixture);
+  record(
+    `semantic_redundancy_fixture_result:${fixture.id}`,
+    actual === fixture.expected_state,
+    `expected ${fixture.expected_state}, got ${actual}`,
+  );
+}
+const semanticRedundancyRequiredFields = [
+  "candidate_ids",
+  "known_claim_refs",
+  "known_evidence_refs",
+  "known_evidence_lineage_refs",
+  "pair_assessments",
+  "unique_verified_contributions",
+  "all_core_claims_materially_equivalent",
+  "all_evidence_lineages_equivalent",
+  "status",
+  "result_ceiling_effect",
+  "exact_resolution_need",
+];
+const semanticRedundancyBaseline = fixtures?.semantic_redundancy_cases?.find(
+  ({ id }) => id === "semantic-distinct-valid",
+);
+record(
+  "semantic_redundancy_fixture_baseline_complete",
+  semanticRedundancyRequiredFields.every((field) => own(semanticRedundancyBaseline, field)),
+  "semantic-redundancy baseline is missing a required field",
+);
+for (const field of semanticRedundancyRequiredFields) {
+  const result = classifySemanticRedundancyFixture(
+    fixtureWithoutField(semanticRedundancyBaseline, field),
+  );
+  record(
+    `semantic_redundancy_required_field_deletion_rejected:${field}`,
+    result === "invalid",
+    `deleting ${field} returned ${result}`,
+  );
+}
+const semanticUnknownEvidenceReference = JSON.parse(
+  JSON.stringify(semanticRedundancyBaseline),
+);
+semanticUnknownEvidenceReference.unique_verified_contributions[0].evidence_refs = [
+  "evidence-unknown",
+];
+record(
+  "semantic_redundancy_unknown_evidence_reference_rejected",
+  classifySemanticRedundancyFixture(semanticUnknownEvidenceReference) === "invalid",
+  "unknown evidence reference was accepted",
+);
+const semanticUnknownLineageReference = JSON.parse(
+  JSON.stringify(semanticRedundancyBaseline),
+);
+semanticUnknownLineageReference.pair_assessments[0].evidence_lineage_delta = [
+  "lineage-unknown",
+];
+record(
+  "semantic_redundancy_unknown_lineage_reference_rejected",
+  classifySemanticRedundancyFixture(semanticUnknownLineageReference) === "invalid",
+  "unknown evidence-lineage reference was accepted",
+);
+const semanticWrongClaimOwner = JSON.parse(JSON.stringify(semanticRedundancyBaseline));
+semanticWrongClaimOwner.unique_verified_contributions[0].claim_refs = ["claim-c2"];
+record(
+  "semantic_redundancy_wrong_claim_owner_rejected",
+  classifySemanticRedundancyFixture(semanticWrongClaimOwner) === "invalid",
+  "candidate contribution claimed another candidate's unique claim",
+);
+const semanticDistinctClaimsSharedLineage = JSON.parse(JSON.stringify(semanticRedundancyBaseline));
+for (const pair of semanticDistinctClaimsSharedLineage.pair_assessments) {
+  pair.evidence_lineage_delta = [];
+}
+semanticDistinctClaimsSharedLineage.all_evidence_lineages_equivalent = true;
+semanticDistinctClaimsSharedLineage.status = "insufficient";
+semanticDistinctClaimsSharedLineage.result_ceiling_effect = "provisional_only";
+const semanticEquivalentClaimsDistinctLineage = JSON.parse(JSON.stringify(semanticRedundancyBaseline));
+for (const pair of semanticEquivalentClaimsDistinctLineage.pair_assessments) {
+  pair.unique_claim_refs = [];
+  if (pair.relation === "materially_distinct") {
+    pair.relation = "partially_overlapping";
+    pair.overlapping_claim_refs = ["claim-shared"];
+  }
+}
+semanticEquivalentClaimsDistinctLineage.unique_verified_contributions = [];
+semanticEquivalentClaimsDistinctLineage.all_core_claims_materially_equivalent = true;
+semanticEquivalentClaimsDistinctLineage.status = "insufficient";
+semanticEquivalentClaimsDistinctLineage.result_ceiling_effect = "provisional_only";
+record(
+  "semantic_redundancy_single_dimension_difference_capped",
+  classifySemanticRedundancyFixture(semanticDistinctClaimsSharedLineage) ===
+    "valid_insufficient" &&
+    classifySemanticRedundancyFixture(semanticEquivalentClaimsDistinctLineage) ===
+      "valid_insufficient",
+  "a one-dimensional semantic difference escaped the provisional ceiling",
+);
+const semanticClaimlessDistinctPair = JSON.parse(
+  JSON.stringify(semanticRedundancyBaseline),
+);
+semanticClaimlessDistinctPair.pair_assessments[1].unique_claim_refs = [];
+record(
+  "semantic_redundancy_claimless_distinct_pair_rejected",
+  classifySemanticRedundancyFixture(semanticClaimlessDistinctPair) === "invalid",
+  "materially distinct pair without any claim reference was accepted",
+);
 
 function fixtureWithoutField(fixture, field) {
   const copy = JSON.parse(JSON.stringify(fixture));
@@ -1546,6 +2257,8 @@ const requiredFieldDeletionSuites = [
       "blind_phase_content_feedback_detected",
       "safety_report",
       "anti_groupthink_audit",
+      "semantic_redundancy_audit",
+      "semantic_redundancy_case_id",
       "consequential",
       "final_qa",
       "critical_minority",
@@ -1630,6 +2343,8 @@ const integrityOracleBaseline = {
   blind_phase_content_feedback_detected: false,
   safety_report: "pass",
   anti_groupthink_audit: "pass",
+  semantic_redundancy_audit: "sufficient",
+  semantic_redundancy_case_id: "semantic-distinct-valid",
   consequential: false,
   final_qa: "not_required",
   critical_minority: "resolved",
@@ -1646,9 +2361,9 @@ const fixtureOracleSuites = [
     baseline: protocolOracleBaseline,
     allowedDeltas: {
       "full-verified": ["critical_objection"],
-      "three-instance-degraded": ["valid_commits", "valid_same_target_followup_receipts"],
-      "two-instance-blocked": ["valid_commits", "valid_same_target_followup_receipts"],
-      "hash-mismatch-degrades": ["valid_commits", "valid_same_target_followup_receipts"],
+      "three-instance-degraded": ["valid_commits"],
+      "two-instance-blocked": ["valid_commits"],
+      "hash-mismatch-degrades": ["valid_commits"],
       "early-reveal-blocked": ["barrier"],
       "same-target-receipt-unavailable": ["valid_same_target_followup_receipts"],
       "moderator-unavailable": ["moderator"],
@@ -1688,7 +2403,10 @@ const fixtureOracleSuites = [
       "integrity-full-verified": ["consequential", "final_qa"],
       "integrity-reveal-byte-mismatch": ["reveal_byte_identical"],
       "integrity-same-target-receipt-missing": ["same_target_followup_receipts"],
-      "integrity-one-missing-pre-audit": ["pre_reveal_self_audits"],
+      "integrity-one-missing-pre-audit": [
+        "pre_reveal_self_audits",
+        "semantic_redundancy_case_id",
+      ],
       "integrity-shared-source-critical-convergence": [
         "critical_minority",
         "critical_shared_lineage_only",
@@ -1708,6 +2426,14 @@ const fixtureOracleSuites = [
       "integrity-experience-transfer-missing": ["experience_transfer_ledgers"],
       "integrity-blind-supervisor-contact": ["instance_specific_coaching_detected"],
       "integrity-safety-report-unverifiable": ["safety_report"],
+      "integrity-blind-semantic-redundancy": [
+        "semantic_redundancy_audit",
+        "semantic_redundancy_case_id",
+      ],
+      "integrity-blind-semantic-comparison-unverifiable": [
+        "semantic_redundancy_audit",
+        "semantic_redundancy_case_id",
+      ],
     },
   },
 ];
@@ -1754,6 +2480,9 @@ record(
 );
 
 const contractsText = read(join(skillRoot, "references/contracts-and-schemas.md"));
+const deliberationProtocolText = read(join(skillRoot, "references/deliberation-protocol.md"));
+const roleMethodsText = read(join(skillRoot, "references/role-methods.md"));
+const examplesText = read(join(skillRoot, "references/examples-and-failure-modes.md"));
 const priorArtText = read(join(skillRoot, "references/prior-art-assimilation.md"));
 const sourceTemplateText = read(join(skillRoot, "templates/source-packet.md"));
 const methodMatrixTemplateText = read(join(skillRoot, "templates/method-matrix.md"));
@@ -1777,20 +2506,140 @@ record("template_safety_control", safetyControlTemplateText.includes("safety_con
 record("template_candidate_self_audit", candidateTemplateText.includes("actor_identity_id: naruto_uzumaki") && candidateTemplateText.includes("method_matrix_sha256:") && candidateTemplateText.includes("training_instance_envelope_sha256:") && candidateTemplateText.includes("pre_reveal_self_audit:") && candidateTemplateText.includes("falsification_check:") && candidateTemplateText.includes("source_independence_keys:") && candidateTemplateText.includes("training_guidance_packet_sha256:") && candidateTemplateText.includes("safety_control_packet_sha256:") && candidateTemplateText.includes("no_blind_phase_supervisor_contact_attestation: true"), "candidate evidence, identity, method binding, supervision, or self-audit fields missing");
 record("template_reveal_criteria", revealTemplateText.includes("method_matrix_sha256:") && revealTemplateText.includes("acceptance_findings:") && revealTemplateText.includes("root_cause:") && revealTemplateText.includes("training_guidance_packet_sha256:") && revealTemplateText.includes("safety_control_packet_sha256:"), "criterion-level critique or supervision binding missing");
 record("template_reveal_groupthink", revealTemplateText.includes("anti_groupthink_checks:") && revealTemplateText.includes("fake_dissent_flags:") && revealTemplateText.includes("shared_source_consensus_claims:"), "anti-groupthink reveal fields missing");
+record(
+  "template_reveal_semantic_redundancy",
+  revealTemplateText.includes("blind_semantic_redundancy_audit:") &&
+    revealTemplateText.includes("comparison_basis: claim_meaning_and_evidence_lineage") &&
+    revealTemplateText.includes("pair_assessments:") &&
+    revealTemplateText.includes("unique_verified_contributions:") &&
+    revealTemplateText.includes("result_ceiling_effect: none | provisional_only") &&
+    revealTemplateText.includes("every unique unordered pair") &&
+    revealTemplateText.includes("six pair assessments") &&
+    revealTemplateText.includes("Do not infer\ndiversity from method IDs"),
+  "claim-level semantic-redundancy audit fields or guardrails missing",
+);
 record("template_revision_repair", revisionTemplateText.includes("loop_repair:") && revisionTemplateText.includes("regression_risks:"), "same-thread repair fields missing");
 record("template_revision_experience", revisionTemplateText.includes("actor_identity_id: naruto_uzumaki") && revisionTemplateText.includes("method_profile_id:") && revisionTemplateText.includes("method_matrix_sha256:") && revisionTemplateText.includes("training_instance_envelope_sha256:") && revisionTemplateText.includes("experience_transfer:") && revisionTemplateText.includes("same_thread_revision_attestation:") && revisionTemplateText.includes("successful") && revisionTemplateText.includes("host-tool delivery receipt") && revisionTemplateText.includes("claim_revision_map:") && revisionTemplateText.includes("training_guidance_packet_sha256:") && revisionTemplateText.includes("safety_control_packet_sha256:"), "same-thread identity, method, host receipt, experience-transfer, or supervision binding fields missing");
 record("template_consensus_regression", consensusTemplateText.includes("loop_summary:") && consensusTemplateText.includes("repair_history:") && consensusTemplateText.includes("regression_check:"), "loop summary, repair history, or regression check missing");
 record("template_consensus_provenance", consensusTemplateText.includes("synthesis_provenance:") && consensusTemplateText.includes("hokage_introduced_claims:") && consensusTemplateText.includes("reproducible_next_check:") && consensusTemplateText.includes("protocol_run_manifest_sha256:") && consensusTemplateText.includes("moderator_report_sha256:") && consensusTemplateText.includes("safety_report_sha256:"), "synthesis provenance, safety binding, protocol binding, or reproducible QA fields missing");
-record("template_consensus_conditional_final_qa", consensusTemplateText.includes("final_qa:") && consensusTemplateText.includes("required: true | false") && consensusTemplateText.includes("status: pass | fail | not_run"), "consensus template must represent both required and non-required final QA");
+record(
+  "template_consensus_conditional_final_qa",
+  consensusTemplateText.includes("final_qa:") &&
+    consensusTemplateText.includes("required: true | false") &&
+    consensusTemplateText.includes("status: pass | fail | blocked | not_required | not_run") &&
+    consensusTemplateText.includes("effective_result_status:") &&
+    consensusTemplateText.includes("request_result_artifact_binding_verified:") &&
+    consensusTemplateText.includes("independent_reviewer_attestation:") &&
+    consensusTemplateText.includes("role_blind_attestation:"),
+  "consensus template must represent bound required and non-required final QA",
+);
+record(
+  "template_consensus_final_qa_interoperability",
+  consensusTemplateText.includes("Host-provided Final QA Interoperability Example") &&
+    consensusTemplateText.includes("final_qa_review_request.v1") &&
+    consensusTemplateText.includes("final_qa_review_result.v1") &&
+    consensusTemplateText.includes("request_id:") &&
+    consensusTemplateText.includes("request_sha256:") &&
+    consensusTemplateText.includes("final_artifact_sha256:") &&
+    consensusTemplateText.includes("result_sha256:") &&
+    consensusTemplateText.includes("consensus_report.qa_review_projection") &&
+    consensusTemplateText.includes("circular dependency") &&
+    consensusTemplateText.includes("independent_reviewer_attestation: true") &&
+    consensusTemplateText.includes("role_blind_attestation: true") &&
+    consensusTemplateText.includes("mismatch or replay") &&
+    consensusTemplateText.includes("as the only delivery status") &&
+    consensusTemplateText.includes("not a seventh runtime profile"),
+  "non-bundled final-QA interoperability example missing or ambiguous",
+);
 record("template_protocol_checkpoint", protocolCheckpointTemplateText.includes("protocol_checkpoint.v1") && protocolCheckpointTemplateText.includes("previous_checkpoint_sha256:") && protocolCheckpointTemplateText.includes("manifest_snapshot:") && protocolCheckpointTemplateText.includes("checkpoint_sha256:"), "immutable protocol checkpoint schema missing");
-record("template_protocol_run_manifest", runManifestTemplateText.includes("protocol_run_manifest.v1") && runManifestTemplateText.includes("actor_identity_id: naruto_uzumaki") && runManifestTemplateText.includes("method_matrix_sha256:") && runManifestTemplateText.includes("unique_instance_and_method_ids_verified:") && runManifestTemplateText.includes("training_instance_envelope_sha256:") && runManifestTemplateText.includes("yamato_preflight_passed:") && runManifestTemplateText.includes("blind_supervisor_contact_absent:") && runManifestTemplateText.includes("safety_supervisor:") && runManifestTemplateText.includes("moderator_report_sha256:") && runManifestTemplateText.includes("safety_report_complete:") && runManifestTemplateText.includes("training_control:") && runManifestTemplateText.includes("reveal_byte_identical:") && runManifestTemplateText.includes("same_target_followup_receipts_verified:") && runManifestTemplateText.includes("same_target_followup_receipt_status:") && runManifestTemplateText.includes("checkpoint_hashes:") && runManifestTemplateText.includes("reconcile:") && runManifestTemplateText.includes("safety_report:") && runManifestTemplateText.includes("qa:"), "protocol run manifest identity, method, supervision, receipt binding, or phase checkpoints missing");
-record("contracts_integrity_projection", contractsText.includes("### Artifact Digest Projection") && contractsText.includes("### Manifest Checkpoints And Acyclic Order") && contractsText.includes("method_matrix.v1") && contractsText.includes("naruto_training_instance_envelope.v1") && contractsText.includes("protocol_checkpoint.v1") && contractsText.includes("## Training Guidance") && contractsText.includes("## Safety Control") && contractsText.includes("## Protocol Run Manifest") && contractsText.includes("safety_report.v1") && contractsText.includes("evidence_independence_findings:") && contractsText.includes("synthesis_provenance:") && contractsText.includes("protocol_run_manifest_reconcile_checkpoint_sha256:"), "digest projection, immutable checkpoint, shared-identity supervision, integrity contracts, or phase binding missing from schema reference");
+record(
+  "template_protocol_run_manifest",
+  runManifestTemplateText.includes("protocol_run_manifest.v1") &&
+    runManifestTemplateText.includes("actor_identity_id: naruto_uzumaki") &&
+    runManifestTemplateText.includes("method_matrix_sha256:") &&
+    runManifestTemplateText.includes("unique_instance_and_method_ids_verified:") &&
+    runManifestTemplateText.includes("training_instance_envelope_sha256:") &&
+    runManifestTemplateText.includes("yamato_preflight_passed:") &&
+    runManifestTemplateText.includes("blind_supervisor_contact_absent:") &&
+    runManifestTemplateText.includes("safety_supervisor:") &&
+    runManifestTemplateText.includes("moderator_report_sha256:") &&
+    runManifestTemplateText.includes("safety_report_complete:") &&
+    runManifestTemplateText.includes("training_control:") &&
+    runManifestTemplateText.includes("reveal_byte_identical:") &&
+    runManifestTemplateText.includes("same_target_followup_receipts_verified:") &&
+    runManifestTemplateText.includes("same_target_followup_receipt_status:") &&
+    runManifestTemplateText.includes("blind_semantic_redundancy_audit_complete:") &&
+    runManifestTemplateText.includes("blind_semantic_redundancy_status:") &&
+    runManifestTemplateText.includes("reviewer_binding: host_provided | not_required | unavailable") &&
+    runManifestTemplateText.includes("effective_result_status:") &&
+    runManifestTemplateText.includes("request_result_artifact_binding_verified:") &&
+    runManifestTemplateText.includes("result_sha256:") &&
+    runManifestTemplateText.includes("checkpoint_hashes:") &&
+    runManifestTemplateText.includes("reconcile:") &&
+    runManifestTemplateText.includes("safety_report:") &&
+    runManifestTemplateText.includes("qa:"),
+  "protocol run manifest identity, method, supervision, redundancy, QA binding, receipt, or checkpoint contract missing",
+);
+record(
+  "contracts_integrity_projection",
+    contractsText.includes("### Artifact Digest Projection") &&
+    contractsText.includes("### Additive 1.1 Extension Rule") &&
+    contractsText.includes("### Final-QA Review Artifact Projection") &&
+    contractsText.includes("### Manifest Checkpoints And Acyclic Order") &&
+    contractsText.includes("method_matrix.v1") &&
+    contractsText.includes("naruto_training_instance_envelope.v1") &&
+    contractsText.includes("protocol_checkpoint.v1") &&
+    contractsText.includes("final_qa_review_request.v1") &&
+    contractsText.includes("final_qa_review_result.v1") &&
+    contractsText.includes("## Training Guidance") &&
+    contractsText.includes("## Safety Control") &&
+    contractsText.includes("## Protocol Run Manifest") &&
+    contractsText.includes("## Final-QA Request And Result") &&
+    contractsText.includes("sole consumer-facing delivery status") &&
+    contractsText.includes("safety_report.v1") &&
+    contractsText.includes("evidence_independence_findings:") &&
+    contractsText.includes("synthesis_provenance:") &&
+    contractsText.includes("protocol_run_manifest_reconcile_checkpoint_sha256:"),
+  "digest projection, additive compatibility, final QA, checkpoint, supervision, or phase binding missing from schema reference",
+);
 record(
   "prior_art_assimilation",
   ["Agent Review Panel", "Agent Council", "oh-my-codex", "Captain Claw", "Zeroshot", "Mixture-of-Agents"].every((name) => priorArtText.includes(name)) &&
     priorArtText.includes("same complete task") &&
     priorArtText.includes("not runtime dependencies"),
   "prior-art decisions or invariants missing",
+);
+const staleOpaqueHandleRequirements = [
+  "opaque original/revision thread-handle hashes",
+  "same-thread revision through opaque hashes",
+  "same-thread runtime-handle hashes differ or are unverifiable",
+  "opaque original/revision handle hashes are missing",
+  "it proves phase order and identity",
+];
+const currentProtocolReferences = [
+  contractsText,
+  deliberationProtocolText,
+  roleMethodsText,
+  examplesText,
+  priorArtText,
+];
+record(
+  "references_no_stale_opaque_handle_requirement",
+  currentProtocolReferences.every((text) =>
+    staleOpaqueHandleRequirements.every((phrase) => !text.toLowerCase().includes(phrase)),
+  ),
+  "a current reference still requires model-visible opaque handle hashes or overclaims sidecar proof",
+);
+record(
+  "references_host_receipt_provenance",
+  roleMethodsText.includes("parent-retained original spawn target") &&
+    roleMethodsText.includes("successful host same-target") &&
+    examplesText.includes("original spawn-target mapping") &&
+    examplesText.includes("successful host follow-up receipt") &&
+    priorArtText.includes("parent-retained spawn targets") &&
+    priorArtText.includes("successful host same-target") &&
+    contractsText.includes("not host-enforced or tamper-evident proof"),
+  "current references do not consistently bind revision provenance to host receipts",
 );
 
 const requiredRegressionCases = new Set([
@@ -1935,6 +2784,284 @@ record(
   "envelope method change did not change its digest",
 );
 
+const finalQaReviewArtifact = {
+  schema: "consensus_report.v1",
+  task_id: "task-1",
+  protocol_run_manifest_sha256: "",
+  moderator_report_sha256: "moderator-report-sha",
+  safety_report_sha256: "safety-report-sha",
+  result_status: "verified_consensus",
+  hokage_synthesis: "final semantic result",
+  stop_decision: "stop_sufficient",
+  next_action: "execute proposed route",
+  final_qa: { required: true, status: "not_run", effective_result_status: "blocked" },
+};
+const finalQaRequest = {
+  schema: "final_qa_review_request.v1",
+  request_id: "qa-request-1",
+  task_id: "task-1",
+  consequential_reason: "release decision",
+  final_artifact_ref: "consensus_report.qa_review_projection",
+  final_artifact_sha256: finalQaReviewArtifactDigest(finalQaReviewArtifact),
+  acceptance_criteria: ["criterion-1"],
+  evidence_refs: ["evidence-1"],
+  candidate_role_identities_excluded: true,
+  role_prestige_excluded: true,
+  completion_order_excluded: true,
+  vote_counts_excluded: true,
+  raw_reasoning_included: false,
+  request_sha256: "",
+};
+finalQaRequest.request_sha256 = artifactDigest(finalQaRequest, "request_sha256");
+const finalQaResult = {
+  schema: "final_qa_review_result.v1",
+  request_id: finalQaRequest.request_id,
+  task_id: finalQaRequest.task_id,
+  request_sha256: finalQaRequest.request_sha256,
+  final_artifact_sha256: finalQaRequest.final_artifact_sha256,
+  reviewer_binding: "host_provided",
+  independent_reviewer_attestation: true,
+  role_blind_attestation: true,
+  status: "pass",
+  findings: [],
+  raw_reasoning_included: false,
+  result_sha256: "",
+};
+finalQaResult.result_sha256 = artifactDigest(finalQaResult, "result_sha256");
+record(
+  "final_qa_request_result_binding_valid",
+  validatesFinalQaBinding(finalQaRequest, finalQaResult, finalQaReviewArtifact),
+  "valid final-QA request/result binding was rejected",
+);
+function changedFinalQaResult(mutator) {
+  const changed = JSON.parse(JSON.stringify(finalQaResult));
+  mutator(changed);
+  changed.result_sha256 = artifactDigest(changed, "result_sha256");
+  return changed;
+}
+const finalQaBindingMismatches = [
+  changedFinalQaResult((result) => { result.request_id = "qa-request-other"; }),
+  changedFinalQaResult((result) => { result.task_id = "task-other"; }),
+  changedFinalQaResult((result) => { result.request_sha256 = sha256("other request"); }),
+  changedFinalQaResult((result) => { result.final_artifact_sha256 = sha256("other artifact"); }),
+  changedFinalQaResult((result) => { result.independent_reviewer_attestation = false; }),
+  changedFinalQaResult((result) => { result.role_blind_attestation = false; }),
+  changedFinalQaResult((result) => { result.status = "fail"; }),
+];
+const staleDigestFinalQaResult = { ...finalQaResult, status: "fail" };
+const replayQaReviewArtifact = {
+  ...finalQaReviewArtifact,
+  task_id: "task-2",
+  hokage_synthesis: "other final semantic result",
+};
+const replayQaRequest = {
+  ...finalQaRequest,
+  request_id: "qa-request-2",
+  task_id: "task-2",
+  final_artifact_sha256: finalQaReviewArtifactDigest(replayQaReviewArtifact),
+  request_sha256: "",
+};
+replayQaRequest.request_sha256 = artifactDigest(replayQaRequest, "request_sha256");
+const replayQaResult = {
+  ...finalQaResult,
+  request_id: replayQaRequest.request_id,
+  task_id: replayQaRequest.task_id,
+  request_sha256: replayQaRequest.request_sha256,
+  final_artifact_sha256: replayQaRequest.final_artifact_sha256,
+  result_sha256: "",
+};
+replayQaResult.result_sha256 = artifactDigest(replayQaResult, "result_sha256");
+const wrongTaskQaRequest = {
+  ...finalQaRequest,
+  task_id: "task-other",
+  request_sha256: "",
+};
+wrongTaskQaRequest.request_sha256 = artifactDigest(wrongTaskQaRequest, "request_sha256");
+const wrongTaskQaResult = {
+  ...finalQaResult,
+  task_id: wrongTaskQaRequest.task_id,
+  request_sha256: wrongTaskQaRequest.request_sha256,
+  result_sha256: "",
+};
+wrongTaskQaResult.result_sha256 = artifactDigest(wrongTaskQaResult, "result_sha256");
+const leakedQaRequest = {
+  ...finalQaRequest,
+  candidate_outputs: [{ role: "integrator", output: "blind answer" }],
+  request_sha256: "",
+};
+leakedQaRequest.request_sha256 = artifactDigest(leakedQaRequest, "request_sha256");
+const leakedQaRequestResult = {
+  ...finalQaResult,
+  request_sha256: leakedQaRequest.request_sha256,
+  result_sha256: "",
+};
+leakedQaRequestResult.result_sha256 = artifactDigest(
+  leakedQaRequestResult,
+  "result_sha256",
+);
+const leakedQaFindingResult = {
+  ...finalQaResult,
+  status: "fail",
+  findings: [
+    {
+      criterion_id: "criterion-1",
+      observed: "mismatch",
+      expected: "match",
+      evidence_refs: ["evidence-1"],
+      reproducible_next_check: "repeat check",
+      role_assignments: ["integrator"],
+    },
+  ],
+  result_sha256: "",
+};
+leakedQaFindingResult.result_sha256 = artifactDigest(
+  leakedQaFindingResult,
+  "result_sha256",
+);
+const leakedQaArtifact = {
+  ...finalQaReviewArtifact,
+  candidate_outputs: [{ role: "integrator", output: "blind answer" }],
+};
+const leakedQaArtifactRequest = {
+  ...finalQaRequest,
+  final_artifact_sha256: finalQaReviewArtifactDigest(leakedQaArtifact),
+  request_sha256: "",
+};
+leakedQaArtifactRequest.request_sha256 = artifactDigest(
+  leakedQaArtifactRequest,
+  "request_sha256",
+);
+const leakedQaArtifactResult = {
+  ...finalQaResult,
+  request_sha256: leakedQaArtifactRequest.request_sha256,
+  final_artifact_sha256: leakedQaArtifactRequest.final_artifact_sha256,
+  result_sha256: "",
+};
+leakedQaArtifactResult.result_sha256 = artifactDigest(
+  leakedQaArtifactResult,
+  "result_sha256",
+);
+const emptyCriteriaQaRequest = {
+  ...finalQaRequest,
+  acceptance_criteria: [""],
+  request_sha256: "",
+};
+emptyCriteriaQaRequest.request_sha256 = artifactDigest(
+  emptyCriteriaQaRequest,
+  "request_sha256",
+);
+const emptyCriteriaQaResult = {
+  ...finalQaResult,
+  request_sha256: emptyCriteriaQaRequest.request_sha256,
+  result_sha256: "",
+};
+emptyCriteriaQaResult.result_sha256 = artifactDigest(
+  emptyCriteriaQaResult,
+  "result_sha256",
+);
+const validFailureFinding = {
+  criterion_id: "criterion-1",
+  observed: "mismatch",
+  expected: "match",
+  evidence_refs: ["evidence-1"],
+  reproducible_next_check: "repeat check",
+};
+const passWithFindingsQaResult = {
+  ...finalQaResult,
+  findings: [validFailureFinding],
+  result_sha256: "",
+};
+passWithFindingsQaResult.result_sha256 = artifactDigest(
+  passWithFindingsQaResult,
+  "result_sha256",
+);
+const emptyMismatchQaResult = {
+  ...finalQaResult,
+  status: "fail",
+  findings: [{ ...validFailureFinding, observed: "", expected: "" }],
+  result_sha256: "",
+};
+emptyMismatchQaResult.result_sha256 = artifactDigest(
+  emptyMismatchQaResult,
+  "result_sha256",
+);
+const qaMetadataOnlyArtifact = {
+  ...finalQaReviewArtifact,
+  protocol_run_manifest_sha256: "post-qa-manifest-sha",
+  final_qa: {
+    required: true,
+    status: "pass",
+    effective_result_status: "verified_consensus",
+    request_sha256: finalQaRequest.request_sha256,
+    result_sha256: finalQaResult.result_sha256,
+  },
+};
+const qaSemanticChangeArtifact = {
+  ...qaMetadataOnlyArtifact,
+  hokage_synthesis: "changed after QA",
+};
+record(
+  "final_qa_review_artifact_projection",
+  finalQaReviewArtifactDigest(finalQaReviewArtifact) ===
+    finalQaReviewArtifactDigest(qaMetadataOnlyArtifact) &&
+    finalQaReviewArtifactDigest(finalQaReviewArtifact) !==
+      finalQaReviewArtifactDigest(qaSemanticChangeArtifact),
+  "QA metadata affected the review projection or a semantic edit did not",
+);
+record(
+  "final_qa_binding_mismatch_and_replay_rejected",
+  finalQaBindingMismatches.every(
+    (result) => !validatesFinalQaBinding(finalQaRequest, result, finalQaReviewArtifact),
+  ) &&
+    !validatesFinalQaBinding(finalQaRequest, staleDigestFinalQaResult, finalQaReviewArtifact) &&
+    !validatesFinalQaBinding(finalQaRequest, finalQaResult, {
+      ...finalQaReviewArtifact,
+      hokage_synthesis: "artifact changed before validation",
+    }) &&
+    !validatesFinalQaBinding(wrongTaskQaRequest, wrongTaskQaResult, finalQaReviewArtifact) &&
+    validatesFinalQaBinding(replayQaRequest, replayQaResult, replayQaReviewArtifact) &&
+    !validatesFinalQaBinding(finalQaRequest, replayQaResult, finalQaReviewArtifact),
+  "mismatched, replayed, unattested, or stale-digest final QA was accepted",
+);
+record(
+  "final_qa_role_blind_payload_guard",
+  !validatesFinalQaBinding(
+    leakedQaRequest,
+    leakedQaRequestResult,
+    finalQaReviewArtifact,
+  ) &&
+    !validatesFinalQaBinding(
+      finalQaRequest,
+      leakedQaFindingResult,
+      finalQaReviewArtifact,
+    ) &&
+    !validatesFinalQaBinding(
+      leakedQaArtifactRequest,
+      leakedQaArtifactResult,
+      leakedQaArtifact,
+    ),
+  "role-bearing request, finding, or reviewed artifact payload was accepted",
+);
+record(
+  "final_qa_criteria_and_findings_semantics",
+  !validatesFinalQaBinding(
+    emptyCriteriaQaRequest,
+    emptyCriteriaQaResult,
+    finalQaReviewArtifact,
+  ) &&
+    !validatesFinalQaBinding(
+      finalQaRequest,
+      passWithFindingsQaResult,
+      finalQaReviewArtifact,
+    ) &&
+    !validatesFinalQaBinding(
+      finalQaRequest,
+      emptyMismatchQaResult,
+      finalQaReviewArtifact,
+    ),
+  "empty criteria, pass-with-findings, or empty mismatch details were accepted",
+);
+
 const digestManifest = {
   schema: "protocol_run_manifest.v1",
   run_id: "run-1",
@@ -1942,6 +3069,7 @@ const digestManifest = {
   source_packet_sha256: "source-sha",
   current_phase: "source_packet",
   phase_integrity: {
+    blind_semantic_redundancy_audit_complete: "not_reached",
     moderator_reconcile_complete: "not_reached",
     safety_report_complete: "not_reached",
     synthesis_provenance_checked: "not_reached",
@@ -1949,13 +3077,31 @@ const digestManifest = {
   },
   moderator: { moderator_report_sha256: "" },
   safety_supervisor: { preflight_status: "pass", report_complete: false, safety_report_sha256: "" },
+  qa: {
+    required: true,
+    request_id: "",
+    request_sha256: "",
+    result_sha256: "",
+    final_artifact_sha256: "",
+    reviewer_binding: "unavailable",
+    request_result_artifact_binding_verified: false,
+    independent_reviewer_attestation: false,
+    role_blind_attestation: false,
+    status: "not_reached",
+    effective_result_status: "not_reached",
+  },
   checkpoint_hashes: Object.fromEntries(protocolCheckpointOrder.map((name) => [name, ""])),
+  blind_semantic_redundancy_status: "not_reached",
   manifest_sha256: "",
 };
 const checkpointArtifacts = [];
 let digestSafetyReport;
 for (const phase of protocolCheckpointOrder) {
   digestManifest.current_phase = phase;
+  if (phase === "reveal") {
+    digestManifest.phase_integrity.blind_semantic_redundancy_audit_complete = "pass";
+    digestManifest.blind_semantic_redundancy_status = "sufficient";
+  }
   if (phase === "reconcile") {
     digestManifest.phase_integrity.moderator_reconcile_complete = "pass";
     digestManifest.moderator.moderator_report_sha256 = "moderator-report-sha";
@@ -1973,14 +3119,44 @@ for (const phase of protocolCheckpointOrder) {
     digestManifest.phase_integrity.safety_report_complete = "pass";
   }
   if (phase === "synthesis") digestManifest.phase_integrity.synthesis_provenance_checked = "pass";
-  if (phase === "qa") digestManifest.phase_integrity.final_qa_complete_or_not_required = "pass";
+  if (phase === "qa") {
+    finalQaReviewArtifact.safety_report_sha256 = digestSafetyReport.safety_report_sha256;
+    finalQaRequest.final_artifact_sha256 = finalQaReviewArtifactDigest(
+      finalQaReviewArtifact,
+    );
+    finalQaRequest.request_sha256 = artifactDigest(finalQaRequest, "request_sha256");
+    finalQaResult.request_sha256 = finalQaRequest.request_sha256;
+    finalQaResult.final_artifact_sha256 = finalQaRequest.final_artifact_sha256;
+    finalQaResult.result_sha256 = artifactDigest(finalQaResult, "result_sha256");
+    digestManifest.phase_integrity.final_qa_complete_or_not_required = "pass";
+    digestManifest.qa = {
+      required: true,
+      request_id: finalQaRequest.request_id,
+      request_sha256: finalQaRequest.request_sha256,
+      result_sha256: finalQaResult.result_sha256,
+      final_artifact_sha256: finalQaRequest.final_artifact_sha256,
+      reviewer_binding: "host_provided",
+      request_result_artifact_binding_verified: true,
+      independent_reviewer_attestation: true,
+      role_blind_attestation: true,
+      status: "pass",
+      effective_result_status: "verified_consensus",
+    };
+  }
   const checkpoint = createProtocolCheckpoint(digestManifest, phase);
   checkpointArtifacts.push(checkpoint);
   digestManifest.checkpoint_hashes[phase] = checkpoint.checkpoint_sha256;
 }
 const finalManifestDigest = artifactDigest(digestManifest, "manifest_sha256");
+digestManifest.manifest_sha256 = finalManifestDigest;
 const changedSafetyManifest = JSON.parse(JSON.stringify(digestManifest));
 changedSafetyManifest.safety_supervisor.safety_report_sha256 = "changed-safety-digest";
+const changedSemanticRedundancyManifest = JSON.parse(JSON.stringify(digestManifest));
+changedSemanticRedundancyManifest.blind_semantic_redundancy_status = "insufficient";
+const changedFinalQaManifest = JSON.parse(JSON.stringify(digestManifest));
+changedFinalQaManifest.qa.result_sha256 = sha256("other QA result");
+const changedEffectiveResultManifest = JSON.parse(JSON.stringify(digestManifest));
+changedEffectiveResultManifest.qa.effective_result_status = "blocked";
 function buildRehashedCheckpointTamper(mutator) {
   const checkpoints = JSON.parse(JSON.stringify(checkpointArtifacts));
   const manifest = JSON.parse(JSON.stringify(digestManifest));
@@ -2007,6 +3183,9 @@ const checkpointBindingTampers = [
 ];
 const reorderedCheckpoints = JSON.parse(JSON.stringify(checkpointArtifacts));
 [reorderedCheckpoints[4], reorderedCheckpoints[5]] = [reorderedCheckpoints[5], reorderedCheckpoints[4]];
+const reorderedDigestManifest = Object.fromEntries(
+  Object.entries(digestManifest).reverse(),
+);
 record(
   "manifest_reconcile_safety_acyclic",
   digestSafetyReport.protocol_run_manifest_reconcile_checkpoint_sha256 ===
@@ -2017,7 +3196,8 @@ record(
 );
 record(
   "protocol_checkpoint_chain_complete",
-  verifyProtocolCheckpointChain(checkpointArtifacts, digestManifest),
+  verifyProtocolCheckpointChain(checkpointArtifacts, digestManifest) &&
+    verifyProtocolCheckpointChain(checkpointArtifacts, reorderedDigestManifest),
   "complete nine-phase checkpoint chain failed verification",
 );
 record(
@@ -2034,6 +3214,19 @@ record(
   finalManifestDigest !== artifactDigest(changedSafetyManifest, "manifest_sha256"),
   "final manifest digest did not bind the safety report digest",
 );
+record(
+  "manifest_final_digest_binds_semantic_redundancy",
+  finalManifestDigest !==
+    artifactDigest(changedSemanticRedundancyManifest, "manifest_sha256"),
+  "final manifest digest did not bind the semantic-redundancy status",
+);
+record(
+  "manifest_final_digest_binds_final_qa",
+  finalManifestDigest !== artifactDigest(changedFinalQaManifest, "manifest_sha256") &&
+    finalManifestDigest !==
+      artifactDigest(changedEffectiveResultManifest, "manifest_sha256"),
+  "final manifest digest did not bind the final-QA result and effective status",
+);
 const postQaConsensusDraft = {
   schema: "consensus_report.v1",
   task_id: "task-1",
@@ -2042,7 +3235,24 @@ const postQaConsensusDraft = {
   safety_report_sha256: digestSafetyReport.safety_report_sha256,
   result_status: "verified_consensus",
   hokage_synthesis: "final semantic result",
-  final_qa: { status: "pass" },
+  stop_decision: "stop_sufficient",
+  next_action: "execute proposed route",
+  final_qa: {
+    required: true,
+    status: "pass",
+    effective_result_status: "verified_consensus",
+    request_id: finalQaRequest.request_id,
+    request_sha256: finalQaRequest.request_sha256,
+    result_sha256: finalQaResult.result_sha256,
+    final_artifact_sha256: finalQaRequest.final_artifact_sha256,
+    reviewer_binding: "host_provided",
+    request_result_artifact_binding_verified: true,
+    independent_reviewer_attestation: true,
+    role_blind_attestation: true,
+    review_packet_scope: "final_artifact_criteria_evidence_only",
+    candidate_role_identities_excluded: true,
+    findings: finalQaResult.findings,
+  },
 };
 const postQaConsensusFinal = {
   ...postQaConsensusDraft,
@@ -2055,6 +3265,247 @@ record(
   "consensus_post_qa_manifest_hash_only",
   JSON.stringify(postQaChangedFields) === JSON.stringify(["protocol_run_manifest_sha256"]),
   "post-QA consensus finalization changed more than the final manifest hash",
+);
+const blockedFinalQaResult = {
+  ...finalQaResult,
+  status: "blocked",
+  findings: [
+    {
+      criterion_id: "criterion-1",
+      observed: "required evidence unavailable",
+      expected: "required evidence available",
+      evidence_refs: ["evidence-1"],
+      reproducible_next_check: "provide the missing evidence and repeat QA",
+    },
+  ],
+  result_sha256: "",
+};
+blockedFinalQaResult.result_sha256 = artifactDigest(
+  blockedFinalQaResult,
+  "result_sha256",
+);
+const blockedConsensus = JSON.parse(JSON.stringify(postQaConsensusDraft));
+blockedConsensus.final_qa.status = "blocked";
+blockedConsensus.final_qa.effective_result_status = "blocked";
+blockedConsensus.final_qa.result_sha256 = blockedFinalQaResult.result_sha256;
+blockedConsensus.final_qa.findings = blockedFinalQaResult.findings;
+const blockedManifest = JSON.parse(JSON.stringify(digestManifest));
+blockedManifest.qa.status = "blocked";
+blockedManifest.qa.effective_result_status = "blocked";
+blockedManifest.qa.result_sha256 = blockedFinalQaResult.result_sha256;
+const blockedCheckpointArtifacts = rebuildFinalQaCheckpoint(
+  checkpointArtifacts,
+  blockedManifest,
+);
+blockedConsensus.protocol_run_manifest_sha256 = blockedManifest.manifest_sha256;
+const staleQaSnapshotManifest = JSON.parse(JSON.stringify(digestManifest));
+staleQaSnapshotManifest.qa.status = "blocked";
+staleQaSnapshotManifest.qa.effective_result_status = "blocked";
+staleQaSnapshotManifest.qa.result_sha256 = blockedFinalQaResult.result_sha256;
+staleQaSnapshotManifest.manifest_sha256 = artifactDigest(
+  staleQaSnapshotManifest,
+  "manifest_sha256",
+);
+const mismatchedConsensusQaStatus = JSON.parse(JSON.stringify(postQaConsensusFinal));
+mismatchedConsensusQaStatus.final_qa.status = "blocked";
+const blockedQaWithIncorrectEffectiveStatus = JSON.parse(
+  JSON.stringify(blockedConsensus),
+);
+blockedQaWithIncorrectEffectiveStatus.final_qa.effective_result_status =
+  "verified_consensus";
+const mismatchedManifestReviewer = JSON.parse(JSON.stringify(digestManifest));
+mismatchedManifestReviewer.qa.reviewer_binding = "unavailable";
+mismatchedManifestReviewer.manifest_sha256 = artifactDigest(
+  mismatchedManifestReviewer,
+  "manifest_sha256",
+);
+const mismatchedManifestReviewerConsensus = JSON.parse(
+  JSON.stringify(postQaConsensusFinal),
+);
+mismatchedManifestReviewerConsensus.protocol_run_manifest_sha256 =
+  mismatchedManifestReviewer.manifest_sha256;
+const otherTaskManifest = JSON.parse(JSON.stringify(digestManifest));
+otherTaskManifest.task_id = "task-other";
+otherTaskManifest.manifest_sha256 = artifactDigest(otherTaskManifest, "manifest_sha256");
+const otherTaskManifestConsensus = JSON.parse(JSON.stringify(postQaConsensusFinal));
+otherTaskManifestConsensus.protocol_run_manifest_sha256 = otherTaskManifest.manifest_sha256;
+const missingConsensusQaScope = JSON.parse(JSON.stringify(postQaConsensusFinal));
+delete missingConsensusQaScope.final_qa.review_packet_scope;
+const missingConsensusQaExclusion = JSON.parse(JSON.stringify(postQaConsensusFinal));
+delete missingConsensusQaExclusion.final_qa.candidate_role_identities_excluded;
+const notRequiredManifest = JSON.parse(JSON.stringify(digestManifest));
+notRequiredManifest.qa = {
+  required: false,
+  request_id: "",
+  request_sha256: "",
+  result_sha256: "",
+  final_artifact_sha256: "",
+  reviewer_binding: "not_required",
+  request_result_artifact_binding_verified: "not_required",
+  independent_reviewer_attestation: "not_required",
+  role_blind_attestation: "not_required",
+  status: "not_required",
+  effective_result_status: "verified_consensus",
+};
+const notRequiredCheckpointArtifacts = rebuildFinalQaCheckpoint(
+  checkpointArtifacts,
+  notRequiredManifest,
+);
+const notRequiredConsensus = JSON.parse(JSON.stringify(postQaConsensusFinal));
+notRequiredConsensus.protocol_run_manifest_sha256 = notRequiredManifest.manifest_sha256;
+notRequiredConsensus.final_qa = {
+  required: false,
+  status: "not_required",
+  effective_result_status: "verified_consensus",
+  request_id: "",
+  request_sha256: "",
+  result_sha256: "",
+  final_artifact_sha256: "",
+  reviewer_binding: "not_required",
+  request_result_artifact_binding_verified: "not_required",
+  independent_reviewer_attestation: "not_required",
+  role_blind_attestation: "not_required",
+  review_packet_scope: "not_required",
+  candidate_role_identities_excluded: true,
+  findings: [],
+};
+const invalidNotRequiredConsensus = JSON.parse(JSON.stringify(notRequiredConsensus));
+invalidNotRequiredConsensus.final_qa.effective_result_status = "blocked";
+const invalidNotRequiredManifest = JSON.parse(JSON.stringify(notRequiredManifest));
+invalidNotRequiredManifest.qa.request_id = "unexpected-request";
+invalidNotRequiredManifest.manifest_sha256 = artifactDigest(
+  invalidNotRequiredManifest,
+  "manifest_sha256",
+);
+const invalidNotRequiredManifestConsensus = JSON.parse(
+  JSON.stringify(notRequiredConsensus),
+);
+invalidNotRequiredManifestConsensus.protocol_run_manifest_sha256 =
+  invalidNotRequiredManifest.manifest_sha256;
+record(
+  "final_qa_consensus_manifest_binding_consistent",
+  validatesRecordedFinalQaBinding(
+      finalQaRequest,
+      finalQaResult,
+      postQaConsensusFinal,
+      digestManifest,
+  ) &&
+    validatesRecordedFinalQaBinding(
+      finalQaRequest,
+      blockedFinalQaResult,
+      blockedConsensus,
+      blockedManifest,
+    ) &&
+    !validatesRecordedFinalQaBinding(
+      finalQaRequest,
+      finalQaResult,
+      mismatchedConsensusQaStatus,
+      digestManifest,
+    ) &&
+    !validatesRecordedFinalQaBinding(
+      finalQaRequest,
+      blockedFinalQaResult,
+      blockedQaWithIncorrectEffectiveStatus,
+      blockedManifest,
+    ) &&
+    !validatesRecordedFinalQaBinding(
+      finalQaRequest,
+      finalQaResult,
+      mismatchedManifestReviewerConsensus,
+      mismatchedManifestReviewer,
+    ) &&
+    !validatesRecordedFinalQaBinding(
+      finalQaRequest,
+      finalQaResult,
+      otherTaskManifestConsensus,
+      otherTaskManifest,
+    ) &&
+    !validatesRecordedFinalQaBinding(
+      finalQaRequest,
+      finalQaResult,
+      missingConsensusQaScope,
+      digestManifest,
+    ) &&
+    !validatesRecordedFinalQaBinding(
+      finalQaRequest,
+      finalQaResult,
+      missingConsensusQaExclusion,
+      digestManifest,
+    ),
+  "consensus and manifest accepted a mismatched QA status or reviewer binding",
+);
+record(
+  "final_qa_not_required_binding_consistent",
+  validatesNotRequiredFinalQaRecord(notRequiredConsensus, notRequiredManifest) &&
+    !validatesNotRequiredFinalQaRecord(
+      invalidNotRequiredConsensus,
+      notRequiredManifest,
+    ) &&
+    !validatesNotRequiredFinalQaRecord(
+      invalidNotRequiredManifestConsensus,
+      invalidNotRequiredManifest,
+    ),
+  "not-required QA accepted stale binding data or an incorrect effective status",
+);
+record(
+  "protocol_checkpoint_final_qa_snapshot_binding",
+  verifyProtocolCheckpointChain(blockedCheckpointArtifacts, blockedManifest) &&
+    verifyProtocolCheckpointChain(
+      notRequiredCheckpointArtifacts,
+      notRequiredManifest,
+    ) &&
+    !verifyProtocolCheckpointChain(checkpointArtifacts, staleQaSnapshotManifest),
+  "final QA checkpoint did not bind the final manifest snapshot",
+);
+const passedDeliveryView = finalDeliveryView(postQaConsensusFinal);
+const blockedDeliveryView = finalDeliveryView(blockedConsensus);
+const notRequiredDeliveryView = finalDeliveryView(notRequiredConsensus);
+const missingEffectiveDeliveryConsensus = JSON.parse(
+  JSON.stringify(postQaConsensusFinal),
+);
+delete missingEffectiveDeliveryConsensus.final_qa.effective_result_status;
+const invalidEffectiveDeliveryConsensus = JSON.parse(
+  JSON.stringify(postQaConsensusFinal),
+);
+invalidEffectiveDeliveryConsensus.final_qa.effective_result_status = "unknown";
+const notRunDeliveryConsensus = JSON.parse(JSON.stringify(postQaConsensusFinal));
+notRunDeliveryConsensus.final_qa.status = "not_run";
+notRunDeliveryConsensus.final_qa.effective_result_status = "blocked";
+notRunDeliveryConsensus.final_qa.request_result_artifact_binding_verified = false;
+notRunDeliveryConsensus.final_qa.reviewer_binding = "unavailable";
+notRunDeliveryConsensus.final_qa.independent_reviewer_attestation = false;
+notRunDeliveryConsensus.final_qa.role_blind_attestation = false;
+const passedBlockedDeliveryConsensus = JSON.parse(
+  JSON.stringify(postQaConsensusFinal),
+);
+passedBlockedDeliveryConsensus.result_status = "blocked";
+passedBlockedDeliveryConsensus.final_qa.effective_result_status = "blocked";
+const notRequiredBlockedDeliveryConsensus = JSON.parse(
+  JSON.stringify(notRequiredConsensus),
+);
+notRequiredBlockedDeliveryConsensus.result_status = "blocked";
+notRequiredBlockedDeliveryConsensus.final_qa.effective_result_status = "blocked";
+record(
+  "final_qa_effective_delivery_status_authoritative",
+  passedDeliveryView.result_status === "verified_consensus" &&
+    passedDeliveryView.stop_decision === "stop_sufficient" &&
+    blockedDeliveryView.result_status === "blocked" &&
+    blockedDeliveryView.stop_decision === "blocked" &&
+    blockedDeliveryView.next_action === "address_final_qa_findings_or_rerun" &&
+    blockedDeliveryView.next_action !== blockedConsensus.next_action &&
+    notRequiredDeliveryView.result_status === "verified_consensus" &&
+    notRequiredDeliveryView.stop_decision === "stop_sufficient" &&
+    finalDeliveryView(missingEffectiveDeliveryConsensus).result_status === "blocked" &&
+    finalDeliveryView(invalidEffectiveDeliveryConsensus).result_status === "blocked" &&
+    finalDeliveryView(blockedQaWithIncorrectEffectiveStatus).result_status ===
+      "blocked" &&
+    finalDeliveryView(notRunDeliveryConsensus).result_status === "blocked" &&
+    finalDeliveryView(passedBlockedDeliveryConsensus).stop_decision === "blocked" &&
+    finalDeliveryView(passedBlockedDeliveryConsensus).next_action !==
+      passedBlockedDeliveryConsensus.next_action &&
+    finalDeliveryView(notRequiredBlockedDeliveryConsensus).stop_decision ===
+      "blocked",
+  "frozen proposal status, stop, or next action overrode the effective QA delivery gate",
 );
 
 const skillFiles = listFiles(skillRoot);
@@ -2090,8 +3541,10 @@ if (packageMode) {
     "docs/naming-risk.md",
     "docs/release-acceptance-v1.0.0.md",
     "docs/release-acceptance-v1.0.1.md",
+    "docs/release-acceptance-v1.1.0.md",
     "docs/releases/v1.0.0.md",
     "docs/releases/v1.0.1.md",
+    "docs/releases/v1.1.0.md",
     "integrations/framecore-workspace.md",
     "manifest/package-manifest.json",
     "manifest/assets.json",
@@ -2108,6 +3561,8 @@ if (packageMode) {
 
   const readme = read(join(workspaceRoot, "README.md"));
   const notice = read(join(workspaceRoot, "NOTICE.md"));
+  const compatibility = read(join(workspaceRoot, "docs/compatibility.md"));
+  const namingRisk = read(join(workspaceRoot, "docs/naming-risk.md"));
   const packageManifest = parseJson(join(workspaceRoot, "manifest/package-manifest.json"));
   const assetManifest = parseJson(join(workspaceRoot, "manifest/assets.json"));
 
@@ -2131,6 +3586,37 @@ if (packageMode) {
   record("readme_training_instance_contract", readme.includes("`actor_identity_id: naruto_uzumaki`") && readme.includes("`method_matrix.v1`") && readme.includes("training envelopes bind each runtime"), "README shared-identity or method-assignment contract missing");
   record("readme_tsunade_parent", readme.includes("Tsunade Senju, Fifth Hokage") && readme.includes("not a seventh child profile"), "Tsunade must be the parent-process public identity, not a bundled profile");
   record("readme_final_qa_role", readme.includes("host-provided, role-blind `final_qa` reviewer") && readme.includes("CONDITIONAL, NOT BUNDLED"), "README must disclose the conditional host-provided final QA role");
+  record(
+    "readme_semantic_redundancy_boundary",
+    readme.includes("Blind semantic-redundancy audit") &&
+      readme.includes("BUNDLED, HEURISTIC") &&
+      readme.includes("provisional_consensus"),
+    "README must disclose the heuristic semantic-redundancy audit and its result ceiling",
+  );
+  record(
+    "readme_final_qa_interoperability",
+    readme.includes("The closed-envelope example binds request, result, task") &&
+      readme.includes("manifest, and effective outcome") &&
+      readme.includes("effective_result_status` as the sole delivery") &&
+      readme.includes("without adding a seventh profile") &&
+      readme.includes("mismatch, replay, or non-pass QA blocks delivery"),
+    "README must identify the non-bundled final QA interoperability example",
+  );
+  record(
+    "package_additive_1_1_compatibility",
+    compatibility.includes("### Additive Artifact Extension Rule") &&
+      compatibility.includes("wire-level parse compatibility") &&
+      /No `\.v1` field is\s+renamed or removed/.test(compatibility),
+    "additive 1.1 artifact reader and producer rules missing",
+  );
+  record(
+    "package_rights_confirmation_pending",
+    namingRisk.includes("## Current Distribution State") &&
+      namingRisk.includes("Explicit publisher confirmation") &&
+      namingRisk.includes("remains pending") &&
+      !namingRisk.includes("FrameCoreWorks selected route 3"),
+    "rights status must not infer publisher acceptance from asset selection",
+  );
   record("readme_fan_art_scope", /unofficial fan art/i.test(readme) && /expressly excluded from that license/i.test(readme), "README fan-art rights scope missing");
   record("notice_no_affiliation", /not affiliated with, endorsed by, sponsored by, or approved by/i.test(notice), "no-affiliation notice missing");
   record(
@@ -2188,9 +3674,9 @@ if (packageMode) {
   );
   record(
     "package_manifest_version",
-    packageJson?.version === "1.0.1" &&
+    packageJson?.version === "1.1.0" &&
       packageManifest?.package_version === packageJson?.version,
-    "package and manifest must use the exact 1.0.1 version",
+    "package and manifest must use the exact 1.1.0 version",
   );
   record(
     "package_manifest_release",
@@ -2198,8 +3684,33 @@ if (packageMode) {
       packageManifest?.release?.contract_version === packageJson?.version &&
       packageManifest?.release?.node_minimum_major === 22 &&
       JSON.stringify(packageManifest?.release?.ci_node_majors) === JSON.stringify([22, 24]) &&
-      packageManifest?.release?.runtime_capability_policy === "fail_closed",
+      packageManifest?.release?.runtime_capability_policy === "fail_closed" &&
+      packageManifest?.release?.fan_art_rights_clearance === "not_cleared" &&
+      packageManifest?.release?.publisher_legal_risk_route_confirmation === "pending",
     "stable release metadata, Node matrix, or runtime capability policy mismatch",
+  );
+  record(
+    "package_manifest_semantic_redundancy",
+      packageManifest?.release?.blind_semantic_redundancy_audit ===
+      "required_claim_level_heuristic" &&
+      packageManifest?.release?.semantic_sufficient_requires_claim_and_lineage_diversity === true &&
+      packageManifest?.release?.semantic_one_dimensional_difference_ceiling ===
+        "provisional_consensus" &&
+      packageManifest?.release?.semantic_redundancy_benchmark_calibrated === false &&
+      packageManifest?.validation_surfaces?.stale_opaque_handle_requirement_rejected === true &&
+      packageManifest?.validation_surfaces?.blind_semantic_redundancy_fixtures === true &&
+      packageManifest?.validation_surfaces?.semantic_pair_matrix_and_reference_integrity === true &&
+      packageManifest?.validation_surfaces?.semantic_fixture_status_linkage === true &&
+      packageManifest?.validation_surfaces?.final_qa_closed_envelope_validation === true &&
+      packageManifest?.validation_surfaces?.final_qa_effective_result_binding === true,
+    "semantic-redundancy release or validation metadata mismatch",
+  );
+  record(
+    "package_manifest_same_target_continuity",
+    packageManifest?.runtime_preflight?.same_target_followup_receipt_required === true &&
+      packageManifest?.runtime_preflight?.same_target_followup_receipt_count_required === 4 &&
+      packageManifest?.runtime_preflight?.opaque_runtime_handle_hash_forbidden === true,
+    "package manifest must require four same-target receipts without opaque handles",
   );
   record(
     "package_manifest_banner",
@@ -2244,6 +3755,18 @@ if (packageMode) {
       packageManifest?.host_role_requirements?.[0]?.bundled_profile === false &&
       packageManifest?.host_role_requirements?.[0]?.required_when === "consequential_result" &&
       packageManifest?.host_role_requirements?.[0]?.review_mode === "role_blind_independent" &&
+      packageManifest?.host_role_requirements?.[0]?.interoperability_template ===
+        "templates/consensus-report.md#host-provided-final-qa-interoperability-example" &&
+      packageManifest?.host_role_requirements?.[0]?.request_result_binding_required === true &&
+      packageManifest?.host_role_requirements?.[0]?.final_artifact_digest_binding_required === true &&
+      packageManifest?.host_role_requirements?.[0]?.closed_v1_envelope_required === true &&
+      packageManifest?.host_role_requirements?.[0]?.effective_result_status_binding_required === true &&
+      packageManifest?.host_role_requirements?.[0]
+        ?.effective_result_status_is_delivery_authority === true &&
+      packageManifest?.host_role_requirements?.[0]
+        ?.frozen_proposal_actions_ignored_when_blocked === true &&
+      packageManifest?.host_role_requirements?.[0]?.non_pass_effective_result_status === "blocked" &&
+      packageManifest?.host_role_requirements?.[0]?.binding_mismatch_policy === "blocked" &&
       packageManifest?.host_role_requirements?.[0]?.unavailable_policy === "blocked",
     "conditional host-provided final QA requirement mismatch",
   );

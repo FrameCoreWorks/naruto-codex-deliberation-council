@@ -73,7 +73,8 @@ and unavailable.
 - Kakashi is the common training guide and evidence moderator. Before fan-out,
   Kakashi prepares one neutral, non-solution guidance packet for all four
   instances. After commit, Kakashi enforces the barrier, prepares the reveal,
-  and records agreements and disputes. Kakashi does not submit a fifth answer.
+  records agreements and disputes, and audits blind-output semantic redundancy
+  at claim and evidence-lineage level. Kakashi does not submit a fifth answer.
 - Yamato is the independent safety supervisor. Yamato validates the common
   guidance, protected boundaries, and phase-control metadata, then returns only
   `pass`, `hold`, or `blocked` safety findings. Yamato never coaches one
@@ -297,6 +298,10 @@ containing:
 - collective blind spots and evidence-lineage findings
 - unsupported convergence, quick surrender, fake dissent, authority submission,
   and factually incorrect opposition checks
+- a blind-output semantic-redundancy audit that compares claim meaning and
+  evidence lineages across every unique unordered pair, records unique verified
+  contributions with packet-valid references, and does not infer diversity
+  from method IDs, wording differences, or invented percentages
 - missing evidence
 - criterion-level failures with evidence, severity, and root cause
 - questions every instance must resolve
@@ -360,6 +365,15 @@ Agreement derived from one shared source remains one evidence lineage. Genuine
 evidence-backed minority objections are preserved, while unsupported dissent
 is rejected rather than rewarded.
 
+The blind-output semantic-redundancy audit is a bounded moderator judgment, not
+a deterministic similarity metric or benchmark result. `sufficient` requires
+verified material differences in both core claims and evidence lineages plus at
+least one candidate-specific unique verified contribution. A difference in
+only one dimension, fully redundant outputs, or an unverifiable comparison caps
+the maximum result at `provisional_consensus`. Do not manufacture disagreement
+to raise the ceiling. Post-reveal convergence is assessed separately and may be
+valid when the experience-transfer ledgers show evidence-backed repair.
+
 Hokage synthesizes the final result. Evidence authority depends on the claim:
 
 1. Workspace policy questions: canonical workspace source of truth first.
@@ -379,7 +393,20 @@ moderator report hash.
 When final QA is required, provide only the final artifact, acceptance criteria,
 and evidence. Exclude training-instance identities, role prestige, completion order,
 and vote counts. Every failed QA finding must include an observable mismatch
-and a reproducible next check.
+and a reproducible next check. Freeze and hash the consensus QA-review
+projection with only the manifest-hash field and entire `final_qa` block
+omitted. Bind the request and result with a unique
+`request_id`, `task_id`, request digest, and final-artifact digest. Recompute
+both self-digests and require every binding field plus the independence and
+role-blind attestations to match before accepting `pass`; mismatch or replay is
+`blocked`. Store the binding in the consensus report and manifest before the QA
+checkpoint. Treat the v1 QA request/result/finding objects as closed envelopes,
+reject role-bearing or raw-reasoning fields in the reviewed projection, and
+require the final consensus to bind the self-digested manifest for the same
+task and exact QA status. After QA, `final_qa.effective_result_status` is the
+only delivery status. If it is `blocked`, ignore the frozen `result_status`,
+`stop_decision`, and `next_action`; expose only QA findings and a repair/rerun
+route, never the proposed action.
 
 Re-evaluate every required acceptance criterion after revision. Preserve
 previous passes, record new regressions, and do not treat agreement as evidence
@@ -392,7 +419,8 @@ Use exactly one result:
 - `verified_consensus`: four valid shadow-clone revisions, required evidence is present,
   critical objections are resolved, and the solution passes its checks.
 - `provisional_consensus`: useful convergence exists, but only three valid
-  instances remain or a non-critical evidence gap is unresolved.
+  instances remain, blind-output semantic diversity is insufficient or
+  unverifiable, or a non-critical evidence gap is unresolved.
 - `structured_dispute`: two or more evidence-backed options remain materially
   incompatible. Preserve the dispute and state what would resolve it.
 - `blocked`: fewer than three valid instances, Kakashi or Yamato unavailable,

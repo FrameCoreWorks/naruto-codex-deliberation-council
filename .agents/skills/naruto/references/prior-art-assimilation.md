@@ -22,8 +22,9 @@ or fail-closed behavior.
 
 ## Resulting Workspace Mechanisms
 
-1. `protocol_run_manifest.v1` proves phase order, byte-identical reveal, and
-   same-thread revision through opaque hashes.
+1. `protocol_run_manifest.v1` records phase order and byte-identical reveal;
+   parent-retained spawn targets plus successful host same-target follow-up
+   receipts establish revision continuity without model-visible handle hashes.
 2. Training-instance self-audits classify evidence, name falsification checks, and
    expose blind spots before reveal without collecting private reasoning.
 3. `experience_transfer` maps every material claim from original position to
@@ -31,7 +32,8 @@ or fail-closed behavior.
 4. `independence_key` prevents four training instances citing one source from
    appearing as four independent confirmations.
 5. Kakashi checks unsupported convergence, quick surrender, fake dissent,
-   authority submission, incorrect opposition, and lost minority evidence.
+   authority submission, incorrect opposition, lost minority evidence, and
+   claim-level semantic redundancy in the blind outputs.
 6. Hokage builds one manifest-derived `method_matrix.v1`; Kakashi creates one
    common, non-solution training brief while receiving the matrix without change.
    Yamato validates their byte identity, protected boundaries, four routing

@@ -1,7 +1,7 @@
 # Behavioral Benchmark Plan
 
 Status: design only. No benchmark run or performance result is bundled with
-`1.0.1`.
+`1.1.0`.
 
 ## Purpose
 
@@ -95,8 +95,8 @@ must use runtime identifiers and receipts emitted by the host, not self-attested
 identifiers invented in model text. The log should bind build ID, task and
 packet hashes, profile targets, phase transitions, commit barrier, reveal
 delivery, same-target follow-ups, and final-QA disposition. This is stronger
-evidence than the parent-owned logical sidecar used for base `1.0.1` live
-acceptance. Version `1.0.1` does not bundle the adapter or log implementation.
+evidence than the parent-owned logical sidecar used for base `1.1.0` live
+acceptance. Version `1.1.0` does not bundle the adapter or log implementation.
 
 ## Claim Gate
 

@@ -500,7 +500,7 @@ try {
   );
   assert(migrationReport.validation?.status === "pass", "0.4 migration target validation did not pass");
   assertExactProjectInstall(migrationTarget);
-  cases.push("historical-0.4.0-to-1.0.1-full-inventory-migration");
+  cases.push("historical-0.4.0-to-1.1.0-full-inventory-migration");
 
   const sameNameHostTarget = join(testRoot, "same-name-host-project");
   mkdirSync(sameNameHostTarget, { recursive: true });

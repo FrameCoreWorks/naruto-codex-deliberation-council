@@ -124,7 +124,9 @@ the projected manifest snapshot and previous-checkpoint digest; the manifest
 stores its hash. Kakashi's moderator report digest is present before the
 reconcile checkpoint. Yamato binds its safety report to that checkpoint. The
 final consensus binds to the post-QA manifest, moderator report, and safety
-report hashes.
+report hashes. Required final QA also binds request and result to one unique
+request ID, task ID, request digest, and final-artifact digest; any mismatch or
+replay blocks the run before the QA checkpoint is accepted.
 
 The sidecar is parent-owned logical run context. It is not a deterministic host
 adapter, durable audit log, or tamper-evident event stream. Runtime target IDs
@@ -268,6 +270,15 @@ lost critical minorities lower the result ceiling. Unsupported or factually
 incorrect opposition is also flagged; disagreement is not rewarded merely for
 being different.
 
+Kakashi also compares the blind candidate artifacts at claim and evidence-lineage
+level before reveal. Record materially equivalent core claims, pairwise overlap,
+unique verified contributions, and whether every valid candidate depends on the
+same source lineages. Method IDs and surface wording do not prove diversity, and
+the moderator must not invent a numeric similarity score. If all valid blind
+solutions are materially equivalent with the same evidence lineages and no
+unique verified contribution, or if the comparison is unverifiable, cap the run
+at `provisional_consensus`. This cap does not reward unsupported dissent.
+
 For each failed, partial, or unverifiable criterion, Kakashi records evidence,
 severity, root cause, and loopback target. A vague request to "improve" is not a
 valid repair instruction.
@@ -296,6 +307,12 @@ that checkpoint plus final guidance-integrity, phase-order, forbidden-action,
 and boundary metadata, then emits `safety_report.v1`; it never inspects or edits
 solution content. Record the safety digest and preserve the `safety_report`
 checkpoint before Hokage synthesis.
+
+The moderator report preserves the blind-output redundancy result separately
+from post-reveal convergence. Similar revised answers are not retroactive proof
+of blind diversity; they are acceptable only when claim-level experience
+transfer shows evidence-backed adoption, correction, or independently retained
+support.
 
 Reconciliation reruns failed criteria and protects every previous pass. Record
 new regressions and whether the revision produced material improvement. Do not
@@ -343,9 +360,10 @@ must include an observable mismatch and reproducible next check.
 | Protected-boundary or phase-integrity supervision failure | `blocked` |
 | Same-thread revision unavailable | `blocked` |
 | Reveal bytes differ between valid training instances | `blocked` |
-| Same-thread runtime-handle hashes differ or are unverifiable | `blocked` |
+| Parent cannot retain the original spawn-target mapping or a successful same-target follow-up receipt | `blocked` |
 | Critical evidence-backed objection unresolved | `structured_dispute` |
 | Critical agreement depends on one shared lineage only | at most `provisional_consensus` |
+| Blind outputs are materially equivalent on core claims and evidence lineages with no unique verified contribution, or the comparison is unverifiable | at most `provisional_consensus` |
 | Unsupported critical or major Hokage-introduced claim | at most `provisional_consensus` |
 | Consequential final QA missing or non-reproducible | `blocked` |
 | Required protected action lacks permission | `blocked` |

@@ -24,7 +24,8 @@ All four training instances:
 - revise in the same thread after one common reveal packet
 - retain the same actor identity and method assignment through revision
 - record an experience-transfer claim map with evidence deltas and matching
-  opaque original/revision thread-handle hashes
+  parent-retained original spawn target plus a successful host same-target
+  follow-up receipt; never invent or hash a model-visible runtime handle
 
 The instances differ by fixed method, not identity, task ownership, source
 access, permissions, or acceptance criteria. Their purpose is methodological
@@ -141,6 +142,9 @@ Kakashi must:
 - exclude invalid instances with explicit reasons
 - prepare one byte-identical reveal packet for every valid instance
 - map claims to evidence authority and independent source lineages
+- compare blind outputs at claim and evidence-lineage level, recording materially
+  equivalent claims, unique verified contributions, and an evidence-backed
+  semantic-redundancy result without invented similarity percentages
 - preserve critical minority objections
 - identify shared-source convergence, collective blind spots, quick surrender,
   fake dissent, authority submission, and factually incorrect opposition
@@ -157,6 +161,7 @@ Kakashi must not:
 - reveal outputs early
 - introduce new private evidence after the barrier
 - decide by majority, completion order, length, style, or confidence prose
+- infer diversity from method IDs or reward unsupported dissent
 - expose raw chain-of-thought or a debate transcript
 - execute any recommendation
 

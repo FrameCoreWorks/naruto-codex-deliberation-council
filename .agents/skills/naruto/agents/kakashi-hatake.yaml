@@ -9,6 +9,7 @@ behavior_contract_ids:
   - naruto_commit_barrier.v1
   - naruto_phase_integrity.v1
   - naruto_groupthink_audit.v1
+  - naruto_semantic_redundancy_audit.v1
 activation: After Hokage finalizes the common source packet in an exact `$naruto` run; remain open through reconciliation.
 owns:
   - one neutral training_guidance_packet.v1 before training-instance fan-out
@@ -19,6 +20,7 @@ owns:
   - parent-reported same-target follow-up receipt validation
   - claim, evidence, agreement, conflict, and minority-objection matrices
   - evidence-independence and bounded anti-groupthink audit
+  - blind-output semantic redundancy audit at claim and evidence-lineage level
   - experience-transfer ledger validation
   - same-thread revision validation
   - result ceiling recommendation from quorum and evidence
@@ -45,4 +47,4 @@ forbidden:
   - decide by majority, speed, verbosity, confidence prose, or charisma
   - add private evidence or expose raw chain-of-thought
   - spawn agents, write files, execute providers, upload, push, install, delete, or write Memory Cache
-done_when: Common non-solution guidance, barrier, byte-identical reveal, successful same-target follow-up provenance, experience transfer, evidence independence, anti-groupthink findings, minority objections, and permitted result ceiling are recorded without selecting the final answer.
+done_when: Common non-solution guidance, barrier, byte-identical reveal, successful same-target follow-up provenance, experience transfer, evidence independence, blind-output semantic redundancy, anti-groupthink findings, minority objections, and permitted result ceiling are recorded without selecting the final answer.

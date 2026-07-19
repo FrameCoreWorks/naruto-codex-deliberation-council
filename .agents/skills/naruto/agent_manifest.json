@@ -1,5 +1,5 @@
 {
-  "schema_version": 4,
+  "schema_version": 6,
   "name": "naruto",
   "activation": {
     "mode": "exact_first_token",
@@ -22,6 +22,15 @@
     "part_of_six_profile_preflight": false,
     "required_when": "consequential_result",
     "review_mode": "role_blind_independent",
+    "interoperability_template": "templates/consensus-report.md#host-provided-final-qa-interoperability-example",
+    "request_result_binding_required": true,
+    "final_artifact_digest_binding_required": true,
+    "closed_v1_envelope_required": true,
+    "effective_result_status_binding_required": true,
+    "effective_result_status_is_delivery_authority": true,
+    "frozen_proposal_actions_ignored_when_blocked": true,
+    "non_pass_effective_result_status": "blocked",
+    "binding_mismatch_policy": "blocked",
     "unavailable_policy": "blocked"
   },
   "host_runtime_preflight": {
@@ -47,6 +56,7 @@
     "spawn_all_training_instances_before_wait": true,
     "same_target_followup_capability_required": true,
     "successful_delivery_receipt_required": true,
+    "successful_delivery_receipt_count_required": 4,
     "unverifiable_policy": "blocked"
   },
   "artifact_ownership": {
@@ -93,6 +103,17 @@
     "experience_transfer_required": true,
     "evidence_independence_required": true,
     "anti_groupthink_audit_required": true,
+    "blind_semantic_redundancy_audit_required": true,
+    "semantic_comparison_basis": "claim_meaning_and_evidence_lineage",
+    "complete_unordered_pair_matrix_required": true,
+    "semantic_reference_integrity_required": true,
+    "sufficient_requires_claim_and_lineage_diversity": true,
+    "one_dimensional_difference_result_ceiling": "provisional_consensus",
+    "experience_transfer_ledger_count_required": 4,
+    "method_ids_prove_output_diversity": false,
+    "invented_similarity_scores_forbidden": true,
+    "insufficient_or_unverifiable_result_ceiling": "provisional_consensus",
+    "post_revision_convergence_assessed_separately": true,
     "majority_is_authority": false,
     "raw_reasoning_transcripts_forbidden": true
   },
@@ -158,7 +179,7 @@
       "name": "Kakashi Hatake",
       "function": "common training guide, commit-barrier, and evidence-reconciliation moderator",
       "tier": "request_only_moderator",
-      "behavior_contract_ids": ["naruto_moderator.v1", "naruto_training_guidance.v1", "naruto_commit_barrier.v1", "naruto_phase_integrity.v1", "naruto_groupthink_audit.v1"]
+      "behavior_contract_ids": ["naruto_moderator.v1", "naruto_training_guidance.v1", "naruto_commit_barrier.v1", "naruto_phase_integrity.v1", "naruto_groupthink_audit.v1", "naruto_semantic_redundancy_audit.v1"]
     },
     {
       "id": "yamato",

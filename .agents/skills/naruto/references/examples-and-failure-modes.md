@@ -132,8 +132,10 @@ starts a second panel automatically.
 | Speed/verbosity bias | Completion order or answer length affects rank | Remove the signal and re-evaluate claims. |
 | Lost minority objection | Evidence-backed critical objection omitted | Result cannot be verified; restore dispute. |
 | New thread revision | An instance is respawned after reveal | Block; same-thread learning was not proven. |
-| Missing same-thread proof | Opaque original/revision handle hashes are missing, unverifiable, or unequal | Return `blocked`; do not claim experience transfer. |
+| Missing same-thread proof | Parent lacks the original spawn-target mapping or a successful host follow-up receipt to that exact target | Return `blocked`; do not claim experience transfer. |
 | Non-identical reveal | Training-instance reveal hashes differ | Return `blocked`; the comparison is contaminated. |
+| Redundant blind outputs | All valid blind solutions have materially equivalent core claims, the same evidence lineages, and no unique verified contribution | Record the claim-level audit and cap at `provisional_consensus`; do not manufacture dissent. |
+| Unverifiable semantic comparison | Kakashi cannot map overlap and unique contributions to concise claim and evidence references | Cap at `provisional_consensus` and state the missing comparison evidence. |
 | Empty experience transfer | Revision changes claims without a claim map or evidence delta | Mark revision invalid or cap below verified. |
 | Quick surrender | An instance changes position only because peers agree | Flag conformity and require evidence or corrected-assumption basis. |
 | Fake dissent | An instance preserves a contradicted claim only to remain different | Reject the dissent; diversity is not evidence. |
@@ -158,6 +160,8 @@ A useful final answer must tell the user:
 
 - what the four methods agreed on
 - what materially differed
+- whether the blind-output semantic-redundancy audit was sufficient,
+  insufficient, or unverifiable
 - which evidence resolved the difference
 - whether evidence came from independent source lineages
 - what changed in the same training-instance threads after reveal
