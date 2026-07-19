@@ -1,7 +1,7 @@
 {
   "schema": "codex_deliberation_package.v3",
   "package_name": "naruto-codex-deliberation-council",
-  "package_version": "1.0.0",
+  "package_version": "1.0.1",
   "skill_name": "naruto",
   "public_parent_role_id": "hokage",
   "public_parent_identity_id": "tsunade_senju",
@@ -29,7 +29,10 @@
     "plugin_wrapper_included": false,
     "remote_included": false,
     "remote_meaning": "no_remote_configuration_or_push_automation",
-    "github_source_ready": true
+    "github_source_ready": true,
+    "repository_visibility": "public",
+    "repository_url": "https://github.com/FrameCoreWorks/naruto-codex-deliberation-council",
+    "first_published_release_url": "https://github.com/FrameCoreWorks/naruto-codex-deliberation-council/releases/tag/v1.0.0"
   },
   "layout": {
     "skill_root": ".agents/skills/naruto",
@@ -39,10 +42,43 @@
   },
   "release": {
     "status": "stable",
-    "contract_version": "1.0.0",
+    "contract_version": "1.0.1",
     "node_minimum_major": 22,
     "ci_node_majors": [22, 24],
-    "runtime_capability_policy": "fail_closed"
+    "runtime_capability_policy": "fail_closed",
+    "static_package_acceptance": "pass_required",
+    "target_host_runtime_acceptance": "not_proven_until_live_evidence",
+    "host_orchestration_adapter_bundled": false,
+    "host_event_log_bundled": false,
+    "live_host_acceptance_report_bundled": false,
+    "method_output_diversity": "not_measured",
+    "behavioral_quality_lift": "not_measured",
+    "runtime_cost_latency": "not_benchmarked",
+    "benchmark_plan": "docs/benchmark-plan.md",
+    "fan_art_rights_clearance": "not_cleared"
+  },
+  "runtime_preflight": {
+    "trusted_project_required": true,
+    "exact_runtime_profile_count": 6,
+    "peak_child_capacity_required": 6,
+    "profile_permission_defaults": {
+      "sandbox_mode": "read-only",
+      "approval_policy": "never"
+    },
+    "effective_permissions_must_be_verified": true,
+    "fresh_child_context_required": true,
+    "spawn_all_candidates_before_wait": true,
+    "same_target_followup_receipt_required": true,
+    "opaque_runtime_handle_hash_forbidden": true,
+    "unavailable_policy": "blocked"
+  },
+  "validation_surfaces": {
+    "repository_self_check": ".agents/skills/naruto/scripts/validate-naruto.mjs",
+    "strict_profile_toml_and_agent_card_yaml": true,
+    "classifiers_fail_closed": true,
+    "checkpoint_run_task_phase_snapshot_binding": true,
+    "arbitrary_live_run_bundle_validator_bundled": false,
+    "repository_self_check_is_not_host_execution_proof": true
   },
   "assets": [
     {
@@ -100,6 +136,9 @@
   ],
   "migration": {
     "supported_in_place_from": ["0.4.x"],
+    "historical_test_fixture": "scripts/fixtures/install-0.4.0-inventory.json",
+    "historical_test_source_version": "0.4.0",
+    "historical_test_source_commit": "42cab91",
     "legacy_0_3_installation_policy": "fail_closed_manual_cleanup",
     "force_bypass_allowed": false,
     "legacy_profile_paths": [
@@ -125,6 +164,7 @@
     "Context/"
   ],
   "license": "MIT",
+  "license_scope": "original_repository_materials_only_excluding_fan_art_and_third_party_rights",
   "fan_art_included_in_mit": false,
   "third_party_names_licensed": false
 }

@@ -1,0 +1,70 @@
+name: Bug report
+description: Report a reproducible defect in the package, installer, validator, or documentation.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include credentials, private paths, secrets, or sensitive logs.
+        For security vulnerabilities, use the private-reporting guidance in the security policy instead.
+
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: Provide the release version or full commit SHA where the problem occurs.
+      placeholder: v1.0.0 or 7cd400389ead...
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include the operating system, Node.js version, Codex host version, and installation scope when relevant.
+      placeholder: macOS 15, Node.js 24, project installation
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Provide the smallest complete sequence that reproduces the issue.
+      placeholder: |
+        1. Run ...
+        2. Invoke ...
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized evidence
+      description: Add minimal logs or output after removing secrets, tokens, private paths, and unrelated data.
+      render: text
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission checks
+      options:
+        - label: I searched existing issues for the same problem.
+          required: true
+        - label: This report does not disclose a security vulnerability or sensitive information.
+          required: true

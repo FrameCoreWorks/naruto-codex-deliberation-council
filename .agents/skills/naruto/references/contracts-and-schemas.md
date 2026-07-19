@@ -101,8 +101,10 @@ The common source packet excludes private method instructions. A separate,
 byte-identical `method_matrix.v1` exposes all four fixed assignments to every
 participant. Each routing envelope binds one training instance to exactly one
 matrix assignment and the common packet hashes.
-Runtime provenance uses only SHA-256 hashes of opaque runtime handles. Never
-store the raw handles in a protocol artifact.
+Runtime provenance comes from the parent-owned spawn-target mapping and the
+host follow-up tool's successful delivery receipt for that exact target. A
+child-authored acknowledgement is not provenance. Never ask a child to invent,
+echo, or hash an opaque runtime handle.
 
 ## Loop Control Projection
 
@@ -455,9 +457,7 @@ revised_candidate_solution:
   changed_claims: []
   unchanged_claims: []
   experience_transfer:
-    same_thread_attestation: true
-    original_thread_handle_sha256:
-    revision_thread_handle_sha256:
+    same_thread_revision_attestation: true
     reveal_packet_sha256:
     claim_revision_map:
       - claim_id:
@@ -484,12 +484,13 @@ revised_candidate_solution:
   revision_output_sha256:
 ```
 
-The original and revision runtime-handle hashes must be equal, and the actor
-identity, instance ID, method profile, matrix digest, and envelope digest must
-remain unchanged. Missing, unavailable, unequal, or drifted proofs mean the
-same-thread learning requirement was not established and the run is blocked.
-Experience transfer records changed claims and evidence deltas, not private
-reasoning.
+The actor identity, instance ID, method profile, matrix digest, and envelope
+digest must remain unchanged. Hokage separately retains the spawn-target
+mapping and a successful host-tool receipt for delivery of the reveal follow-up
+to that same target. Missing, unsuccessful, child-authored, or mismatched-target
+receipts mean the same-thread learning requirement was not established and the
+run is blocked. Experience transfer records changed claims and evidence deltas,
+not private reasoning.
 
 ## Protocol Run Manifest
 
@@ -516,7 +517,7 @@ protocol_run_manifest:
     blind_commits_recorded: pass | partial | fail | not_reached
     commit_barrier_closed: pass | fail | not_reached
     reveal_byte_identical: pass | fail | not_reached
-    same_thread_revisions_verified: pass | partial | fail | not_reached
+    same_target_followup_receipts_verified: pass | partial | fail | not_reached
     moderator_reconcile_complete: pass | fail | not_reached
     safety_report_complete: pass | fail | not_reached
     synthesis_provenance_checked: pass | fail | not_reached
@@ -526,18 +527,19 @@ protocol_run_manifest:
       actor_identity_id: naruto_uzumaki
       method_profile_id:
       training_instance_envelope_sha256:
-      original_thread_handle_sha256:
-      revision_thread_handle_sha256:
-      same_thread_verified: true | false | unverifiable
+      spawn_target_mapping_retained_by_parent: true | false | unverifiable
+      same_target_followup_receipt_status: pass | fail | unverifiable
       commit_status: valid | invalid | timed_out
       revision_status: valid | invalid | unavailable
       no_blind_phase_supervisor_contact: true | false | unverifiable
   moderator:
-    thread_handle_sha256:
+    spawn_target_mapping_retained_by_parent: true | false | unverifiable
+    followup_receipt_status: pass | fail | not_reached
     reveal_packet_sha256:
     moderator_report_sha256:
   safety_supervisor:
-    thread_handle_sha256:
+    spawn_target_mapping_retained_by_parent: true | false | unverifiable
+    followup_receipt_status: pass | fail | not_reached
     preflight_status: pass | hold | blocked
     hold_count: 0 | 1
     report_complete: true | false

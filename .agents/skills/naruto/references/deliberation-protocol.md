@@ -21,9 +21,11 @@ use four different, fixed methods. Each solves the same complete problem,
 inspects the same committed peer artifacts once, revises its own solution in
 the same thread, and returns evidence for one accumulated synthesis.
 
-The design seeks useful diversity without free-form swarm behavior. It is not
-a voting system, autonomous execution engine, hidden chain-of-thought exchange,
-or replacement for the normal pipeline.
+The design seeks useful diversity without free-form swarm behavior. Fixed
+method assignments do not prove behavioral diversity or quality improvement in
+a particular run. The protocol is not a voting system, autonomous execution
+engine, hidden chain-of-thought exchange, or replacement for the normal
+pipeline.
 
 Its non-negotiable learning shape follows the user's Volume 35-inspired
 analogy: one learner practices the same complete problem through four parallel
@@ -74,7 +76,7 @@ Adopted patterns:
 - evidence-based synthesis
 - explicit activation and bounded runtime
 - measurable packet, phase, and output hashes
-- explicit same-thread provenance through opaque runtime-handle hashes
+- explicit same-thread provenance through successful host same-target follow-up receipts
 - evidence independence counted by source lineage, not agent count
 - bounded groupthink and performative-dissent checks
 
@@ -123,6 +125,11 @@ stores its hash. Kakashi's moderator report digest is present before the
 reconcile checkpoint. Yamato binds its safety report to that checkpoint. The
 final consensus binds to the post-QA manifest, moderator report, and safety
 report hashes.
+
+The sidecar is parent-owned logical run context. It is not a deterministic host
+adapter, durable audit log, or tamper-evident event stream. Runtime target IDs
+and delivery success must be retained from unmodified host-tool results; a
+child-authored attestation cannot establish those facts.
 
 ## Loop Protocol Integration
 
@@ -210,8 +217,9 @@ bytes plus the candidate output schema and the instance's allowlisted envelope.
 Do not provide peer status, output snippets, ranking hints, a preferred answer,
 or private supervisor content.
 
-Method diversity is legitimate. Task, sources, constraints, acceptance
-criteria, and evidence rules are not allowed to differ.
+Method assignments may legitimately differ. Their labels and count are not
+quality evidence. Task, sources, constraints, acceptance criteria, and evidence
+rules are not allowed to differ.
 
 Every training instance classifies claim evidence, records its independence keys and a
 falsification check, then completes a concise pre-reveal self-audit naming its
@@ -273,9 +281,11 @@ claim-by-claim change map and evidence delta.
 If same-thread follow-up is unavailable, stop. Recreating an instance after
 reveal would contaminate the blind/revision identity contract. The actor
 identity, instance ID, method assignment, matrix hash, and envelope hash cannot
-change. The parent records a SHA-256 hash of the instance thread's opaque runtime
-handle at original commit and revision. The hashes must match. Missing,
-unverifiable, or unequal hashes block the run; never store a raw thread ID.
+change. The parent retains the original spawn-target mapping and requires a
+successful host-tool delivery receipt for the reveal follow-up to that exact
+target. Missing, unsuccessful, child-authored, or mismatched-target receipts
+block the run; never ask a child to invent, echo, or hash an opaque runtime
+handle.
 
 ## Reconciliation
 
@@ -292,7 +302,7 @@ new regressions and whether the revision produced material improvement. Do not
 convert a regression into consensus merely because more instances now agree.
 
 Kakashi verifies every experience-transfer ledger against the original claim,
-common reveal hash, revised claim, and same-thread proof. A change without new
+common reveal hash, revised claim, and parent-reported same-target receipt. A change without new
 evidence or a corrected assumption is not automatically improvement. Preserve
 material unchanged claims as evidence that an instance considered and rejected
 peer feedback, not as a failure to conform.
@@ -360,7 +370,7 @@ Record only concise protocol artifacts:
 - QA and stop decision
 - acceptance-matrix results and regression evidence
 - iteration count, hard-stop reason, and material-improvement status
-- opaque same-thread handle hashes and byte-identical reveal hash
+- same-target host follow-up receipt status and byte-identical reveal hash
 - experience-transfer claim map and evidence deltas
 - evidence-independence and anti-groupthink findings
 - synthesis provenance and reproducible QA findings

@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/FrameCoreWorks/naruto-codex-deliberation-council/security/policy
+    about: Follow the private-reporting guidance. Do not publish exploit details or secrets in an issue.

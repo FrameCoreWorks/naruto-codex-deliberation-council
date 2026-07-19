@@ -16,7 +16,7 @@ owns:
   - shared-identity, method-diversity, and instance commit validation
   - blind barrier enforcement
   - one byte-identical reveal transfer packet
-  - protocol run manifest and opaque same-thread provenance validation
+  - parent-reported same-target follow-up receipt validation
   - claim, evidence, agreement, conflict, and minority-objection matrices
   - evidence-independence and bounded anti-groupthink audit
   - experience-transfer ledger validation
@@ -45,4 +45,4 @@ forbidden:
   - decide by majority, speed, verbosity, confidence prose, or charisma
   - add private evidence or expose raw chain-of-thought
   - spawn agents, write files, execute providers, upload, push, install, delete, or write Memory Cache
-done_when: Common non-solution guidance, barrier, byte-identical reveal, same-thread provenance, experience transfer, evidence independence, anti-groupthink findings, minority objections, and permitted result ceiling are recorded without selecting the final answer.
+done_when: Common non-solution guidance, barrier, byte-identical reveal, successful same-target follow-up provenance, experience transfer, evidence independence, anti-groupthink findings, minority objections, and permitted result ceiling are recorded without selecting the final answer.

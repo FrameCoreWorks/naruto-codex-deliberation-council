@@ -1,97 +1,137 @@
 # Codex Compatibility And Prior Art
 
-Checked on 2026-07-18. External material informed package shape only; no code
+Checked on 2026-07-19. External material informed package shape only; no code
 or workflow was copied from the listed repositories.
 
 ## Official Codex Sources
 
 - [Build skills](https://developers.openai.com/codex/skills): a skill is a
-  directory with `SKILL.md` plus optional scripts and references. `SKILL.md`
-  requires `name` and `description`. Project skills live in
-  `.agents/skills`; user skills live in `$HOME/.agents/skills`.
+  directory with `SKILL.md` plus optional scripts and references. Project
+  skills live in `.agents/skills`; user skills live in
+  `$HOME/.agents/skills`.
 - [Subagents and custom agents](https://developers.openai.com/codex/subagents):
   project custom agents live in `.codex/agents`; personal agents live in
-  `~/.codex/agents`. Every profile requires `name`, `description`, and
-  `developer_instructions`. `sandbox_mode = "read-only"` is supported.
-- [Build plugins](https://learn.chatgpt.com/docs/build-plugins): plugins are
-  the preferred broad distribution surface for reusable skills. A plugin
-  requires `.codex-plugin/plugin.json`.
+  `~/.codex/agents`. Profiles declare `name`, `description`,
+  `developer_instructions`, and optional defaults such as
+  `sandbox_mode = "read-only"`.
+- [Build plugins](https://learn.chatgpt.com/docs/build-plugins): plugins are a
+  broad distribution surface for reusable skills. A plugin requires
+  `.codex-plugin/plugin.json`.
 - [OpenAI skills examples](https://github.com/openai/skills): official public
   examples of progressive disclosure, `agents/openai.yaml`, references, and
   validation helpers.
 
-Codex normally detects new or changed skills automatically. Official skill
-documentation says to restart Codex if a change does not appear. Custom-agent
-profiles are configuration layers; test them after restart or in a new task.
+Codex normally detects new or changed skills automatically. Restart Codex and
+start a new task if discovery does not refresh. A repository must be inspected
+and trusted before its project-scoped configuration is loaded.
 
-## Stable 1.0.0 Contract
+`sandbox_mode = "read-only"` and `approval_policy = "never"` are profile
+defaults, not standalone proof of the effective permission set of a spawned
+child. The live parent override, managed policy, and host tool surface remain
+authoritative. Version `1.0.1` therefore requires preflight confirmation of the
+effective pair and blocks if the result cannot be verified.
 
-Version `1.0.0` is the first stable file, package, installer, and static
-protocol contract. Stability covers:
+## Stable 1.0.1 Contract
 
-- the exact `$naruto` trigger
-- the six bundled read-only runtime profile IDs
-- one shared `naruto_uzumaki` actor identity across four Naruto instances
-- the four fixed method IDs: Integrator, Challenger, Strategist, and Empirical
+Version `1.0.1` preserves the stable public compatibility surface introduced by
+`1.0.0`:
+
+- exact `$naruto` trigger
+- six bundled runtime profile IDs
+- one `naruto_uzumaki` actor identity across four Naruto instances
+- four fixed method IDs: Integrator, Challenger, Strategist, and Empirical
   Verifier
 - Kakashi guidance, Yamato safety, commit/reveal/revision, packet, checkpoint,
   and synthesis schemas
-- Tsunade Senju as the public identity of the Hokage role assumed by the
-  parent Codex process, without a separate Hokage profile
-- the project and user installer boundaries, package layout, checksums, and
-  portable validation surface
+- Tsunade Senju as the public identity of the parent Hokage role, without a
+  separate Hokage profile
+- project and user installer roots, package layout, and checksum surface
 
-Stable does not mean that every current or future Codex host implements the
-same custom-profile capacity or thread-resumption behavior. Those capabilities
-remain host acceptance conditions and fail closed when unavailable.
+The `1.0.1` hardening layer adds strict installer input and path controls,
+exact source and target inventory checks, fresh-context spawning, same-target
+follow-up receipts, effective-permission preflight, and stricter fail-closed
+repository fixtures. It does not claim universal host support.
 
-The validation and installer helpers require Node.js 22 or newer. The committed
-GitHub Actions workflow is configured for Node.js 22 and 24; no hosted run is
-claimed or recorded by this repository preparation.
+The canonical method-matrix authority is
+`.agents/skills/naruto/agent_manifest.json`. The package manifest and public
+documentation are projections of that source, not competing authorities.
+
+## Publication And CI Evidence
+
+The repository is public at
+[FrameCoreWorks/naruto-codex-deliberation-council](https://github.com/FrameCoreWorks/naruto-codex-deliberation-council).
+The published [`v1.0.0` release](https://github.com/FrameCoreWorks/naruto-codex-deliberation-council/releases/tag/v1.0.0)
+has two successful hosted workflow runs for the same release commit:
+
+- [main workflow run](https://github.com/FrameCoreWorks/naruto-codex-deliberation-council/actions/runs/29687294043)
+- [tag workflow run](https://github.com/FrameCoreWorks/naruto-codex-deliberation-council/actions/runs/29687369374)
+
+Those runs are historical evidence for `v1.0.0`; they do not certify a later
+checkout. Each release must record green hosted CI for its exact tag or commit.
 
 ## Package Decisions
 
-- Keep `.agents/skills/naruto` and `.codex/agents` in their real project-scoped
-  locations so the cloned repository is directly inspectable by Codex.
-- Keep `SKILL.md` as the workflow source of truth.
+- Keep `.agents/skills/naruto` and `.codex/agents` in their real
+  project-scoped locations so the package is directly inspectable by Codex.
+- Keep `SKILL.md` as the procedural source of truth and
+  `agent_manifest.json` as the machine-readable identity, method, and host
+  preflight authority.
 - Keep `agents/openai.yaml` limited to interface metadata and explicit-only
   invocation policy.
-- Keep all six child profiles read-only. Hokage remains a parent-process role
-  and does not consume a seventh child profile.
-- Preserve the machine ID `naruto_clone_verifier` and method ID
-  `naruto_empirical_method.v1`, while defining the public method as
-  `Naruto Clone: Empirical Verifier`.
-- Keep `evidence_packet_builder` and `source_verifier` as optional capability
-  roles without fixed runtime IDs. Consequential results require a
-  host-provided, role-blind `final_qa` reviewer; the package does not bundle it
-  and fails closed when it is unavailable.
-- Use dependency-free Node scripts for offline validation and installation.
-- Do not add a plugin wrapper that could imply the six custom-agent TOML files
-  are automatically installed. A future plugin may bundle the skill, but the
-  profile installation contract must remain explicit.
-- Treat same-thread revision as a runtime capability to verify after install,
-  not a property that static files can prove.
+- Keep all six child profiles read-only with `never` approval by default.
+  Effective live values must be verified before fan-out.
+- Create every child with no inherited parent conversation context. Open all
+  four Naruto candidate instances before collecting any candidate output.
+- Preserve `naruto_clone_verifier` and `naruto_empirical_method.v1` while
+  defining the public method as `Naruto Clone: Empirical Verifier`.
+- Keep evidence and source preparation as optional capabilities without fixed
+  runtime IDs. Consequential results require a host-provided, role-blind
+  `final_qa` reviewer; the package does not bundle it.
+- Maintain protocol artifacts in parent run context. Read-only children do not
+  persist protocol state to the filesystem.
+- Use exact-target follow-up receipts returned by the host as continuity
+  evidence. Do not require or invent a model-visible opaque thread-handle hash.
+- Use dependency-free Node scripts for offline package, install, and checksum
+  validation.
+- Do not imply that a plugin wrapper automatically installs the separate custom
+  agent profiles.
 
 ## Acceptance Boundary
 
-Static and isolated tests can prove that files, schemas, profiles, fixtures,
-checksums, and installer behavior agree. They cannot prove that a particular
-Codex host discovers all six custom profiles, provides the required concurrent
-capacity, or can re-contact the same four instance threads after reveal.
+Repository and isolated tests can prove that files, schemas, profiles,
+fixtures, checksums, and installer behavior agree. They do not parse an
+arbitrary live-run artifact graph and cannot prove that a particular Codex host
+discovers all six custom profiles, applies effective read-only permissions,
+supplies six child slots, starts children without inherited context, or
+supports follow-up to the exact same four targets.
 
-The `1.0.0` release therefore separates two claims:
+Version `1.0.1` separates three claims:
 
-1. Static package and isolated installation acceptance may be marked `PASS`
-   only after the repository release suite succeeds on the current checkout.
-2. Host custom-profile and same-thread acceptance remains `NOT PROVEN` until a
-   new-task run on the target Codex build records the required live evidence.
+1. Repository self-check acceptance is `PASS` only for an exact checkout whose
+   full test suite succeeds.
+2. Installer acceptance is `PASS` only when isolated security and lifecycle
+   tests succeed.
+3. Target-host acceptance remains `NOT PROVEN` until a new-task execution on
+   that build records every required live receipt and validates the resulting
+   acceptance record.
 
-If live capability is absent or ambiguous, the protocol returns `blocked`. It
-must not replace a dedicated profile with `default`, `worker`, or `explorer`,
-recreate revisions in new threads, or infer continuity from similar text.
+Base live acceptance retains unmodified host-tool targets and receipts in a
+parent-owned logical sidecar. Model-authored attestations are not a substitute.
+The package does not bundle a deterministic host orchestration adapter or
+tamper-evident event log, and it does not claim that the logical sidecar is one.
+It also does not claim measured output diversity, quality lift, latency, token,
+or cost results. The comparison design is documented in
+[`benchmark-plan.md`](benchmark-plan.md), but no results are bundled in
+`1.0.1`.
 
-See [`release-acceptance-v1.0.0.md`](release-acceptance-v1.0.0.md) for the
-complete acceptance matrix.
+If live capability is absent or ambiguous, return `blocked`. Do not substitute
+`default`, `worker`, or `explorer`, recreate revisions in new threads, or infer
+continuity from similar prose.
+
+See [`release-acceptance-v1.0.1.md`](release-acceptance-v1.0.1.md) for the
+complete current matrix and
+[`release-acceptance-v1.0.0.md`](release-acceptance-v1.0.0.md) for the corrected
+historical release record.
 
 ## Prior Art Reviewed
 
@@ -109,7 +149,7 @@ complete acceptance matrix.
 Assimilated patterns:
 
 - progressive disclosure
-- explicit installation roots
+- explicit installation roots and project trust
 - thin UI metadata
 - local validation
 - bounded planner, critic, and moderator roles
@@ -125,14 +165,21 @@ Rejected patterns:
 
 ## Known Runtime Limits
 
-- The custom-agent file format may evolve as Codex agent authoring matures.
-- Static tests cannot prove that a specific Codex build can re-contact the same
-  four open training-instance threads after reveal.
+- Custom-agent configuration may evolve as Codex agent authoring matures.
+- Static tests cannot prove profile discovery, effective permissions, context
+  isolation, target capacity, or same-target follow-up on a specific build.
+- The package does not yet provide a complete validator for arbitrary recorded
+  run artifact graphs; that larger surface is deferred to `1.1.0`.
 - A target environment may cap concurrent child threads below the six required
-  at peak: four Naruto training instances, Kakashi, and Yamato. Hokage remains
-  the parent role and does not consume a child profile.
-- If same-thread follow-up, Kakashi, Yamato, a dedicated Naruto profile, or the
-  required capacity is unavailable, return `blocked`; do not emulate the run
-  with replacement agents.
-- Fan-art and naming rights are outside technical compatibility. Review
-  [`naming-risk.md`](naming-risk.md) separately before public distribution.
+  at peak. Hokage remains the parent and does not consume a child profile.
+- The exact-first-token rule is a skill contract and must be checked live; it
+  is not a declarative host command registration.
+- Independent `final_qa` is conditional and host-provided, so consequential
+  runs block where it is unavailable.
+- No executable host orchestration adapter or tamper-evident event log is
+  bundled; base live acceptance depends on unmodified host-tool receipts bound
+  into parent-owned logical state.
+- Method output diversity and quality lift are `NOT MEASURED`, and runtime
+  latency, tokens, and cost are `NOT BENCHMARKED`.
+- Fan-art and naming rights are outside technical compatibility and remain
+  `NOT CLEARED`. Review [`naming-risk.md`](naming-risk.md).

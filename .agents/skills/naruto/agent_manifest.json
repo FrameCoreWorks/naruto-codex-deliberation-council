@@ -1,5 +1,5 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "name": "naruto",
   "activation": {
     "mode": "exact_first_token",
@@ -19,9 +19,47 @@
     "id": "final_qa",
     "runtime_binding": "host_provided",
     "bundled_profile": false,
+    "part_of_six_profile_preflight": false,
     "required_when": "consequential_result",
     "review_mode": "role_blind_independent",
     "unavailable_policy": "blocked"
+  },
+  "host_runtime_preflight": {
+    "required_before_packet_build": true,
+    "project_trust_required": true,
+    "project_agent_layer_must_be_loaded": true,
+    "required_runtime_ids": [
+      "kakashi_hatake",
+      "yamato",
+      "naruto_clone_integrator",
+      "naruto_clone_challenger",
+      "naruto_clone_strategist",
+      "naruto_clone_verifier"
+    ],
+    "open_child_thread_capacity_required": 6,
+    "parent_live_sandbox_mode_required": "read-only",
+    "parent_live_approval_policy_required": "never",
+    "child_effective_sandbox_mode_required": "read-only",
+    "child_effective_approval_policy_required": "never",
+    "profile_sandbox_mode_is_default_not_enforcement": true,
+    "profile_approval_policy_is_default_not_enforcement": true,
+    "fork_turns_required": "none",
+    "spawn_all_training_instances_before_wait": true,
+    "same_target_followup_capability_required": true,
+    "successful_delivery_receipt_required": true,
+    "unverifiable_policy": "blocked"
+  },
+  "artifact_ownership": {
+    "owner_role_id": "hokage",
+    "runtime_owner": "parent_codex_process",
+    "storage": "parent_orchestration_state",
+    "filesystem_persistence_required": false,
+    "child_artifact_write_forbidden": true,
+    "canonical_values_retained_until_classification": true,
+    "spawn_targets_and_delivery_receipts_parent_only": true,
+    "delivery_receipt_source": "host_followup_tool_result",
+    "child_authored_receipt_is_provenance": false,
+    "retention_unavailable_policy": "blocked"
   },
   "training_instance_model": {
     "shared_actor_identity_id": "naruto_uzumaki",
@@ -49,7 +87,8 @@
     "commit_barrier": true,
     "reveal_cycles": 1,
     "same_thread_revision_required": true,
-    "same_thread_handle_hash_required": true,
+    "same_target_followup_receipt_required": true,
+    "opaque_runtime_handle_hash_forbidden": true,
     "byte_identical_reveal_required": true,
     "experience_transfer_required": true,
     "evidence_independence_required": true,

@@ -5,6 +5,136 @@
 > **One Naruto. Four parallel training paths. Two supervisors. One accumulated
 > lesson.**
 
+[![CI](https://github.com/FrameCoreWorks/naruto-codex-deliberation-council/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/FrameCoreWorks/naruto-codex-deliberation-council/actions/workflows/ci.yml)
+
+**Evidence boundary:** package checks `PASS REQUIRED`; exact-release CI
+`PASS REQUIRED`; target-host runtime `NOT PROVEN`; host orchestration adapter
+and event log `NOT BUNDLED`; method diversity and quality lift `NOT MEASURED`;
+fan-art and franchise rights `NOT CLEARED`.
+
+Naruto Codex Deliberation Council is an explicit-only Codex skill that explores
+one complete problem through four independent methods before producing one
+evidence-weighted synthesis. The exact compatibility trigger is `$naruto`.
+
+## Quick Start
+
+Requirements: Git, Node.js 22 or newer, and a Codex host that supports
+project-scoped skills and custom-agent profiles.
+
+Clone the specific release tag before opening the directory as a trusted Codex
+project:
+
+```bash
+git clone --branch v1.0.1 --depth 1 \
+  https://github.com/FrameCoreWorks/naruto-codex-deliberation-council.git
+cd naruto-codex-deliberation-council
+git describe --tags --exact-match
+```
+
+Before running repository JavaScript or opening the checkout as a trusted Codex
+project, inspect `package.json`, `.agents/skills/naruto/SKILL.md`,
+`.codex/agents/`, `scripts/`, `.github/workflows/ci.yml`, and `SHA256SUMS`.
+A checksum stored beside an untrusted checkout detects accidental drift but
+does not authenticate its source.
+
+After that source review, reproduce the package gates:
+
+```bash
+npm run checksums:check
+npm test
+```
+
+After the checkout is trusted, open Codex from the repository directory and
+start a new task:
+
+```text
+$naruto Review this architecture and recommend a verified route.
+```
+
+If the host does not discover all six profiles, cannot enforce effective child
+`read-only` plus `never` approval policy, lacks capacity, or cannot continue the
+same four instance threads, the correct protocol result is `blocked`. Static
+tests do not turn a missing host capability into a successful live run.
+
+To install into another project instead, preview the exact target first:
+
+```bash
+node scripts/install.mjs --scope project \
+  --target /absolute/path/to/project --dry-run
+node scripts/install.mjs --scope project \
+  --target /absolute/path/to/project
+```
+
+## Status And Claim Boundary
+
+| Surface | Status | Meaning |
+|---|---|---|
+| Package contract | `1.0.1` | Stable file, schema, profile-ID, method-ID, and installer contract. |
+| Repository self-check | `PASS REQUIRED` | `npm test` must pass on the exact checkout being used. It checks package structure and fixtures, not a real hosted deliberation. |
+| Isolated installer tests | `PASS REQUIRED` | Fresh install, strict CLI, source inventory, path/symlink controls, conflicts, and installed-target validation must pass. |
+| Published repository | `PUBLIC` | [FrameCoreWorks/naruto-codex-deliberation-council](https://github.com/FrameCoreWorks/naruto-codex-deliberation-council). |
+| Hosted CI baseline | `PASS` | Two Node 22/24 runs passed for the published `v1.0.0` commit: [main](https://github.com/FrameCoreWorks/naruto-codex-deliberation-council/actions/runs/29687294043) and [tag](https://github.com/FrameCoreWorks/naruto-codex-deliberation-council/actions/runs/29687369374). Every later release needs its own green evidence. |
+| Target-host discovery and same-thread revision | `NOT PROVEN` | A target Codex build must record live discovery, effective permission, capacity, isolation, and same-target follow-up evidence. |
+| Host orchestration adapter and event log | `NOT BUNDLED` | Version `1.0.1` relies on parent-owned logical artifacts retaining unmodified host-tool target IDs and receipts. No deterministic adapter or tamper-evident, host-enforced event log is included. |
+| Current host without that evidence | `BLOCKED` | Dedicated profiles cannot be replaced by generic agents and revisions cannot be recreated in new threads. |
+| Independent final QA | `CONDITIONAL, NOT BUNDLED` | Consequential results require a host-provided, role-blind `final_qa` reviewer. |
+| Method diversity and quality lift | `NOT MEASURED` | Four fixed instruction-level methods do not prove behavioral diversity or improvement over a single agent or planner-critic baseline. |
+| Runtime cost and latency | `NOT BENCHMARKED` | The multi-agent path is expected to use more turns and resources, but this release makes no quantified efficiency claim. |
+| Fan-art and franchise rights | `NOT CLEARED` | Technical validation, MIT licensing of original project material, and disclaimers do not grant third-party rights. |
+
+See the [1.0.1 acceptance matrix](docs/release-acceptance-v1.0.1.md) for the
+evidence required before a release or host run may be called accepted. The
+[benchmark plan](docs/benchmark-plan.md) defines how later work can measure
+output diversity, decision quality, latency, tokens, and cost without treating
+method labels as evidence. Version `1.0.1` includes no benchmark results and
+does not claim superiority over either baseline.
+
+## Result Shape And Failure Modes
+
+A successful run ends with one of the protocol statuses
+`verified_consensus`, `provisional_consensus`, or `structured_dispute`.
+`blocked` is a valid fail-closed result. A compact result may look like this:
+
+```text
+result_status: structured_dispute
+stop_decision: ask_user
+supported_route: <claim-level synthesis with evidence references>
+preserved_minority_objections:
+  - <material unresolved objection>
+runtime_evidence: <recorded preflight and same-target receipts>
+```
+
+This is a contract example, not a recorded host execution.
+
+| Condition | Expected behavior |
+|---|---|
+| Trigger is missing, quoted, prefixed, or has different case | Skill does not activate. |
+| A required profile, supervisor, permission check, or child slot is unavailable | Return `blocked` before fan-out. |
+| Source isolation or commit barrier cannot be demonstrated | Return `blocked`; do not infer independence. |
+| Same-target follow-up cannot return to all four original instances | Return `blocked`; do not spawn replacement revisions. |
+| Consequential result lacks independent final QA | Return `blocked`. |
+| Static, checksum, or installer validation fails | Do not install, release, or claim acceptance. |
+| A solution asks for writes, providers, uploads, pushes, or deletion | Deliberation may recommend a later action, but `$naruto` grants no authority to execute it. |
+
+## Trust And Safety Model
+
+- Project trust comes before discovery. Codex may load project-scoped skills and
+  profiles from a repository, so inspect the pinned checkout before opening it.
+- All six profiles request `sandbox_mode = "read-only"` and
+  `approval_policy = "never"` as profile defaults. The live parent permission
+  override and managed host policy determine effective permissions; preflight
+  must verify both values or block.
+- Every child spawn must start without inherited conversation history. The four
+  Naruto instances are opened before any candidate result is collected.
+- Same-thread revision is demonstrated by successful follow-up receipts to the
+  exact four targets returned at spawn, not by prose similarity.
+- The repository self-check validates package scaffolding and static contract
+  fixtures. It is not a complete parser of a live protocol run. Only a
+  target-host acceptance run can validate host discovery and execution
+  behavior.
+- `$naruto` grants no provider, API, MCP, cost, upload, publishing, file-write,
+  push, install, delete, destructive-action, or project-memory permission.
+
 ## The Training Arc Behind The Protocol
 
 Naruto meets Sasuke again and the gap is impossible to ignore. Determination is
@@ -72,11 +202,12 @@ four independent, method-diverse training paths.
 |---|---|
 | **Tsunade Senju, Fifth Hokage** | Public identity of the top-level role assumed by the parent Codex process. Hokage frames the task, controls phases, owns the stop decision, and writes the final synthesis. Tsunade is not a seventh child profile or an additional solver. |
 | **Four shadow-clone instances** | Share `actor_identity_id: naruto_uzumaki`, receive the same complete task and common packets, use four fixed methods, commit before seeing peer work, then revise once in the original threads. |
-| **Kakashi** | Creates one common, non-solution training brief and receives the manifest-derived method matrix without changing it. After blind work, he validates the barrier and moderates evidence comparison without selecting a winner. |
+| **Kakashi** | Creates one common, non-solution training brief and receives the canonical method matrix without changing it. After blind work, he validates the barrier and moderates evidence comparison without selecting a winner. |
 | **Yamato** | Validates identity, method assignments, packet integrity, protected boundaries, and phase safety. He returns `pass`, `hold`, or `blocked`, but never coaches an individual instance or proposes a solution. |
 | **Asuma's consultation** | Represents narrow, evidence-backed specialist input added to the shared source packet when a task needs it. It is not a permanent extra profile. |
 
-The four training paths are fixed before fan-out:
+The four training paths are fixed in
+`.agents/skills/naruto/agent_manifest.json` before fan-out:
 
 | Runtime profile | Method | Purpose |
 |---|---|---|
@@ -86,12 +217,12 @@ The four training paths are fixed before fan-out:
 | `naruto_clone_verifier` | `naruto_empirical_method.v1` | Build a complete hypothesis-led route with discriminating tests, observables, decision thresholds, and fallback or rollback conditions. |
 
 ```text
-Tsunade as Hokage frames the mission, shared evidence, and manifest-derived method matrix
+Tsunade as Hokage frames the mission, shared evidence, and method matrix
         -> Kakashi fixes one common brief and preserves the matrix unchanged
-        -> Yamato validates identity, routing, and safety
+        -> Yamato validates identity, routing, effective permissions, and safety
         -> four Naruto training instances solve the whole task independently
         -> candidate solutions are committed behind one blind barrier
-        -> one byte-identical reveal returns to the same four threads
+        -> one byte-identical reveal returns to the same four targets
         -> each instance revises without changing identity or method
         -> Kakashi reconciles evidence; Yamato reports phase safety
         -> Tsunade as Hokage accumulates the four lessons into one synthesis
@@ -99,44 +230,15 @@ Tsunade as Hokage frames the mission, shared evidence, and manifest-derived meth
 
 This is not four agents chatting until they agree. It is a controlled training
 ground with identical evidence, four explicit methods, one reveal, one
-same-thread revision, reproducible supervision, and a traceable final decision.
+same-target revision, reproducible supervision, and a traceable final decision.
 
 The banner is original, unofficial fan art created for this repository. It is
-not part of the MIT-licensed project materials and does not reproduce a manga
-panel, dialogue, or an official logo. This project is not affiliated with or
-endorsed by Masashi Kishimoto, Shueisha, VIZ Media, or the *Naruto* franchise.
-Its public provenance, digest, QA, and delivery record is stored in
-[`manifest/assets.json`](manifest/assets.json).
-
-## What It Is
-
-Naruto Codex Deliberation Council is a request-only skill for exploring one complete
-problem through four independent methods before one evidence-weighted synthesis.
-The exact compatibility trigger is `$naruto`.
-
-The deliberation runtime is read-only. It does not grant permission to edit
-files, spawn nested agents, call providers or APIs, use MCP, upload, push,
-install, delete, or write project memory.
-
-## Status
-
-- Standalone package version: `1.0.0`
-- Skill name: `naruto`
-- Trigger: exact, case-sensitive first non-empty token `$naruto`
-- Runtime profiles: four Naruto training instances, Kakashi, and Yamato
-- Shared actor identity: `naruto_uzumaki`
-- Parent role: Tsunade Senju as Hokage; no separate Hokage profile is bundled
-- Conditional host role: independent `final_qa` reviewer for consequential results; not bundled
-- Dependencies: Node.js 22 or newer for validation and installation helpers
-- External services: none
-
-Version `1.0.0` freezes the public trigger, six runtime profile IDs, four method
-IDs, packet schemas, installer boundaries, and standalone package layout. The
-release suite validates those contracts, isolated project and user installs,
-upgrade behavior, checksums, and method fixtures. Host capabilities such as
-profile capacity and same-thread follow-up remain runtime acceptance checks and
-fail closed when unavailable; see
-[`docs/release-acceptance-v1.0.0.md`](docs/release-acceptance-v1.0.0.md).
+not included in the MIT license and does not reproduce a manga panel, dialogue,
+or an official logo. It intentionally depicts recognizable franchise
+characters, so its public distribution remains rights-uncleared. This project
+is not affiliated with or endorsed by Masashi Kishimoto, Shueisha, VIZ Media,
+or the *Naruto* franchise. Provenance, digest, QA, and distribution metadata is
+stored in [`manifest/assets.json`](manifest/assets.json).
 
 ## Activation
 
@@ -169,65 +271,54 @@ marker.
 
 ## Deliberation Architecture
 
-1. Hokage opens `loop_control_fit` with `max_iterations: 1`, fixes acceptance
-   criteria, and creates one canonical hashed evidence packet.
-2. Hokage builds `method_matrix.v1` from the package manifest. It binds the one
-   actor identity to four unique instance IDs and four unique methods before
-   fan-out.
-3. `kakashi_hatake` derives one neutral `training_guidance_packet.v1`. It may
-   clarify criteria and checks, but cannot recommend an answer, rank methods,
-   add private evidence, or vary by instance.
-4. Four `naruto_training_instance_envelope.v1` artifacts bind each runtime to
-   one matrix assignment and the common packet hashes. Only the instance ID,
-   assigned method ID, and resulting envelope digest may differ.
-5. `yamato` validates the source, method matrix, envelopes, guidance, and
-   protected boundaries in `safety_control_packet.v1`. Fan-out starts only
-   after `pass`; one common repair is permitted after `hold`, and a second
-   non-pass blocks the run.
-6. The four Naruto instances receive byte-identical common artifacts plus their
-   allowlisted routing envelope. Each solves the entire task independently.
-7. Every output binds actor, instance, method, source, matrix, envelope,
+1. Hokage checks target-host discovery, trusted project configuration,
+   effective child read-only/never permissions, capacity, source isolation, and
+   same-target follow-up. Any unverified requirement blocks before fan-out.
+2. Hokage fixes acceptance criteria and creates one canonical hashed evidence
+   packet.
+3. Hokage derives `method_matrix.v1` from the canonical agent manifest. It binds
+   the one actor identity to four unique instance IDs and methods.
+4. `kakashi_hatake` receives no inherited conversation context and derives one
+   neutral `training_guidance_packet.v1`. It cannot recommend an answer, rank
+   methods, add private evidence, or vary guidance by instance.
+5. Four training envelopes bind each runtime to one matrix assignment and the
+   common packet hashes. `yamato` validates identity, routing, envelopes,
+   effective boundaries, and safety before candidate fan-out.
+6. All four Naruto instances are spawned without inherited conversation history
+   before any result is collected. Each solves the entire task independently.
+7. Every candidate binds actor, instance, method, source, matrix, envelope,
    guidance, and safety hashes before the commit barrier opens.
-8. Kakashi prepares one byte-identical reveal packet. The same four open threads
-   revise exactly once, retaining actor identity and method assignment. Matching
-   opaque thread-handle hashes and an experience-transfer claim map prove
-   continuity.
+8. Kakashi prepares one byte-identical reveal. Successful follow-up receipts to
+   the exact four saved targets prove same-target revision continuity.
 9. `protocol_run_manifest.v1` records packet identity, phase state, no-contact
-   attestations, same-thread proofs, and regressions. Nine immutable
-   `protocol_checkpoint.v1` artifacts form the checkpoint chain.
+   attestations, follow-up receipts, and regressions. Nine immutable checkpoints
+   form the linked checkpoint chain.
 10. Kakashi reconciles evidence lineages, minority objections, collective blind
     spots, quick surrender, and performative dissent. Yamato produces a final
-    `safety_report.v1` from phase and boundary metadata only.
-11. Hokage synthesizes with claim-level provenance. Consequential outputs
-    receive role-blind independent final QA with reproducible findings before
-    the stop decision.
+    safety report from phase and boundary metadata only.
+11. Hokage synthesizes with claim-level provenance. Consequential output
+    receives role-blind independent final QA before the stop decision.
 
 Completion speed, majority, answer length, confidence, and style are never
 evidence. One independence key represents one underlying source lineage, even
 when all four instances cite it. A supported minority objection can block
-verified consensus.
-
-Possible result statuses are `verified_consensus`, `provisional_consensus`,
-`structured_dispute`, and `blocked`. Stop decisions are `stop_sufficient`,
-`patch_one_gap`, `ask_user`, and `blocked`. The protocol never starts a second
-panel automatically.
+verified consensus. The protocol performs one reveal/revision cycle only.
 
 ## Repository Layout
 
 ```text
-.agents/skills/naruto/   Skill instructions, cards, references, templates,
-                         fixtures, and the portable validator
-.codex/agents/           Six project-scoped read-only custom-agent profiles
-docs/                    Compatibility and naming-risk notes
+.agents/skills/naruto/   Skill instructions, schemas, fixtures, templates,
+                         and the portable repository self-check
+.codex/agents/           Six project-scoped read-only-default profiles
+docs/                    Compatibility, acceptance, release, and rights notes
 integrations/            Optional workspace adapter guidance
-manifest/                Package structure, migration, and release metadata
+manifest/                Package structure, migration, asset, and release data
 scripts/                 Installer, checksums, security tests, and validation
-SHA256SUMS               SHA-256 for every package file except itself
+SHA256SUMS               Package-file checksums; not a source signature
 ```
 
-The layout mirrors project-scoped Codex locations. Cloning the repository and
-opening Codex from this directory exposes the skill and profiles as project
-configuration.
+The layout mirrors project-scoped Codex locations. Codex discovery occurs only
+after the project is trusted and may require a restart or a new task.
 
 ## Validate
 
@@ -238,16 +329,17 @@ npm run validate
 npm test
 ```
 
-Both commands run the same suite. It checks the trigger, shared identity,
-method matrix, routing envelopes, supervision, commit and revision integrity,
-loop fixtures, six read-only profiles, installer security, package hygiene, and
-all recorded SHA-256 checksums.
+`validate` is a repository self-check for the package layout, profile and
+manifest projections, strictly parsed profile TOML and agent-card YAML, trigger
+and protocol fixtures, fail-closed classifiers, checkpoint projections,
+installer security, release metadata, and checksums. It is not a complete
+validator for arbitrary live-run artifacts and does not prove that a particular
+Codex host performed a run. A full machine-readable recorded-run validator is
+deferred to `1.1.0`.
 
-## Install
+## Install And Update
 
 ### Project scope
-
-Preview changes, then install into an existing project:
 
 ```bash
 node scripts/install.mjs --scope project --target /absolute/path/to/project --dry-run
@@ -255,12 +347,16 @@ node scripts/install.mjs --scope project --target /absolute/path/to/project
 ```
 
 This copies the skill to `.agents/skills/naruto/` and the six profiles to
-`.codex/agents/`. Existing differing files are never overwritten unless
-`--force` is supplied.
+`.codex/agents/`. Unknown, duplicated, missing-value, or scope-incompatible CLI
+options fail before writes. The installer verifies the exact source inventory,
+copies descriptor-verified source snapshots, rejects unsafe destination
+symlinks, hard links, and unexpected package-owned skill files, then validates
+the result from a private verified validator copy before reporting `installed`.
+Existing differing files are never replaced unless `--force` is supplied.
+Run it only without elevation against a quiescent target exclusively controlled
+by your account.
 
 ### User scope
-
-Preview and install for the current user:
 
 ```bash
 node scripts/install.mjs --scope user --dry-run
@@ -269,111 +365,70 @@ node scripts/install.mjs --scope user
 
 The skill is copied to `$HOME/.agents/skills/naruto/`. Profiles are copied to
 `$CODEX_HOME/agents/` when `CODEX_HOME` is set, otherwise to
-`$HOME/.codex/agents/`.
+`$HOME/.codex/agents/`. `--target` is not valid with user scope.
 
-Codex normally detects skill changes automatically. If the skill or profiles do
-not appear, restart Codex and start a new task. Test configuration changes in a
-new task so old thread context cannot affect trigger checks.
+### Updating 0.4.x or 1.0.x
 
-## Update
+Preview differences first and use `--force` only for reviewed package-owned
+files. The installer deliberately does not delete files. If any pre-`0.4`
+legacy path is present, it returns `blocked` and `--force` cannot bypass the
+migration gate.
 
-Version `1.0.0` updates `0.4.x` installations in place because all six runtime
-IDs remain stable. Preview differences first, then use `--force` only for
-reviewed package-owned files. The installer deliberately does not delete files.
-If any of the eight pre-`0.4` legacy paths are present, installation returns:
+1. Obtain a pinned release from the trusted repository source.
+2. Run checksum and test commands in that checkout.
+3. Run the destination install with `--dry-run`.
+4. Review legacy, unexpected, differing, and unsafe-path reports.
+5. Remove only confirmed obsolete package-owned files manually, if required.
+6. Repeat the dry run and use `--force` only for intended replacements.
+7. Restart Codex or start a new task and repeat target-host acceptance.
 
-```text
-status: blocked
-reason: legacy_0_3_installation_detected
-```
+The release suite reproduces the complete `0.4.0` package inventory from commit
+`42cab91`: 23 files are replaced, 10 are unchanged, and no package paths are
+created during that migration.
 
-`--force` cannot bypass this migration gate.
-
-1. Pull or replace this repository from its trusted source.
-2. Run `npm test` in the repository.
-3. Preview the target with the install command plus `--dry-run`.
-4. If legacy paths are reported, review that exact list and manually remove only
-   those superseded files. Preserve any unrelated local changes.
-5. Run the dry run again and review differing destination files.
-6. Use `--force` only when replacing current package-owned files is intended.
-7. Restart Codex or start a new task if the updated profiles are not visible.
-8. Repeat the live acceptance checks below.
-
-The installer never removes, archives, renames, or edits legacy files for you.
-It never creates a remote or pushes code.
-Copies are sequential rather than transactional. If the installer returns
-`copy_failed` or `destination_verification_failed`, inspect the reported target,
-rerun a dry run, and then repeat the reviewed install. No automatic rollback is
-claimed.
+Copies remain sequential rather than transactional. A filesystem or final
+validation failure can leave a partial set of verified files. Inspect the exact
+reported paths and rerun a dry run before recovery. No automatic rollback or
+uninstall is claimed in `1.0.1`. A concurrent writer can still swap a parent
+directory between pathname checks because Node has no portable `openat` API;
+shared-writable and elevated installs are outside the supported trust boundary.
 
 ## Live Acceptance
 
-After installation and any required restart, verify in a new task:
+After installation, any required restart, and creation of a new trusted task,
+record the Codex build, scope, and evidence for:
 
-- exact `$naruto` activation and all documented non-activation examples
-- all six dedicated profiles are present and read-only
-- no separate `hokage.toml` exists; the parent process assumes Tsunade Senju's Hokage role
-- all four solution runtimes share `actor_identity_id: naruto_uzumaki`
-- the method matrix contains four unique runtime IDs and four unique fixed methods
-- all four routing envelopes pass the difference allowlist
-- Kakashi emits one common, non-solution guidance packet
-- Yamato returns `pass` before fan-out and emits the final safety report
-- common source, matrix, guidance, and safety bytes are identical for all four
-- every instance attests to no blind-phase supervisor content contact
-- no instance sees peer work before the commit barrier
-- every instance returns a complete solution, never only a subtask
-- the reveal bytes are identical for every valid training instance
-- original and revision actor, instance, method, matrix, and envelope values match
-- opaque original and revision thread-handle hashes match for every instance
-- every revision includes a traceable experience-transfer ledger
-- all nine protocol checkpoints are present, ordered, and linked
-- one shared source remains one independence key rather than four confirmations
-- Kakashi records anti-groupthink and minority-preservation checks
-- Hokage synthesis traces material claims to revisions and evidence
-- consequential final QA is role-blind and every failure is reproducible
-- missing dedicated profiles cannot be replaced by `default`, `worker`, or
-  `explorer`
-- `$naruto` grants no provider, upload, write, push, install, or delete permission
-- the run stops after one reveal/revision cycle and never opens a second panel
+- exact activation and documented non-activation examples
+- discovery of all six dedicated profiles with no separate Hokage profile
+- effective child `read-only` and `never` approval status, not only TOML defaults
+- child spawns without inherited conversation history
+- four unique runtime IDs and four fixed methods under one actor identity
+- all four candidate spawns completed before the first candidate is collected
+- byte-identical common evidence, matrix, guidance, safety, and reveal packets
+- complete blind candidates committed before reveal
+- successful follow-up receipts to the same four saved targets
+- one revision with a traceable experience-transfer ledger per instance
+- nine ordered and linked protocol checkpoints
+- evidence-lineage counting and minority-objection preservation
+- claim-level Hokage synthesis and consequential independent final QA
+- no authority escalation and stop after one reveal/revision cycle
+- a retained acceptance record for the preflight and same-target receipts
 
-If same-thread follow-up, a dedicated profile, or required runtime capacity is
-unavailable, the correct result is `blocked`.
+If any item is unavailable or ambiguous, report `blocked` and preserve the
+missing evidence in the acceptance record.
 
-## Safety Boundaries
+## Distribution And License
 
-- All six child profiles are read-only.
-- Training instances cannot spawn children or research outside the common packet.
-- Kakashi cannot recommend or rank a solution, vary guidance by instance, or
-  introduce private evidence.
-- Yamato cannot inspect solution quality, coach one instance, or raise the
-  result ceiling.
-- Identity drift, duplicate instance IDs, duplicate methods, method drift, or
-  routing-envelope drift blocks the run.
-- Missing dedicated profiles cannot be replaced by generic profiles.
-- `$naruto` grants no provider, API, MCP, cost, upload, publishing, file-write,
-  push, destructive-action, install, delete, or project-memory permission.
-- Any later execution leaves deliberation mode and re-enters the target
-  project's normal approval and safety route.
-- Raw chain-of-thought, private scratchpads, and debate transcripts are not
-  protocol artifacts.
-
-## Distribution Note
-
-Current OpenAI documentation treats a skill folder as the authoring format and
-recommends plugins for broad installable distribution. This repository remains
-a transparent standalone package because custom-agent TOML profiles are a
+This is a public standalone package because custom-agent TOML profiles are a
 separate Codex configuration surface. It does not claim that a plugin installer
 will install those profiles automatically.
 
-See [`docs/compatibility.md`](docs/compatibility.md) for official sources and
-prior art, [`integrations/framecore-workspace.md`](integrations/framecore-workspace.md)
-for the optional workspace adapter, and [`NOTICE.md`](NOTICE.md) before public
-release.
+Original repository code, documentation, templates, and validation scripts are
+available under the MIT License. The title banner is unofficial fan art and is
+expressly excluded from that license. No license or permission is granted for
+third-party characters, names, marks, or protected expression, and no rights
+clearance is claimed.
 
-## License
-
-Original repository code and documentation are available under the MIT License.
-The title banner is unofficial fan art and is expressly excluded from the MIT
-License. Third-party characters, names, and marks are not licensed. See
-[`LICENSE`](LICENSE), [`NOTICE.md`](NOTICE.md), and
-[`docs/naming-risk.md`](docs/naming-risk.md).
+Review [`LICENSE`](LICENSE), [`NOTICE.md`](NOTICE.md),
+[`docs/naming-risk.md`](docs/naming-risk.md), and
+[`docs/compatibility.md`](docs/compatibility.md) before reuse or distribution.

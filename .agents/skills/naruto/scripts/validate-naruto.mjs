@@ -7,8 +7,25 @@ import { dirname, extname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
-const skillRoot = resolve(scriptDir, "..");
-const workspaceRoot = resolve(skillRoot, "../../..");
+const installValidationMode = process.env.NARUTO_INSTALL_VALIDATION_MODE === "1";
+const installValidationRoots = {
+  skill: process.env.NARUTO_INSTALL_VALIDATOR_SKILL_ROOT,
+  profile: process.env.NARUTO_INSTALL_VALIDATOR_PROFILE_ROOT,
+  workspace: process.env.NARUTO_INSTALL_VALIDATOR_WORKSPACE_ROOT,
+};
+if (installValidationMode && Object.values(installValidationRoots).some((value) => !value)) {
+  console.error("Installer validation mode requires explicit skill, profile, and workspace roots.");
+  process.exit(2);
+}
+const skillRoot = installValidationMode
+  ? resolve(installValidationRoots.skill)
+  : resolve(scriptDir, "..");
+const workspaceRoot = installValidationMode
+  ? resolve(installValidationRoots.workspace)
+  : resolve(skillRoot, "../../..");
+const installProfileRoot = installValidationMode
+  ? resolve(installValidationRoots.profile)
+  : null;
 const errors = [];
 const checks = [];
 
@@ -104,40 +121,250 @@ function parseJson(path) {
   }
 }
 
-function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function own(value, key) {
+  return Object.prototype.hasOwnProperty.call(value ?? {}, key);
 }
 
-function unquote(value) {
-  const trimmed = String(value ?? "").trim();
-  if (
-    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
-  ) {
-    return trimmed.slice(1, -1);
+function parseQuotedScalar(value, context) {
+  const trimmed = value.trim();
+  if (!trimmed) throw new Error(context + ": empty scalar");
+  if (trimmed.startsWith('"')) {
+    if (!trimmed.endsWith('"')) throw new Error(context + ": unclosed double-quoted scalar");
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (typeof parsed !== "string") throw new Error("not a string");
+      return parsed;
+    } catch (error) {
+      throw new Error(context + ": invalid double-quoted scalar (" + error.message + ")");
+    }
+  }
+  if (trimmed.startsWith("'")) {
+    if (!trimmed.endsWith("'")) throw new Error(context + ": unclosed single-quoted scalar");
+    return trimmed.slice(1, -1).replace(/''/g, "'");
+  }
+  if (trimmed.includes(" #")) {
+    throw new Error(context + ": inline comments are outside the accepted profile/card subset");
   }
   return trimmed;
 }
 
-function yamlScalar(text, key) {
-  const match = text.match(new RegExp(`^${escapeRegExp(key)}:\\s*(.+)$`, "m"));
-  return match ? unquote(match[1]) : undefined;
+const agentCardScalarKeys = new Set([
+  "id",
+  "runtime_id",
+  "name",
+  "actor_identity_id",
+  "training_instance_id",
+  "method_profile_id",
+  "function",
+  "tier",
+  "activation",
+  "done_when",
+]);
+const agentCardListKeys = new Set([
+  "behavior_contract_ids",
+  "owns",
+  "inputs",
+  "outputs",
+  "handoff_to",
+  "forbidden",
+]);
+
+function parseStrictAgentCardYaml(text) {
+  const result = {};
+  const lines = String(text).replace(/\r\n?/g, "\n").split("\n");
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (!line.trim() || line.trimStart().startsWith("#")) continue;
+    if (line.includes("\t")) throw new Error("line " + (index + 1) + ": tabs are forbidden");
+    const match = line.match(/^([a-z][a-z0-9_]*):(?:\s*(.*))?$/);
+    if (!match) throw new Error("line " + (index + 1) + ": unsupported YAML structure");
+    const [, key, rawValue = ""] = match;
+    if (!agentCardScalarKeys.has(key) && !agentCardListKeys.has(key)) {
+      throw new Error("line " + (index + 1) + ": unknown top-level key " + key);
+    }
+    if (own(result, key)) throw new Error("line " + (index + 1) + ": duplicate key " + key);
+    if (agentCardScalarKeys.has(key)) {
+      if (!rawValue.trim()) throw new Error("line " + (index + 1) + ": " + key + " requires a scalar");
+      result[key] = parseQuotedScalar(rawValue, "line " + (index + 1) + " " + key);
+      continue;
+    }
+    if (rawValue.trim()) throw new Error("line " + (index + 1) + ": " + key + " must be a block list");
+    const items = [];
+    while (index + 1 < lines.length) {
+      const next = lines[index + 1];
+      if (!next.trim()) {
+        index += 1;
+        continue;
+      }
+      const itemMatch = next.match(/^  -\s+(.+)$/);
+      if (!itemMatch) break;
+      index += 1;
+      items.push(parseQuotedScalar(itemMatch[1], "line " + (index + 1) + " " + key));
+    }
+    if (items.length === 0) throw new Error("line " + (index + 1) + ": " + key + " requires at least one item");
+    result[key] = items;
+  }
+  const required = [
+    "id",
+    "runtime_id",
+    "name",
+    "function",
+    "tier",
+    "behavior_contract_ids",
+    "activation",
+    "owns",
+    "inputs",
+    "outputs",
+    "handoff_to",
+    "forbidden",
+    "done_when",
+  ];
+  for (const key of required) {
+    if (!own(result, key)) throw new Error("missing required key " + key);
+  }
+  const trainingKeys = ["actor_identity_id", "training_instance_id", "method_profile_id"];
+  const trainingKeyCount = trainingKeys.filter((key) => own(result, key)).length;
+  if (trainingKeyCount !== 0 && trainingKeyCount !== trainingKeys.length) {
+    throw new Error("training-instance identity keys must be present as one complete set");
+  }
+  return result;
 }
 
-function yamlList(text, key) {
-  const match = text.match(
-    new RegExp(`^${escapeRegExp(key)}:\\s*\\n((?:[ \\t]+-[^\\n]*(?:\\n|$))+)`, "m"),
-  );
-  if (!match) return [];
-  return match[1]
-    .split(/\r?\n/)
-    .map((line) => line.match(/^\s+-\s*(.+)$/)?.[1])
-    .filter(Boolean)
-    .map(unquote);
+function parseStrictOpenAiYaml(text) {
+  const result = {};
+  const allowed = {
+    interface: new Set(["display_name", "short_description", "default_prompt"]),
+    policy: new Set(["allow_implicit_invocation"]),
+  };
+  const lines = String(text).replace(/\r\n?/g, "\n").split("\n");
+  let section = null;
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (!line.trim() || line.trimStart().startsWith("#")) continue;
+    if (line.includes("\t")) throw new Error("line " + (index + 1) + ": tabs are forbidden");
+    const sectionMatch = line.match(/^([a-z][a-z0-9_]*):\s*$/);
+    if (sectionMatch) {
+      section = sectionMatch[1];
+      if (!own(allowed, section)) throw new Error("line " + (index + 1) + ": unknown section " + section);
+      if (own(result, section)) throw new Error("line " + (index + 1) + ": duplicate section " + section);
+      result[section] = {};
+      continue;
+    }
+    const valueMatch = line.match(/^  ([a-z][a-z0-9_]*):\s*(.+)$/);
+    if (!valueMatch || !section) throw new Error("line " + (index + 1) + ": unsupported YAML structure");
+    const [, key, rawValue] = valueMatch;
+    if (!allowed[section].has(key)) {
+      throw new Error("line " + (index + 1) + ": unknown " + section + " key " + key);
+    }
+    if (own(result[section], key)) {
+      throw new Error("line " + (index + 1) + ": duplicate " + section + "." + key);
+    }
+    if (section === "policy" && key === "allow_implicit_invocation") {
+      if (!/^(?:true|false)$/.test(rawValue.trim())) {
+        throw new Error("line " + (index + 1) + ": " + section + "." + key + " must be boolean");
+      }
+      result[section][key] = rawValue.trim() === "true";
+    } else {
+      result[section][key] = parseQuotedScalar(
+        rawValue,
+        "line " + (index + 1) + " " + section + "." + key,
+      );
+    }
+  }
+  if (JSON.stringify(Object.keys(result)) !== JSON.stringify(["interface", "policy"])) {
+    throw new Error("openai.yaml must contain exactly interface then policy");
+  }
+  for (const key of allowed.interface) {
+    if (!own(result.interface, key)) throw new Error("missing interface." + key);
+  }
+  if (!own(result.policy, "allow_implicit_invocation")) {
+    throw new Error("missing policy.allow_implicit_invocation");
+  }
+  return result;
 }
 
-function tomlString(text, key) {
-  return text.match(new RegExp(`^${escapeRegExp(key)}\\s*=\\s*"([^"]*)"`, "m"))?.[1];
+const profileTomlSchema = {
+  name: "string",
+  description: "string",
+  sandbox_mode: "string",
+  approval_policy: "string",
+  nickname_candidates: "string_array",
+  developer_instructions: "multiline_string",
+};
+
+function parseStrictProfileToml(text) {
+  const result = {};
+  const lines = String(text).replace(/\r\n?/g, "\n").split("\n");
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (!line.trim() || line.trimStart().startsWith("#")) continue;
+    if (line.includes("\t")) throw new Error("line " + (index + 1) + ": tabs are forbidden");
+    const match = line.match(/^([a-z][a-z0-9_]*)\s*=\s*(.*)$/);
+    if (!match) throw new Error("line " + (index + 1) + ": unsupported TOML structure");
+    const [, key, rawValue] = match;
+    const type = profileTomlSchema[key];
+    if (!type) throw new Error("line " + (index + 1) + ": unknown top-level key " + key);
+    if (own(result, key)) throw new Error("line " + (index + 1) + ": duplicate key " + key);
+    if (type === "multiline_string") {
+      if (rawValue !== '"""') {
+        throw new Error("line " + (index + 1) + ": " + key + " must start with triple quotes");
+      }
+      const body = [];
+      let closed = false;
+      while (index + 1 < lines.length) {
+        index += 1;
+        if (lines[index] === '"""') {
+          closed = true;
+          break;
+        }
+        body.push(lines[index]);
+      }
+      if (!closed) throw new Error("line " + (index + 1) + ": unclosed multiline string " + key);
+      result[key] = body.join("\n");
+      continue;
+    }
+    if (type === "string_array") {
+      let parsed;
+      try {
+        parsed = JSON.parse(rawValue);
+      } catch {
+        throw new Error("line " + (index + 1) + ": invalid or unclosed string array " + key);
+      }
+      if (
+        !Array.isArray(parsed) ||
+        parsed.length === 0 ||
+        parsed.some((item) => typeof item !== "string" || !item)
+      ) {
+        throw new Error("line " + (index + 1) + ": " + key + " must be a non-empty string array");
+      }
+      result[key] = parsed;
+      continue;
+    }
+    if (
+      !(
+        (rawValue.startsWith('"') && rawValue.endsWith('"')) ||
+        (rawValue.startsWith("'") && rawValue.endsWith("'"))
+      )
+    ) {
+      throw new Error("line " + (index + 1) + ": " + key + " must be a quoted TOML string");
+    }
+    result[key] = parseQuotedScalar(rawValue, "line " + (index + 1) + " " + key);
+  }
+  for (const key of Object.keys(profileTomlSchema)) {
+    if (!own(result, key)) throw new Error("missing required key " + key);
+  }
+  return result;
+}
+
+function parseAndRecord(name, parser, text) {
+  try {
+    const value = parser(text);
+    record(name, true);
+    return value;
+  } catch (error) {
+    record(name, false, error.message);
+    return null;
+  }
 }
 
 function canonicalize(value) {
@@ -206,16 +433,41 @@ function createProtocolCheckpoint(manifest, phase) {
 }
 
 function verifyProtocolCheckpointChain(checkpoints, manifest) {
-  if (checkpoints.length !== protocolCheckpointOrder.length) return false;
+  if (!Array.isArray(checkpoints) || checkpoints.length !== protocolCheckpointOrder.length) return false;
   return checkpoints.every((checkpoint, index) => {
     const expectedPrevious = index === 0 ? null : checkpoints[index - 1].checkpoint_sha256;
+    const snapshot = checkpoint?.manifest_snapshot;
     return checkpoint.schema === "protocol_checkpoint.v1" &&
+      checkpoint.run_id === manifest.run_id &&
+      checkpoint.task_id === manifest.task_id &&
       checkpoint.sequence === index + 1 &&
       checkpoint.phase === protocolCheckpointOrder[index] &&
       checkpoint.previous_checkpoint_sha256 === expectedPrevious &&
       checkpoint.checkpoint_sha256 === artifactDigest(checkpoint, "checkpoint_sha256") &&
-      manifest.checkpoint_hashes?.[checkpoint.phase] === checkpoint.checkpoint_sha256;
+      manifest.checkpoint_hashes?.[checkpoint.phase] === checkpoint.checkpoint_sha256 &&
+      snapshot &&
+      typeof snapshot === "object" &&
+      !Array.isArray(snapshot) &&
+      snapshot.schema === manifest.schema &&
+      snapshot.run_id === manifest.run_id &&
+      snapshot.task_id === manifest.task_id &&
+      snapshot.current_phase === checkpoint.phase &&
+      !own(snapshot, "checkpoint_hashes") &&
+      !own(snapshot, "manifest_sha256");
   });
+}
+
+function rehashCheckpointChainForProbe(checkpoints, manifest) {
+  for (let index = 0; index < checkpoints.length; index += 1) {
+    checkpoints[index].previous_checkpoint_sha256 =
+      index === 0 ? null : checkpoints[index - 1].checkpoint_sha256;
+    checkpoints[index].checkpoint_sha256 = artifactDigest(
+      checkpoints[index],
+      "checkpoint_sha256",
+    );
+    manifest.checkpoint_hashes[checkpoints[index].phase] =
+      checkpoints[index].checkpoint_sha256;
+  }
 }
 
 function matchesExactTrigger(message) {
@@ -254,12 +506,13 @@ function classifyTrainingInstanceFixture(fixture) {
 }
 
 function validateEmpiricalMethodFixture(fixture) {
-  return fixture.has_complete_solution === true &&
+  return fixture && typeof fixture === "object" &&
+    fixture.has_complete_solution === true &&
     fixture.fixed_acceptance_criteria_preserved === true &&
-    fixture.hypothesis_count > 0 &&
-    fixture.discriminating_test_count > 0 &&
-    fixture.observable_count > 0 &&
-    fixture.decision_threshold_count > 0 &&
+    Number.isInteger(fixture.hypothesis_count) && fixture.hypothesis_count > 0 &&
+    Number.isInteger(fixture.discriminating_test_count) && fixture.discriminating_test_count > 0 &&
+    Number.isInteger(fixture.observable_count) && fixture.observable_count > 0 &&
+    Number.isInteger(fixture.decision_threshold_count) && fixture.decision_threshold_count > 0 &&
     fixture.fallback_or_rollback_defined === true &&
     fixture.invented_results === false &&
     fixture.peer_evaluation === false &&
@@ -285,6 +538,27 @@ function listFiles(directory, base = "", options = {}) {
 }
 
 function classifyProtocolFixture(fixture) {
+  const requiredTypesValid =
+    fixture &&
+    typeof fixture === "object" &&
+    typeof fixture.protected_action_without_normal_gate === "boolean" &&
+    ["available", "unavailable"].includes(fixture.safety_supervisor) &&
+    ["pass", "fail"].includes(fixture.training_control) &&
+    ["pass", "fail", "fail_early_reveal", "not_reached"].includes(fixture.barrier) &&
+    ["available", "unavailable"].includes(fixture.moderator) &&
+    Number.isInteger(fixture.valid_commits) &&
+    fixture.valid_commits >= 0 &&
+    fixture.valid_commits <= 4 &&
+    Number.isInteger(fixture.valid_same_target_followup_receipts) &&
+    fixture.valid_same_target_followup_receipts >= 0 &&
+    fixture.valid_same_target_followup_receipts <= 4 &&
+    ["complete", "partial", "incomplete", "conflicting", "contaminated"].includes(
+      fixture.evidence,
+    ) &&
+    ["none", "resolved", "unknown", "evidence_backed_unresolved"].includes(
+      fixture.critical_objection,
+    );
+  if (!requiredTypesValid) return "blocked";
   if (
     fixture.protected_action_without_normal_gate === true ||
     fixture.safety_supervisor === "unavailable" ||
@@ -292,7 +566,7 @@ function classifyProtocolFixture(fixture) {
     fixture.barrier !== "pass" ||
     fixture.moderator !== "available" ||
     fixture.valid_commits < 3 ||
-    fixture.valid_same_thread_revisions < 3
+    fixture.valid_same_target_followup_receipts < 3
   ) {
     return "blocked";
   }
@@ -301,7 +575,7 @@ function classifyProtocolFixture(fixture) {
   }
   if (
     fixture.valid_commits === 4 &&
-    fixture.valid_same_thread_revisions === 4 &&
+    fixture.valid_same_target_followup_receipts === 4 &&
     fixture.evidence === "complete"
   ) {
     return "verified_consensus";
@@ -310,6 +584,21 @@ function classifyProtocolFixture(fixture) {
 }
 
 function classifySupervisionFixture(fixture) {
+  const requiredTypesValid =
+    fixture &&
+    typeof fixture === "object" &&
+    ["available", "unavailable"].includes(fixture.safety_supervisor) &&
+    typeof fixture.source_packet_available === "boolean" &&
+    typeof fixture.source_packet_hash_matches === "boolean" &&
+    typeof fixture.guidance_byte_identical === "boolean" &&
+    typeof fixture.guidance_non_solution === "boolean" &&
+    typeof fixture.instance_specific_coaching === "boolean" &&
+    ["pass", "fail", "unverifiable"].includes(fixture.protected_boundaries) &&
+    ["pass", "hold", "blocked"].includes(fixture.safety_status) &&
+    Number.isInteger(fixture.hold_count) &&
+    fixture.hold_count >= 0 &&
+    fixture.hold_count <= 1;
+  if (!requiredTypesValid) return "blocked";
   if (
     fixture.safety_supervisor !== "available" ||
     fixture.source_packet_available !== true ||
@@ -329,6 +618,21 @@ function classifySupervisionFixture(fixture) {
 }
 
 function decideLoopFixture(fixture) {
+  const requiredTypesValid =
+    fixture &&
+    typeof fixture === "object" &&
+    typeof fixture.user_input_required === "boolean" &&
+    typeof fixture.automatic_second_panel_requested === "boolean" &&
+    Number.isInteger(fixture.required_failures) &&
+    fixture.required_failures >= 0 &&
+    typeof fixture.regression_clean === "boolean" &&
+    typeof fixture.root_cause_known === "boolean" &&
+    typeof fixture.bounded_repair_available === "boolean" &&
+    Number.isInteger(fixture.iteration_count) &&
+    fixture.iteration_count >= 0 &&
+    Number.isInteger(fixture.max_iterations) &&
+    fixture.max_iterations >= 0;
+  if (!requiredTypesValid) return "blocked";
   if (fixture.user_input_required === true) return "ask_user";
   if (fixture.automatic_second_panel_requested === true) return "blocked";
   if (fixture.required_failures === 0 && fixture.regression_clean === true) {
@@ -347,17 +651,58 @@ function decideLoopFixture(fixture) {
 }
 
 function classifyIntegrityFixture(fixture) {
+  const coreTypesValid =
+    fixture &&
+    typeof fixture === "object" &&
+    Number.isInteger(fixture.valid_training_instances) &&
+    fixture.valid_training_instances >= 0 &&
+    fixture.valid_training_instances <= 4 &&
+    Number.isInteger(fixture.pre_reveal_self_audits) &&
+    fixture.pre_reveal_self_audits >= 0 &&
+    fixture.pre_reveal_self_audits <= 4 &&
+    Number.isInteger(fixture.same_target_followup_receipts) &&
+    fixture.same_target_followup_receipts >= 0 &&
+    fixture.same_target_followup_receipts <= 4 &&
+    Number.isInteger(fixture.experience_transfer_ledgers) &&
+    fixture.experience_transfer_ledgers >= 0 &&
+    fixture.experience_transfer_ledgers <= 4 &&
+    Number.isInteger(fixture.no_blind_phase_supervisor_contact_attestations) &&
+    fixture.no_blind_phase_supervisor_contact_attestations >= 0 &&
+    fixture.no_blind_phase_supervisor_contact_attestations <= 4 &&
+    ["pass", "fail"].includes(fixture.barrier) &&
+    typeof fixture.reveal_byte_identical === "boolean" &&
+    ["pass", "fail"].includes(fixture.anti_groupthink_audit) &&
+    typeof fixture.consequential === "boolean" &&
+    ["pass_reproducible", "fail_non_reproducible", "fail", "not_required"].includes(
+      fixture.final_qa,
+    ) &&
+    ["none", "resolved", "evidence_backed_unresolved", "lost"].includes(
+      fixture.critical_minority,
+    ) &&
+    ["complete_independent", "shared_lineage_only", "conflicting", "partial", "incomplete"].includes(
+      fixture.evidence,
+    );
+  if (!coreTypesValid) return "blocked";
+  const completeIntegrityEvidence =
+    typeof fixture.guidance_byte_identical === "boolean" &&
+    typeof fixture.safety_control_byte_identical === "boolean" &&
+    typeof fixture.instance_specific_coaching_detected === "boolean" &&
+    typeof fixture.blind_phase_content_feedback_detected === "boolean" &&
+    ["pass", "fail", "unverifiable"].includes(fixture.safety_report) &&
+    typeof fixture.critical_shared_lineage_only === "boolean" &&
+    typeof fixture.quick_surrender_unresolved === "boolean" &&
+    Number.isInteger(fixture.hokage_unverified_critical_or_major_claims);
   const usableInstances = Math.min(
-    fixture.valid_training_instances ?? 0,
-    fixture.pre_reveal_self_audits ?? 0,
-    fixture.same_thread_proofs ?? 0,
-    fixture.experience_transfer_ledgers ?? 0,
-    fixture.no_blind_phase_supervisor_contact_attestations ?? fixture.valid_training_instances ?? 0,
+    fixture.valid_training_instances,
+    fixture.pre_reveal_self_audits,
+    fixture.same_target_followup_receipts,
+    fixture.experience_transfer_ledgers,
+    fixture.no_blind_phase_supervisor_contact_attestations,
   );
   if (
     fixture.barrier !== "pass" ||
     fixture.reveal_byte_identical !== true ||
-    fixture.same_thread_proofs < 3 ||
+    fixture.same_target_followup_receipts < 3 ||
     fixture.experience_transfer_ledgers < 3 ||
     fixture.guidance_byte_identical === false ||
     fixture.safety_control_byte_identical === false ||
@@ -365,22 +710,24 @@ function classifyIntegrityFixture(fixture) {
     fixture.blind_phase_content_feedback_detected === true ||
     (fixture.safety_report != null && fixture.safety_report !== "pass") ||
     fixture.anti_groupthink_audit !== "pass" ||
-    (fixture.consequential === true && fixture.final_qa !== "pass_reproducible")
+    (fixture.consequential === true && fixture.final_qa !== "pass_reproducible") ||
+    (fixture.consequential === false && fixture.final_qa !== "not_required")
   ) {
     return "blocked";
   }
+  if (!completeIntegrityEvidence) return "blocked";
+  if (usableInstances < 3) return "blocked";
   if (
     fixture.critical_minority === "evidence_backed_unresolved" ||
     fixture.critical_minority === "lost"
   ) {
     return "structured_dispute";
   }
-  if (usableInstances < 3) return "blocked";
   if (
     usableInstances < 4 ||
     fixture.critical_shared_lineage_only === true ||
     fixture.quick_surrender_unresolved === true ||
-    (fixture.hokage_unverified_critical_or_major_claims ?? 0) > 0 ||
+    fixture.hokage_unverified_critical_or_major_claims > 0 ||
     fixture.evidence !== "complete_independent"
   ) {
     return "provisional_consensus";
@@ -390,9 +737,12 @@ function classifyIntegrityFixture(fixture) {
 
 const packageJsonPath = join(workspaceRoot, "package.json");
 const packageJson = existsSync(packageJsonPath) ? parseJson(packageJsonPath) : null;
-const packageMode = packageJson?.name === "naruto-codex-deliberation-council";
+const packageMode =
+  !installValidationMode && packageJson?.name === "naruto-codex-deliberation-council";
 
-const profileRootCandidates = packageMode
+const profileRootCandidates = installValidationMode
+  ? [installProfileRoot]
+  : packageMode
   ? [join(workspaceRoot, ".codex/agents")]
   : [
       join(workspaceRoot, ".codex/agents"),
@@ -400,7 +750,9 @@ const profileRootCandidates = packageMode
       join(homedir(), ".codex/agents"),
     ].filter(Boolean);
 const uniqueProfileRoots = [...new Set(profileRootCandidates)];
-const profileRoot = packageMode
+const profileRoot = installValidationMode
+  ? installProfileRoot
+  : packageMode
   ? join(workspaceRoot, ".codex/agents")
   : uniqueProfileRoots.find((root) =>
       expectedAgents.every(({ runtime }) => existsSync(join(root, `${runtime}.toml`))),
@@ -508,8 +860,10 @@ record(
 );
 record(
   "skill_phase_integrity",
-  skillText.includes("`protocol_run_manifest.v1`") && skillText.includes("opaque runtime handle"),
-  "phase-integrity manifest or opaque handle rule missing",
+  skillText.includes("`protocol_run_manifest.v1`") &&
+    skillText.includes("same-target follow-up receipt") &&
+    skillText.includes('fork_turns: "none"'),
+  "phase-integrity manifest, isolated spawn, or same-target receipt rule missing",
 );
 record(
   "skill_evidence_independence",
@@ -518,8 +872,9 @@ record(
 );
 record(
   "skill_experience_transfer",
-  skillText.includes("`experience_transfer`") && skillText.includes("opaque runtime handle"),
-  "experience-transfer or same-thread provenance rule missing",
+  skillText.includes("`experience_transfer`") &&
+    skillText.includes("successful same-target follow-up provenance"),
+  "experience-transfer or same-target provenance rule missing",
 );
 record(
   "skill_groupthink",
@@ -533,9 +888,14 @@ record(
 );
 
 const openaiText = read(join(skillRoot, "agents/openai.yaml"));
-const defaultPrompt = openaiText.match(/^\s*default_prompt:\s*"([^"]+)"/m)?.[1];
-const shortDescription = openaiText.match(/^\s*short_description:\s*"([^"]+)"/m)?.[1] ?? "";
-record("openai_display_name", /display_name:\s*"[^"]+"/.test(openaiText), "display_name missing");
+const openaiConfig = parseAndRecord(
+  "openai_yaml_strict_schema",
+  parseStrictOpenAiYaml,
+  openaiText,
+);
+const defaultPrompt = openaiConfig?.interface?.default_prompt;
+const shortDescription = openaiConfig?.interface?.short_description ?? "";
+record("openai_display_name", Boolean(openaiConfig?.interface?.display_name), "display_name missing");
 record(
   "openai_short_description_length",
   shortDescription.length >= 25 && shortDescription.length <= 64,
@@ -543,7 +903,7 @@ record(
 );
 record(
   "openai_implicit_false",
-  /^\s*allow_implicit_invocation:\s*false\s*$/m.test(openaiText),
+  openaiConfig?.policy?.allow_implicit_invocation === false,
   "allow_implicit_invocation must be false",
 );
 record(
@@ -556,9 +916,26 @@ record(
   defaultPrompt?.includes("Kakashi") === true && defaultPrompt?.includes("Yamato") === true,
   "default_prompt must expose common Kakashi guidance and Yamato safety control",
 );
+const malformedOpenAiYamlCases = [
+  openaiText + "\npolicy:\n  allow_implicit_invocation: false\n",
+  openaiText.replace("display_name:", "unknown_display_name:"),
+  openaiText.replace('default_prompt: "$naruto', 'default_prompt: "$naruto').replace(/"\n\npolicy:/, "\n\npolicy:"),
+];
+record(
+  "openai_yaml_malformed_rejected",
+  malformedOpenAiYamlCases.every((text) => {
+    try {
+      parseStrictOpenAiYaml(text);
+      return false;
+    } catch {
+      return true;
+    }
+  }),
+  "duplicate, unknown, or unclosed openai.yaml value was accepted",
+);
 
 const manifest = parseJson(join(skillRoot, "agent_manifest.json"));
-record("manifest_schema_version", manifest?.schema_version === 3, "manifest schema_version must be 3");
+record("manifest_schema_version", manifest?.schema_version === 4, "manifest schema_version must be 4");
 record("manifest_agent_count", manifest?.agents?.length === 6, "manifest must contain six agents");
 record("manifest_owner_hokage", manifest?.owner_role_id === "hokage", "Hokage must remain the public owner role");
 record(
@@ -575,10 +952,46 @@ record(
   manifest?.qa_role?.id === "final_qa" &&
     manifest?.qa_role?.runtime_binding === "host_provided" &&
     manifest?.qa_role?.bundled_profile === false &&
+    manifest?.qa_role?.part_of_six_profile_preflight === false &&
     manifest?.qa_role?.required_when === "consequential_result" &&
     manifest?.qa_role?.review_mode === "role_blind_independent" &&
     manifest?.qa_role?.unavailable_policy === "blocked",
   "final QA must be an explicit host-provided, role-blind, fail-closed role",
+);
+record(
+  "manifest_host_runtime_preflight",
+  manifest?.host_runtime_preflight?.required_before_packet_build === true &&
+    manifest?.host_runtime_preflight?.project_trust_required === true &&
+    manifest?.host_runtime_preflight?.project_agent_layer_must_be_loaded === true &&
+    JSON.stringify([...(manifest?.host_runtime_preflight?.required_runtime_ids ?? [])].sort()) ===
+      JSON.stringify(expectedAgents.map(({ runtime }) => runtime).sort()) &&
+    manifest?.host_runtime_preflight?.open_child_thread_capacity_required === 6 &&
+    manifest?.host_runtime_preflight?.parent_live_sandbox_mode_required === "read-only" &&
+    manifest?.host_runtime_preflight?.parent_live_approval_policy_required === "never" &&
+    manifest?.host_runtime_preflight?.child_effective_sandbox_mode_required === "read-only" &&
+    manifest?.host_runtime_preflight?.child_effective_approval_policy_required === "never" &&
+    manifest?.host_runtime_preflight?.profile_sandbox_mode_is_default_not_enforcement === true &&
+    manifest?.host_runtime_preflight?.profile_approval_policy_is_default_not_enforcement === true &&
+    manifest?.host_runtime_preflight?.fork_turns_required === "none" &&
+    manifest?.host_runtime_preflight?.spawn_all_training_instances_before_wait === true &&
+    manifest?.host_runtime_preflight?.same_target_followup_capability_required === true &&
+    manifest?.host_runtime_preflight?.successful_delivery_receipt_required === true &&
+    manifest?.host_runtime_preflight?.unverifiable_policy === "blocked",
+  "live host discovery, effective permission, fork, capacity, or receipt preflight mismatch",
+);
+record(
+  "manifest_parent_artifact_ownership",
+  manifest?.artifact_ownership?.owner_role_id === "hokage" &&
+    manifest?.artifact_ownership?.runtime_owner === "parent_codex_process" &&
+    manifest?.artifact_ownership?.storage === "parent_orchestration_state" &&
+    manifest?.artifact_ownership?.filesystem_persistence_required === false &&
+    manifest?.artifact_ownership?.child_artifact_write_forbidden === true &&
+    manifest?.artifact_ownership?.canonical_values_retained_until_classification === true &&
+    manifest?.artifact_ownership?.spawn_targets_and_delivery_receipts_parent_only === true &&
+    manifest?.artifact_ownership?.delivery_receipt_source === "host_followup_tool_result" &&
+    manifest?.artifact_ownership?.child_authored_receipt_is_provenance === false &&
+    manifest?.artifact_ownership?.retention_unavailable_policy === "blocked",
+  "parent-owned logical artifact or host receipt provenance contract mismatch",
 );
 record("manifest_trigger", manifest?.activation?.token === "$naruto", "manifest trigger mismatch");
 record("manifest_trigger_case", manifest?.activation?.case_sensitive === true, "trigger must be case-sensitive");
@@ -610,7 +1023,8 @@ record(
 );
 record(
   "manifest_integrity_contract",
-  manifest?.moderation?.same_thread_handle_hash_required === true &&
+  manifest?.moderation?.same_target_followup_receipt_required === true &&
+    manifest?.moderation?.opaque_runtime_handle_hash_forbidden === true &&
     manifest?.moderation?.byte_identical_reveal_required === true &&
     manifest?.moderation?.experience_transfer_required === true,
   "same-thread, reveal, or experience-transfer requirement missing",
@@ -672,8 +1086,13 @@ record(
 for (const expected of expectedAgents) {
   const cardPath = join(skillRoot, "agents", expected.card);
   const cardText = read(cardPath);
+  const card = parseAndRecord(
+    `agent_card_strict_schema:${expected.runtime}`,
+    parseStrictAgentCardYaml,
+    cardText,
+  );
   const manifestAgent = manifest?.agents?.find((agent) => agent.runtime_id === expected.runtime);
-  const cardContracts = yamlList(cardText, "behavior_contract_ids").sort();
+  const cardContracts = [...(card?.behavior_contract_ids ?? [])].sort();
   const canonicalContracts = [...expected.contracts].sort();
 
   record(`agent_manifest:${expected.runtime}`, Boolean(manifestAgent), "runtime missing from manifest");
@@ -685,7 +1104,7 @@ for (const expected of expectedAgents) {
   );
   record(
     `agent_card_runtime:${expected.runtime}`,
-    yamlScalar(cardText, "runtime_id") === expected.runtime,
+    card?.runtime_id === expected.runtime,
     "card runtime_id mismatch",
   );
   record(
@@ -701,8 +1120,13 @@ for (const expected of expectedAgents) {
 
   const runtimePath = profileRoot ? join(profileRoot, `${expected.runtime}.toml`) : "";
   const runtimeText = runtimePath && existsSync(runtimePath) ? read(runtimePath) : "";
+  const runtime = parseAndRecord(
+    `agent_runtime_strict_schema:${expected.runtime}`,
+    parseStrictProfileToml,
+    runtimeText,
+  );
   const runtimeContracts =
-    runtimeText
+    runtime?.developer_instructions
       .match(/^Behavior contract IDs:\s*([^\n]+)$/m)?.[1]
       ?.split(",")
       .map((value) => value.trim())
@@ -712,23 +1136,28 @@ for (const expected of expectedAgents) {
   record(`agent_runtime_exists:${expected.runtime}`, Boolean(runtimeText), "runtime profile missing");
   record(
     `agent_runtime_name:${expected.runtime}`,
-    tomlString(runtimeText, "name") === expected.runtime,
+    runtime?.name === expected.runtime,
     "runtime name mismatch",
   );
   record(
     `agent_runtime_description:${expected.runtime}`,
-    Boolean(tomlString(runtimeText, "description")),
+    Boolean(runtime?.description),
     "runtime description missing",
   );
   record(
     `agent_runtime_instructions:${expected.runtime}`,
-    /developer_instructions\s*=\s*"""[\s\S]+"""/.test(runtimeText),
+    Boolean(runtime?.developer_instructions),
     "developer_instructions missing",
   );
   record(
     `agent_runtime_read_only:${expected.runtime}`,
-    /^sandbox_mode\s*=\s*"read-only"$/m.test(runtimeText),
+    runtime?.sandbox_mode === "read-only",
     "runtime must be read-only",
+  );
+  record(
+    `agent_runtime_approval_never:${expected.runtime}`,
+    runtime?.approval_policy === "never",
+    "runtime approval_policy must be never",
   );
   record(
     `agent_runtime_contracts:${expected.runtime}`,
@@ -750,9 +1179,9 @@ for (const expected of expectedAgents) {
     );
     record(
       `agent_card_training_instance:${expected.runtime}`,
-      yamlScalar(cardText, "actor_identity_id") === expected.actorIdentity &&
-        yamlScalar(cardText, "training_instance_id") === expected.runtime &&
-        yamlScalar(cardText, "method_profile_id") === expected.methodProfile,
+      card?.actor_identity_id === expected.actorIdentity &&
+        card?.training_instance_id === expected.runtime &&
+        card?.method_profile_id === expected.methodProfile,
       "card training-instance identity or method mismatch",
     );
     record(
@@ -777,9 +1206,9 @@ for (const expected of expectedAgents) {
       "agent_runtime_moderator_integrity",
       runtimeText.includes("method_matrix.v1") &&
         runtimeText.includes("training_guidance_packet.v1") &&
-        runtimeText.includes("protocol_run_manifest.v1") &&
+      runtimeText.includes("protocol_run_manifest.v1") &&
         runtimeText.includes("evidence-independence") &&
-        runtimeText.includes("matching thread-handle hashes"),
+        runtimeText.includes("same-target follow-up receipt"),
       "Kakashi runtime lacks common guidance or integrity enforcement",
     );
   } else if (expected.runtime === "yamato") {
@@ -809,22 +1238,77 @@ for (const expected of expectedAgents) {
       cardText.includes("method-matrix hashes") &&
         cardText.includes("pre-reveal self-audit") &&
         cardText.includes("experience-transfer ledger") &&
-        cardText.includes("opaque handle hashes") &&
+        cardText.includes("successful host receipt") &&
         cardText.includes("no-blind-contact attestation"),
       "candidate card lacks supervision, self-audit, or same-thread experience transfer",
     );
     record(
       `agent_runtime_candidate_learning:${expected.runtime}`,
       runtimeText.includes("same Naruto identity") &&
-        runtimeText.includes("method_matrix.v1") &&
+      runtimeText.includes("method_matrix.v1") &&
         runtimeText.includes("pre-reveal self-audit") &&
         runtimeText.includes("experience-transfer claim map") &&
-        runtimeText.includes("opaque thread-handle hashes") &&
+        runtimeText.includes("successful same-target follow-up receipt") &&
         runtimeText.includes("no_blind_phase_supervisor_contact_attestation=true"),
       "candidate runtime lacks supervision, self-audit, or same-thread experience transfer",
     );
   }
 }
+
+const strictProfileProbeText = read(join(profileRoot, "naruto_clone_integrator.toml"));
+const malformedProfileCases = [
+  strictProfileProbeText + '\ninvalid_unclosed_array = [',
+  strictProfileProbeText.replace(
+    'description = "',
+    'name = "duplicate"\ndescription = "',
+  ),
+  strictProfileProbeText.replace(
+    'nickname_candidates = ["Naruto Clone Integrator"]',
+    'nickname_candidates = ["Naruto Clone Integrator"',
+  ),
+  strictProfileProbeText.replace(
+    'sandbox_mode = "read-only"',
+    "sandbox_mode = read-only",
+  ),
+  strictProfileProbeText.replace(/\n"""\s*$/, ""),
+];
+record(
+  "agent_runtime_malformed_profiles_rejected",
+  malformedProfileCases.every((text) => {
+    try {
+      parseStrictProfileToml(text);
+      return false;
+    } catch {
+      return true;
+    }
+  }),
+  "unknown, duplicate, unquoted string, unclosed array, or unclosed multiline TOML was accepted",
+);
+const strictCardProbeText = read(join(skillRoot, "agents/naruto-clone-integrator.yaml"));
+const malformedCardCases = [
+  strictCardProbeText + "\nunknown_top_level: rejected",
+  strictCardProbeText.replace(
+    "runtime_id: naruto_clone_integrator",
+    "runtime_id: naruto_clone_integrator\nruntime_id: duplicate",
+  ),
+  strictCardProbeText.replace(
+    'name: "Naruto Clone: Integrator"',
+    'name: "Naruto Clone: Integrator',
+  ),
+  strictCardProbeText.replace("behavior_contract_ids:\n", "behavior_contract_ids: []\n"),
+];
+record(
+  "agent_card_malformed_yaml_rejected",
+  malformedCardCases.every((text) => {
+    try {
+      parseStrictAgentCardYaml(text);
+      return false;
+    } catch {
+      return true;
+    }
+  }),
+  "unknown, duplicate, unclosed, or flow-style agent-card YAML was accepted",
+);
 
 const empiricalVerifierCardText = read(join(skillRoot, "agents/naruto-clone-verifier.yaml"));
 const empiricalVerifierRuntimeText = profileRoot
@@ -855,7 +1339,7 @@ record(
 );
 
 const fixtures = parseJson(join(skillRoot, "fixtures/naruto-fixtures.json"));
-record("fixtures_schema_version", fixtures?.schema_version === 3, "fixtures schema_version must be 3");
+record("fixtures_schema_version", fixtures?.schema_version === 4, "fixtures schema_version must be 4");
 for (const fixture of fixtures?.trigger_cases ?? []) {
   record(
     `trigger_fixture:${fixture.id}`,
@@ -916,7 +1400,7 @@ const requiredProtocolCases = new Set([
   "two-instance-blocked",
   "hash-mismatch-degrades",
   "early-reveal-blocked",
-  "same-thread-unavailable",
+  "same-target-receipt-unavailable",
   "moderator-unavailable",
   "critical-minority-unresolved",
   "protected-action-requested",
@@ -966,7 +1450,7 @@ for (const fixture of fixtures?.supervision_cases ?? []) {
 const requiredIntegrityCases = new Set([
   "integrity-full-verified",
   "integrity-reveal-byte-mismatch",
-  "integrity-thread-handle-mismatch",
+  "integrity-same-target-receipt-missing",
   "integrity-one-missing-pre-audit",
   "integrity-shared-source-critical-convergence",
   "integrity-canonical-minority-over-unsupported-majority",
@@ -991,6 +1475,252 @@ for (const fixture of fixtures?.integrity_cases ?? []) {
     classifyIntegrityFixture(fixture) === fixture.expected_max_result,
     `expected ${fixture.expected_max_result}, got ${classifyIntegrityFixture(fixture)}`,
   );
+}
+
+function fixtureWithoutField(fixture, field) {
+  const copy = JSON.parse(JSON.stringify(fixture));
+  delete copy[field];
+  return copy;
+}
+
+const requiredFieldDeletionSuites = [
+  {
+    id: "training_instance",
+    baseline: fixtures.training_instance_cases.find(({ id }) => id === "training-instances-ready"),
+    requiredFields: [
+      "actor_identity_ids",
+      "instance_ids",
+      "method_profile_ids",
+      "revision_method_profile_ids",
+      "method_matrix_byte_identical",
+      "envelope_difference_allowlist_valid",
+    ],
+    classify: classifyTrainingInstanceFixture,
+  },
+  {
+    id: "protocol",
+    baseline: fixtures.protocol_cases.find(({ id }) => id === "full-verified"),
+    requiredFields: [
+      "protected_action_without_normal_gate",
+      "safety_supervisor",
+      "training_control",
+      "barrier",
+      "moderator",
+      "valid_commits",
+      "valid_same_target_followup_receipts",
+      "evidence",
+      "critical_objection",
+    ],
+    classify: classifyProtocolFixture,
+  },
+  {
+    id: "supervision",
+    baseline: fixtures.supervision_cases.find(({ id }) => id === "supervision-ready"),
+    requiredFields: [
+      "safety_supervisor",
+      "source_packet_available",
+      "source_packet_hash_matches",
+      "guidance_byte_identical",
+      "guidance_non_solution",
+      "instance_specific_coaching",
+      "protected_boundaries",
+      "safety_status",
+      "hold_count",
+    ],
+    classify: classifySupervisionFixture,
+  },
+  {
+    id: "integrity",
+    baseline: fixtures.integrity_cases.find(({ id }) => id === "integrity-full-verified"),
+    requiredFields: [
+      "barrier",
+      "reveal_byte_identical",
+      "valid_training_instances",
+      "pre_reveal_self_audits",
+      "same_target_followup_receipts",
+      "experience_transfer_ledgers",
+      "no_blind_phase_supervisor_contact_attestations",
+      "guidance_byte_identical",
+      "safety_control_byte_identical",
+      "instance_specific_coaching_detected",
+      "blind_phase_content_feedback_detected",
+      "safety_report",
+      "anti_groupthink_audit",
+      "consequential",
+      "final_qa",
+      "critical_minority",
+      "critical_shared_lineage_only",
+      "quick_surrender_unresolved",
+      "hokage_unverified_critical_or_major_claims",
+      "evidence",
+    ],
+    classify: classifyIntegrityFixture,
+  },
+];
+for (const suite of requiredFieldDeletionSuites) {
+  record(
+    `fixture_baseline_complete:${suite.id}`,
+    suite.requiredFields.every((field) => own(suite.baseline, field)),
+    "representative valid baseline is missing a required field",
+  );
+  for (const field of suite.requiredFields) {
+    const result = suite.classify(fixtureWithoutField(suite.baseline, field));
+    record(
+      `required_field_deletion_rejected:${suite.id}:${field}`,
+      result === "blocked",
+      `deleting ${field} returned ${result}`,
+    );
+  }
+}
+
+const fixtureSchemaSuites = [
+  { group: "protocol", cases: fixtures.protocol_cases, fields: requiredFieldDeletionSuites[1].requiredFields },
+  { group: "supervision", cases: fixtures.supervision_cases, fields: requiredFieldDeletionSuites[2].requiredFields },
+  { group: "integrity", cases: fixtures.integrity_cases, fields: requiredFieldDeletionSuites[3].requiredFields },
+];
+for (const suite of fixtureSchemaSuites) {
+  for (const fixture of suite.cases) {
+    record(
+      `fixture_required_fields_complete:${suite.group}:${fixture.id}`,
+      suite.fields.every((field) => own(fixture, field)),
+      "negative fixture is not a complete baseline-derived oracle",
+    );
+  }
+}
+
+function requiredFieldDelta(fixture, baseline, fields) {
+  return fields
+    .filter((field) => JSON.stringify(fixture[field]) !== JSON.stringify(baseline[field]))
+    .sort();
+}
+
+const protocolOracleBaseline = {
+  protected_action_without_normal_gate: false,
+  safety_supervisor: "available",
+  training_control: "pass",
+  barrier: "pass",
+  moderator: "available",
+  valid_commits: 4,
+  valid_same_target_followup_receipts: 4,
+  evidence: "complete",
+  critical_objection: "none",
+};
+const supervisionOracleBaseline = {
+  safety_supervisor: "available",
+  source_packet_available: true,
+  source_packet_hash_matches: true,
+  guidance_byte_identical: true,
+  guidance_non_solution: true,
+  instance_specific_coaching: false,
+  protected_boundaries: "pass",
+  safety_status: "pass",
+  hold_count: 0,
+};
+const integrityOracleBaseline = {
+  barrier: "pass",
+  reveal_byte_identical: true,
+  valid_training_instances: 4,
+  pre_reveal_self_audits: 4,
+  same_target_followup_receipts: 4,
+  experience_transfer_ledgers: 4,
+  no_blind_phase_supervisor_contact_attestations: 4,
+  guidance_byte_identical: true,
+  safety_control_byte_identical: true,
+  instance_specific_coaching_detected: false,
+  blind_phase_content_feedback_detected: false,
+  safety_report: "pass",
+  anti_groupthink_audit: "pass",
+  consequential: false,
+  final_qa: "not_required",
+  critical_minority: "resolved",
+  critical_shared_lineage_only: false,
+  quick_surrender_unresolved: false,
+  hokage_unverified_critical_or_major_claims: 0,
+  evidence: "complete_independent",
+};
+const fixtureOracleSuites = [
+  {
+    group: "protocol",
+    cases: fixtures.protocol_cases,
+    fields: requiredFieldDeletionSuites[1].requiredFields,
+    baseline: protocolOracleBaseline,
+    allowedDeltas: {
+      "full-verified": ["critical_objection"],
+      "three-instance-degraded": ["valid_commits", "valid_same_target_followup_receipts"],
+      "two-instance-blocked": ["valid_commits", "valid_same_target_followup_receipts"],
+      "hash-mismatch-degrades": ["valid_commits", "valid_same_target_followup_receipts"],
+      "early-reveal-blocked": ["barrier"],
+      "same-target-receipt-unavailable": ["valid_same_target_followup_receipts"],
+      "moderator-unavailable": ["moderator"],
+      "critical-minority-unresolved": ["critical_objection", "evidence"],
+      "protected-action-requested": ["protected_action_without_normal_gate"],
+      "safety-supervisor-unavailable": ["safety_supervisor"],
+    },
+  },
+  {
+    group: "supervision",
+    cases: fixtures.supervision_cases,
+    fields: requiredFieldDeletionSuites[2].requiredFields,
+    baseline: supervisionOracleBaseline,
+    allowedDeltas: {
+      "supervision-ready": [],
+      "supervision-one-common-repair": ["hold_count", "safety_status"],
+      "supervision-guidance-byte-mismatch": ["guidance_byte_identical"],
+      "supervision-solution-direction": ["guidance_non_solution"],
+      "supervision-yamato-unavailable": ["safety_status", "safety_supervisor"],
+      "supervision-instance-specific-coaching": ["instance_specific_coaching"],
+      "supervision-protected-boundary-failure": ["protected_boundaries"],
+      "supervision-second-non-pass": ["hold_count", "safety_status"],
+      "supervision-unverifiable": ["safety_status"],
+      "supervision-source-packet-missing": [
+        "source_packet_available",
+        "source_packet_hash_matches",
+      ],
+      "supervision-source-packet-hash-mismatch": ["source_packet_hash_matches"],
+    },
+  },
+  {
+    group: "integrity",
+    cases: fixtures.integrity_cases,
+    fields: requiredFieldDeletionSuites[3].requiredFields,
+    baseline: integrityOracleBaseline,
+    allowedDeltas: {
+      "integrity-full-verified": ["consequential", "final_qa"],
+      "integrity-reveal-byte-mismatch": ["reveal_byte_identical"],
+      "integrity-same-target-receipt-missing": ["same_target_followup_receipts"],
+      "integrity-one-missing-pre-audit": ["pre_reveal_self_audits"],
+      "integrity-shared-source-critical-convergence": [
+        "critical_minority",
+        "critical_shared_lineage_only",
+        "evidence",
+      ],
+      "integrity-canonical-minority-over-unsupported-majority": [
+        "critical_minority",
+        "evidence",
+      ],
+      "integrity-quick-surrender-without-evidence": ["quick_surrender_unresolved"],
+      "integrity-fake-dissent-rejected": [],
+      "integrity-hokage-unsupported-major-claim": [
+        "hokage_unverified_critical_or_major_claims",
+      ],
+      "integrity-final-qa-non-reproducible": ["consequential", "final_qa"],
+      "integrity-lost-critical-minority": ["critical_minority", "evidence"],
+      "integrity-experience-transfer-missing": ["experience_transfer_ledgers"],
+      "integrity-blind-supervisor-contact": ["instance_specific_coaching_detected"],
+      "integrity-safety-report-unverifiable": ["safety_report"],
+    },
+  },
+];
+for (const suite of fixtureOracleSuites) {
+  for (const fixture of suite.cases) {
+    const actual = requiredFieldDelta(fixture, suite.baseline, suite.fields);
+    const expected = [...(suite.allowedDeltas[fixture.id] ?? [])].sort();
+    record(
+      `fixture_single_fault_oracle:${suite.group}:${fixture.id}`,
+      JSON.stringify(actual) === JSON.stringify(expected),
+      `expected deltas ${expected.join(",")}; got ${actual.join(",")}`,
+    );
+  }
 }
 
 const requiredLoopCases = new Set([
@@ -1048,12 +1778,12 @@ record("template_candidate_self_audit", candidateTemplateText.includes("actor_id
 record("template_reveal_criteria", revealTemplateText.includes("method_matrix_sha256:") && revealTemplateText.includes("acceptance_findings:") && revealTemplateText.includes("root_cause:") && revealTemplateText.includes("training_guidance_packet_sha256:") && revealTemplateText.includes("safety_control_packet_sha256:"), "criterion-level critique or supervision binding missing");
 record("template_reveal_groupthink", revealTemplateText.includes("anti_groupthink_checks:") && revealTemplateText.includes("fake_dissent_flags:") && revealTemplateText.includes("shared_source_consensus_claims:"), "anti-groupthink reveal fields missing");
 record("template_revision_repair", revisionTemplateText.includes("loop_repair:") && revisionTemplateText.includes("regression_risks:"), "same-thread repair fields missing");
-record("template_revision_experience", revisionTemplateText.includes("actor_identity_id: naruto_uzumaki") && revisionTemplateText.includes("method_profile_id:") && revisionTemplateText.includes("method_matrix_sha256:") && revisionTemplateText.includes("training_instance_envelope_sha256:") && revisionTemplateText.includes("experience_transfer:") && revisionTemplateText.includes("original_thread_handle_sha256:") && revisionTemplateText.includes("claim_revision_map:") && revisionTemplateText.includes("training_guidance_packet_sha256:") && revisionTemplateText.includes("safety_control_packet_sha256:"), "same-thread identity, method, experience-transfer, or supervision binding fields missing");
+record("template_revision_experience", revisionTemplateText.includes("actor_identity_id: naruto_uzumaki") && revisionTemplateText.includes("method_profile_id:") && revisionTemplateText.includes("method_matrix_sha256:") && revisionTemplateText.includes("training_instance_envelope_sha256:") && revisionTemplateText.includes("experience_transfer:") && revisionTemplateText.includes("same_thread_revision_attestation:") && revisionTemplateText.includes("successful") && revisionTemplateText.includes("host-tool delivery receipt") && revisionTemplateText.includes("claim_revision_map:") && revisionTemplateText.includes("training_guidance_packet_sha256:") && revisionTemplateText.includes("safety_control_packet_sha256:"), "same-thread identity, method, host receipt, experience-transfer, or supervision binding fields missing");
 record("template_consensus_regression", consensusTemplateText.includes("loop_summary:") && consensusTemplateText.includes("repair_history:") && consensusTemplateText.includes("regression_check:"), "loop summary, repair history, or regression check missing");
 record("template_consensus_provenance", consensusTemplateText.includes("synthesis_provenance:") && consensusTemplateText.includes("hokage_introduced_claims:") && consensusTemplateText.includes("reproducible_next_check:") && consensusTemplateText.includes("protocol_run_manifest_sha256:") && consensusTemplateText.includes("moderator_report_sha256:") && consensusTemplateText.includes("safety_report_sha256:"), "synthesis provenance, safety binding, protocol binding, or reproducible QA fields missing");
 record("template_consensus_conditional_final_qa", consensusTemplateText.includes("final_qa:") && consensusTemplateText.includes("required: true | false") && consensusTemplateText.includes("status: pass | fail | not_run"), "consensus template must represent both required and non-required final QA");
 record("template_protocol_checkpoint", protocolCheckpointTemplateText.includes("protocol_checkpoint.v1") && protocolCheckpointTemplateText.includes("previous_checkpoint_sha256:") && protocolCheckpointTemplateText.includes("manifest_snapshot:") && protocolCheckpointTemplateText.includes("checkpoint_sha256:"), "immutable protocol checkpoint schema missing");
-record("template_protocol_run_manifest", runManifestTemplateText.includes("protocol_run_manifest.v1") && runManifestTemplateText.includes("actor_identity_id: naruto_uzumaki") && runManifestTemplateText.includes("method_matrix_sha256:") && runManifestTemplateText.includes("unique_instance_and_method_ids_verified:") && runManifestTemplateText.includes("training_instance_envelope_sha256:") && runManifestTemplateText.includes("yamato_preflight_passed:") && runManifestTemplateText.includes("blind_supervisor_contact_absent:") && runManifestTemplateText.includes("safety_supervisor:") && runManifestTemplateText.includes("moderator_report_sha256:") && runManifestTemplateText.includes("safety_report_complete:") && runManifestTemplateText.includes("training_control:") && runManifestTemplateText.includes("reveal_byte_identical:") && runManifestTemplateText.includes("same_thread_revisions_verified:") && runManifestTemplateText.includes("checkpoint_hashes:") && runManifestTemplateText.includes("reconcile:") && runManifestTemplateText.includes("safety_report:") && runManifestTemplateText.includes("qa:"), "protocol run manifest identity, method, supervision, report binding, or phase checkpoints missing");
+record("template_protocol_run_manifest", runManifestTemplateText.includes("protocol_run_manifest.v1") && runManifestTemplateText.includes("actor_identity_id: naruto_uzumaki") && runManifestTemplateText.includes("method_matrix_sha256:") && runManifestTemplateText.includes("unique_instance_and_method_ids_verified:") && runManifestTemplateText.includes("training_instance_envelope_sha256:") && runManifestTemplateText.includes("yamato_preflight_passed:") && runManifestTemplateText.includes("blind_supervisor_contact_absent:") && runManifestTemplateText.includes("safety_supervisor:") && runManifestTemplateText.includes("moderator_report_sha256:") && runManifestTemplateText.includes("safety_report_complete:") && runManifestTemplateText.includes("training_control:") && runManifestTemplateText.includes("reveal_byte_identical:") && runManifestTemplateText.includes("same_target_followup_receipts_verified:") && runManifestTemplateText.includes("same_target_followup_receipt_status:") && runManifestTemplateText.includes("checkpoint_hashes:") && runManifestTemplateText.includes("reconcile:") && runManifestTemplateText.includes("safety_report:") && runManifestTemplateText.includes("qa:"), "protocol run manifest identity, method, supervision, receipt binding, or phase checkpoints missing");
 record("contracts_integrity_projection", contractsText.includes("### Artifact Digest Projection") && contractsText.includes("### Manifest Checkpoints And Acyclic Order") && contractsText.includes("method_matrix.v1") && contractsText.includes("naruto_training_instance_envelope.v1") && contractsText.includes("protocol_checkpoint.v1") && contractsText.includes("## Training Guidance") && contractsText.includes("## Safety Control") && contractsText.includes("## Protocol Run Manifest") && contractsText.includes("safety_report.v1") && contractsText.includes("evidence_independence_findings:") && contractsText.includes("synthesis_provenance:") && contractsText.includes("protocol_run_manifest_reconcile_checkpoint_sha256:"), "digest projection, immutable checkpoint, shared-identity supervision, integrity contracts, or phase binding missing from schema reference");
 record(
   "prior_art_assimilation",
@@ -1251,8 +1981,30 @@ for (const phase of protocolCheckpointOrder) {
 const finalManifestDigest = artifactDigest(digestManifest, "manifest_sha256");
 const changedSafetyManifest = JSON.parse(JSON.stringify(digestManifest));
 changedSafetyManifest.safety_supervisor.safety_report_sha256 = "changed-safety-digest";
-const tamperedCheckpoints = JSON.parse(JSON.stringify(checkpointArtifacts));
-tamperedCheckpoints[5].manifest_snapshot.current_phase = "tampered";
+function buildRehashedCheckpointTamper(mutator) {
+  const checkpoints = JSON.parse(JSON.stringify(checkpointArtifacts));
+  const manifest = JSON.parse(JSON.stringify(digestManifest));
+  mutator(checkpoints);
+  rehashCheckpointChainForProbe(checkpoints, manifest);
+  return { checkpoints, manifest };
+}
+const checkpointBindingTampers = [
+  buildRehashedCheckpointTamper((checkpoints) => {
+    checkpoints[5].manifest_snapshot.current_phase = "tampered";
+  }),
+  buildRehashedCheckpointTamper((checkpoints) => {
+    checkpoints[2].run_id = "other-run";
+  }),
+  buildRehashedCheckpointTamper((checkpoints) => {
+    checkpoints[3].manifest_snapshot.task_id = "other-task";
+  }),
+  buildRehashedCheckpointTamper((checkpoints) => {
+    checkpoints[4].manifest_snapshot.schema = "other_manifest.v1";
+  }),
+  buildRehashedCheckpointTamper((checkpoints) => {
+    checkpoints[6].manifest_snapshot.checkpoint_hashes = {};
+  }),
+];
 const reorderedCheckpoints = JSON.parse(JSON.stringify(checkpointArtifacts));
 [reorderedCheckpoints[4], reorderedCheckpoints[5]] = [reorderedCheckpoints[5], reorderedCheckpoints[4]];
 record(
@@ -1270,10 +2022,12 @@ record(
 );
 record(
   "protocol_checkpoint_chain_tamper_detected",
-  !verifyProtocolCheckpointChain(tamperedCheckpoints, digestManifest) &&
+  checkpointBindingTampers.every(
+    ({ checkpoints, manifest }) => !verifyProtocolCheckpointChain(checkpoints, manifest),
+  ) &&
     !verifyProtocolCheckpointChain(reorderedCheckpoints, digestManifest) &&
     !verifyProtocolCheckpointChain(checkpointArtifacts.slice(0, -1), digestManifest),
-  "tampered, reordered, or incomplete checkpoint chain was accepted",
+  "rehashed run/task/schema/phase/snapshot tamper, reordering, or incomplete chain was accepted",
 );
 record(
   "manifest_final_digest_binds_safety",
@@ -1335,7 +2089,9 @@ if (packageMode) {
     "docs/compatibility.md",
     "docs/naming-risk.md",
     "docs/release-acceptance-v1.0.0.md",
+    "docs/release-acceptance-v1.0.1.md",
     "docs/releases/v1.0.0.md",
+    "docs/releases/v1.0.1.md",
     "integrations/framecore-workspace.md",
     "manifest/package-manifest.json",
     "manifest/assets.json",
@@ -1355,23 +2111,28 @@ if (packageMode) {
   const packageManifest = parseJson(join(workspaceRoot, "manifest/package-manifest.json"));
   const assetManifest = parseJson(join(workspaceRoot, "manifest/assets.json"));
 
-  record("readme_install", /^## Install$/m.test(readme), "README install section missing");
-  record("readme_update", /^## Update$/m.test(readme), "README update section missing");
+  record(
+    "readme_install_update",
+    /^## Install And Update$/m.test(readme) &&
+      readme.includes("node scripts/install.mjs --scope project") &&
+      readme.includes("node scripts/install.mjs --scope user"),
+    "README install/update section or commands missing",
+  );
   record("readme_restart", /restart Codex/i.test(readme), "README restart guidance missing");
   record("readme_positive_trigger", readme.includes("$naruto Review this architecture"), "positive trigger missing");
   record("readme_negative_trigger", readme.includes("$naruto: Review this architecture"), "negative trigger missing");
-  record("readme_no_generic_fallback", readme.includes("cannot be replaced by `default`, `worker`, or"), "no-fallback note missing");
+  record("readme_no_generic_fallback", readme.includes("cannot be replaced by generic agents"), "no-fallback note missing");
   record("readme_validation", readme.includes("npm test"), "single validation command missing");
-  record("readme_package_version", readme.includes(`Standalone package version: \`${packageJson?.version}\``), "README package version mismatch");
-  record("readme_loop_contract", readme.includes("`loop_control_fit`") && readme.includes("`max_iterations: 1`"), "bounded loop contract missing");
-  record("readme_integrity_contract", readme.includes("`protocol_run_manifest.v1`") && /opaque\s+thread-handle hashes/.test(readme) && readme.includes("experience-transfer"), "phase-integrity contract missing");
-  record("readme_epistemic_contract", readme.includes("independence key") && readme.includes("anti-groupthink") && readme.includes("role-blind"), "evidence or QA contract missing");
-  record("readme_supervision_contract", readme.includes("`training_guidance_packet.v1`") && readme.includes("`safety_control_packet.v1`") && readme.includes("Hokage") && readme.includes("Kakashi") && readme.includes("Yamato"), "public parent or supervision contract missing");
-  record("readme_training_instance_contract", readme.includes("`actor_identity_id: naruto_uzumaki`") && readme.includes("`method_matrix.v1`") && readme.includes("`naruto_training_instance_envelope.v1`"), "README shared-identity or method-assignment contract missing");
+  record("readme_package_version", readme.includes("| Package contract | `" + packageJson?.version + "`"), "README package version mismatch");
+  record("readme_loop_contract", readme.includes("one reveal/revision cycle only"), "bounded loop contract missing");
+  record("readme_integrity_contract", readme.includes("`protocol_run_manifest.v1`") && readme.includes("same-target follow-up") && readme.includes("experience-transfer"), "phase-integrity or host receipt contract missing");
+  record("readme_epistemic_contract", readme.includes("independence key") && readme.includes("quick surrender") && readme.includes("role-blind independent final QA"), "evidence or QA contract missing");
+  record("readme_supervision_contract", readme.includes("`training_guidance_packet.v1`") && readme.includes("Yamato produces a final") && readme.includes("Hokage synthesizes"), "public parent or supervision contract missing");
+  record("readme_training_instance_contract", readme.includes("`actor_identity_id: naruto_uzumaki`") && readme.includes("`method_matrix.v1`") && readme.includes("training envelopes bind each runtime"), "README shared-identity or method-assignment contract missing");
   record("readme_tsunade_parent", readme.includes("Tsunade Senju, Fifth Hokage") && readme.includes("not a seventh child profile"), "Tsunade must be the parent-process public identity, not a bundled profile");
-  record("readme_final_qa_role", readme.includes("independent `final_qa` reviewer") && readme.includes("not bundled"), "README must disclose the conditional host-provided final QA role");
-  record("readme_fan_art_scope", /unofficial fan art/i.test(readme) && /excluded from the MIT/i.test(readme), "README fan-art rights scope missing");
-  record("notice_no_affiliation", /not affiliated[\s\S]+not endorsed/i.test(notice), "no-affiliation notice missing");
+  record("readme_final_qa_role", readme.includes("host-provided, role-blind `final_qa` reviewer") && readme.includes("CONDITIONAL, NOT BUNDLED"), "README must disclose the conditional host-provided final QA role");
+  record("readme_fan_art_scope", /unofficial fan art/i.test(readme) && /expressly excluded from that license/i.test(readme), "README fan-art rights scope missing");
+  record("notice_no_affiliation", /not affiliated with, endorsed by, sponsored by, or approved by/i.test(notice), "no-affiliation notice missing");
   record(
     "package_manifest_layout",
     packageManifest?.schema === "codex_deliberation_package.v3" &&
@@ -1427,14 +2188,14 @@ if (packageMode) {
   );
   record(
     "package_manifest_version",
-    packageJson?.version === "1.0.0" &&
+    packageJson?.version === "1.0.1" &&
       packageManifest?.package_version === packageJson?.version,
-    "package and manifest must use the exact 1.0.0 version",
+    "package and manifest must use the exact 1.0.1 version",
   );
   record(
     "package_manifest_release",
     packageManifest?.release?.status === "stable" &&
-      packageManifest?.release?.contract_version === "1.0.0" &&
+      packageManifest?.release?.contract_version === packageJson?.version &&
       packageManifest?.release?.node_minimum_major === 22 &&
       JSON.stringify(packageManifest?.release?.ci_node_majors) === JSON.stringify([22, 24]) &&
       packageManifest?.release?.runtime_capability_policy === "fail_closed",
@@ -1462,8 +2223,9 @@ if (packageMode) {
       assetManifest?.assets?.[0]?.sha256 === "fdd77292c3778aee20d0a4bc608b4b5567223fd44de6e443ebff82228ae00c46" &&
       assetManifest?.assets?.[0]?.sha256 ===
         sha256(readFileSync(join(workspaceRoot, "assets/naruto-codex-deliberation-council-banner.png"))) &&
-      assetManifest?.assets?.[0]?.qa?.status === "accepted" &&
-      assetManifest?.assets?.[0]?.distribution?.delivery_status === "local_repository_only" &&
+      assetManifest?.assets?.[0]?.qa?.status === "accepted_with_known_deviation" &&
+      assetManifest?.assets?.[0]?.qa?.exact_spaced_title_compliance === false &&
+      assetManifest?.assets?.[0]?.distribution?.delivery_status === "public_github_repository" &&
       assetManifest?.assets?.[0]?.distribution?.rights_clearance === "not_cleared",
     "asset identity, digest, QA, delivery, or rights traceability mismatch",
   );

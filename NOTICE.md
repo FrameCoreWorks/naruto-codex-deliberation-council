@@ -1,40 +1,53 @@
 # Notice
 
-This is an independent, unofficial Codex skill package. It is not affiliated
-with Masashi Kishimoto, Shueisha, TV Tokyo, Studio Pierrot, VIZ Media, OpenAI,
-or any other rights holder. It is not endorsed by, sponsored by, or approved
-by any of those parties.
+Naruto Codex Deliberation Council is an independent, unofficial Codex skill
+package published at
+[github.com/FrameCoreWorks/naruto-codex-deliberation-council](https://github.com/FrameCoreWorks/naruto-codex-deliberation-council).
+It is not affiliated with, endorsed by, sponsored by, or approved by Masashi
+Kishimoto, Shueisha, TV Tokyo, Studio Pierrot, VIZ Media, OpenAI, or any other
+rights holder.
 
-The exact `$naruto` compatibility trigger, Naruto-inspired profile labels, and
-the public Hokage role are mnemonic names for deliberation methods and process
-responsibilities. Tsunade Senju is the public identity of the Hokage role
-assumed by the parent Codex process. She is not a bundled child profile or an
-additional solver. `Naruto Clone: Empirical Verifier` identifies a
-hypothesis-led empirical method, not a separate character identity.
+The exact `$naruto` compatibility trigger, franchise-derived profile labels,
+and the public Hokage role are mnemonic names for deliberation methods and
+process responsibilities. Tsunade Senju is the public identity of the parent
+Hokage role. She is not a bundled child profile or an additional solver.
+`Naruto Clone: Empirical Verifier` identifies a hypothesis-led empirical
+method, not a separate character identity.
 
-## Fan-art asset
+## Fan-art Asset
 
 [`assets/naruto-codex-deliberation-council-banner.png`](assets/naruto-codex-deliberation-council-banner.png)
-is unofficial fan art created for this repository. It depicts Naruto, Kakashi,
-Yamato, and Tsunade in a black-and-white, hand-drawn manga-sketch composition.
-The four characters pose as a group; the image does not depict the protocol's
-parallel tasks literally. It is not an official franchise asset and does not
-reproduce an official logo, manga panel, or manga dialogue.
+is unofficial fan art created for this repository. It intentionally depicts
+recognizable Naruto, Kakashi, Yamato, and Tsunade in a black-and-white,
+hand-drawn manga-sketch group portrait. Their hairstyles, clothing, headbands,
+facial markings, character names, and the Hokage presentation are recognizable
+franchise-derived elements. The image does not depict four protocol tasks
+literally and does not reproduce an official logo, manga panel, manga scan, or
+manga dialogue.
 
-The banner is excluded from the MIT license. The repository does not grant a
-license to use, reproduce, modify, distribute, or commercialize the depicted
-characters, names, marks, or any other third-party material. Rights in those
-elements remain with their respective owners.
+The selected image has a known title-spacing deviation: `CODEX` and
+`DELIBERATION` appear tightly joined. The asset manifest records it as
+`accepted_with_known_deviation` because the exact composition was explicitly
+selected; that status is a repository QA decision, not a rights-clearance or
+brand-compliance claim.
+
+## License Scope
+
+The MIT License applies to this repository's original code, documentation,
+templates, and validation scripts. The banner is expressly excluded from the
+MIT License. The repository does not grant permission to use, reproduce,
+modify, distribute, or commercialize third-party characters, names, marks, or
+protected expression. Any rights in those elements remain with their
+respective owners.
 
 No copyright, trademark, publicity-rights, or other rights clearance has been
-performed or obtained for the banner or the franchise references. Describing
-the asset as unofficial fan art, identifying it as newly created, or including
-a no-affiliation disclaimer does not create permission or grant any rights.
+performed or obtained for the banner or franchise references. Describing the
+asset as unofficial fan art, creating it independently, publishing source
+metadata, or including a no-affiliation disclaimer does not create permission
+or grant rights. Public availability of this repository does not change that
+boundary.
 
-The MIT license applies only to this repository's original code,
-documentation, templates, and validation scripts, excluding the banner and all
-third-party names, marks, characters, and protected expression.
-
-Review [`docs/naming-risk.md`](docs/naming-risk.md) before public distribution.
-Technical provenance and QA metadata for the banner is recorded in
-[`manifest/assets.json`](manifest/assets.json).
+This notice is a practical scope statement, not legal advice. Review
+[`docs/naming-risk.md`](docs/naming-risk.md) before redistribution. Technical
+provenance, the file digest, QA status, and publication metadata are recorded
+in [`manifest/assets.json`](manifest/assets.json).

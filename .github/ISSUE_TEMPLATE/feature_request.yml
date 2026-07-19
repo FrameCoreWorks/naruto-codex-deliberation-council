@@ -1,0 +1,52 @@
+name: Feature request
+description: Propose a focused improvement to the package or its documented workflow.
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe the user need or limitation. Avoid proposing a solution before defining the problem.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed improvement
+      description: Explain the smallest useful change and its intended behavior.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Note workarounds or simpler options that were considered.
+
+  - type: textarea
+    id: contract_impact
+    attributes:
+      label: Contract and compatibility impact
+      description: Identify any effect on the exact `$naruto` trigger, profiles, read-only boundaries, installer, schemas, fixtures, or supported hosts.
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List observable conditions that would show the improvement works.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission checks
+      options:
+        - label: I searched existing issues and documentation for this request.
+          required: true
+        - label: The proposal does not require weakening read-only, provider, upload, or security boundaries.
+          required: true

@@ -23,7 +23,7 @@ protocol_run_manifest:
     blind_commits_recorded: pass | partial | fail | not_reached
     commit_barrier_closed: pass | fail | not_reached
     reveal_byte_identical: pass | fail | not_reached
-    same_thread_revisions_verified: pass | partial | fail | not_reached
+    same_target_followup_receipts_verified: pass | partial | fail | not_reached
     moderator_reconcile_complete: pass | fail | not_reached
     safety_report_complete: pass | fail | not_reached
     synthesis_provenance_checked: pass | fail | not_reached
@@ -33,18 +33,19 @@ protocol_run_manifest:
       actor_identity_id: naruto_uzumaki
       method_profile_id: ""
       training_instance_envelope_sha256: ""
-      original_thread_handle_sha256: ""
-      revision_thread_handle_sha256: ""
-      same_thread_verified: true | false | unverifiable
+      spawn_target_mapping_retained_by_parent: true | false | unverifiable
+      same_target_followup_receipt_status: pass | fail | unverifiable
       commit_status: valid | invalid | timed_out
       revision_status: valid | invalid | unavailable
       no_blind_phase_supervisor_contact: true | false | unverifiable
   moderator:
-    thread_handle_sha256: ""
+    spawn_target_mapping_retained_by_parent: true | false | unverifiable
+    followup_receipt_status: pass | fail | not_reached
     reveal_packet_sha256: ""
     moderator_report_sha256: ""
   safety_supervisor:
-    thread_handle_sha256: ""
+    spawn_target_mapping_retained_by_parent: true | false | unverifiable
+    followup_receipt_status: pass | fail | not_reached
     preflight_status: pass | hold | blocked
     hold_count: 0
     report_complete: false
@@ -66,11 +67,12 @@ protocol_run_manifest:
   manifest_sha256: ""
 ```
 
-This is a local protocol sidecar, not part of `source_packet_sha256`. Use only
-opaque SHA-256 runtime-handle proofs, never raw thread IDs, timestamps, secrets,
-private reasoning, or provider data. Equal original and revision handle hashes
-are required for same-thread learning. Any unverifiable critical phase lowers
-the result ceiling or blocks according to the protocol. Preserve one
+This is a parent-owned logical protocol sidecar, not part of
+`source_packet_sha256`. Retain spawn-target mappings and successful host-tool
+follow-up receipts in parent orchestration state; never ask a child to invent,
+echo, or hash an opaque runtime handle. A successful receipt for the original
+target is required for same-thread learning. Any unverifiable critical phase
+lowers the result ceiling or blocks according to the protocol. Preserve one
 `protocol_checkpoint.v1` artifact from `templates/protocol-checkpoint.md` after
 every phase. Each checkpoint snapshot omits the entire `checkpoint_hashes`
 object and `manifest_sha256`, and each checkpoint links to its predecessor.

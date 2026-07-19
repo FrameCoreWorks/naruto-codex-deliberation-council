@@ -23,9 +23,7 @@ revised_candidate_solution:
   changed_claims: []
   unchanged_claims: []
   experience_transfer:
-    same_thread_attestation: true
-    original_thread_handle_sha256: ""
-    revision_thread_handle_sha256: ""
+    same_thread_revision_attestation: true
     reveal_packet_sha256: ""
     claim_revision_map:
       - claim_id: ""
@@ -54,7 +52,10 @@ revised_candidate_solution:
 
 Revise in the original training-instance thread with the same actor identity
 and method assignment. Return the complete solution again,
-not only a diff. The two opaque thread-handle hashes must match; if the runtime
-cannot provide this proof, stop as blocked. Record only concise claim changes
-and evidence deltas, never private reasoning. This is the only Naruto optimizer
-repair iteration.
+not only a diff. The child attestation is semantic output, not provenance.
+Hokage must separately retain the original spawn-target mapping and a successful
+host-tool delivery receipt proving that the reveal follow-up was delivered to
+that same target. A missing or unsuccessful receipt blocks the run; never ask
+the child to invent, echo, or hash an opaque runtime handle. Record only concise
+claim changes and evidence deltas, never private reasoning. This is the only
+Naruto optimizer repair iteration.

@@ -1,6 +1,6 @@
 {
   "name": "naruto-codex-deliberation-council",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "A request-only, evidence-weighted shadow-clone deliberation skill for Codex.",
   "type": "module",

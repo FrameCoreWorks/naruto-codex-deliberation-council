@@ -23,6 +23,41 @@ Reject aliases and near matches, including `naruto`, `$Naruto`, `$NARUTO`,
 `$naruto:`, `use naruto`, and a later mention of `$naruto` in prose. Never
 activate from prior turns, Memory Cache, a fixture, or an agent suggestion.
 
+## Live Runtime Preflight
+
+Before building protocol packets or spawning any Naruto child, Hokage verifies
+the current host state. All checks are mandatory and fail closed:
+
+1. The project is trusted and its project-scoped `.codex/agents/` layer is
+   loaded.
+2. The current spawn-agent catalog exposes all six exact runtime IDs:
+   `kakashi_hatake`, `yamato`, `naruto_clone_integrator`,
+   `naruto_clone_challenger`, `naruto_clone_strategist`, and
+   `naruto_clone_verifier`. A generic or renamed agent is not a substitute.
+3. The host supports explicit `fork_turns: "none"`, returns a target identifier
+   for every spawn, supports a follow-up to that exact target, returns a
+   successful delivery receipt, and can wait for the resulting turn. Only the
+   successful host-tool result is a receipt; child-authored acknowledgement is
+   not provenance.
+4. Capacity exists for six simultaneously open child threads. Finish or close
+   unrelated children before continuing.
+5. The parent turn's live sandbox mode is `read-only` with approval policy
+   `never`, each of the six profiles declares `sandbox_mode = "read-only"` and
+   `approval_policy = "never"`, and any host-provided effective-child preview
+   reports the same pair. This combination makes an attempted escalation fail
+   closed instead of opening an approval path. Profile values are configuration
+   defaults, not proof of enforcement; live parent overrides may otherwise win.
+
+If project trust, runtime discovery, capacity, follow-up delivery, effective
+read-only enforcement, or fail-closed approval policy is absent or
+unverifiable, return `blocked` with the failed preflight item. Do not change
+permissions, trust the project, or fall
+back to built-in agents automatically. Record whether a host-provided,
+independent `final_qa` reviewer can be opened after the six Naruto threads
+close. It is a conditional external dependency, not a seventh bundled profile
+or part of the six-ID preflight; a consequential result blocks if it is needed
+and unavailable.
+
 ## Ownership And Boundaries
 
 - Hokage remains the only workflow orchestrator and final synthesizer.
@@ -47,9 +82,12 @@ activate from prior turns, Memory Cache, a fixture, or an agent suggestion.
   the result affects implementation, workflow governance, external execution,
   or another consequential decision. This reviewer is not bundled with the six
   Naruto profiles; if required and unavailable, the run blocks.
-- Training instances are read-only and cannot spawn children, edit files, run
-  providers, upload, push, install, delete, write Memory Cache, or execute the
-  proposed solution.
+- All six Naruto child profiles request a read-only sandbox with approval policy
+  `never` and are behaviorally non-mutating. Host enforcement comes from the
+  effective runtime permission and approval policy, not from prompt text.
+  Training instances cannot spawn children, edit files, run providers, upload,
+  push, install, delete, write Memory Cache, or execute the proposed solution
+  even if a tool is visible.
 - `$naruto` grants no provider activation, cost approval, upload approval,
   destructive-action approval, or other permission. Later execution returns
   to the normal route and re-checks every current-turn gate.
@@ -67,6 +105,11 @@ into one synthesis. Identity drift, duplicate methods, character-persona
 substitution, tailored coaching, splitting the problem into four subtasks,
 pre-commit instance communication, or fresh instances after reveal invalidate
 the run.
+
+`Method-diverse` describes the four fixed instruction assignments. It is not
+evidence that a particular run produced nonredundant reasoning or a better
+answer than a single-agent baseline; do not make that claim from method labels
+or candidate count.
 
 ## Loop Protocol Integration
 
@@ -128,15 +171,28 @@ separate from the source packet hash so method diversity cannot alter evidence.
 If a required evidence gap remains, expose the same gap to all instances.
 Do not let one instance privately gain a different source set.
 Create `protocol_run_manifest.v1` from
-`templates/protocol-run-manifest.md` as a local runtime sidecar. Keep it outside
-the common packet hash and store only hashes of opaque runtime handles. Preserve
-one immutable `protocol_checkpoint.v1` artifact after every completed phase and
-store its digest in the manifest.
+`templates/protocol-run-manifest.md` as a parent-owned logical sidecar. Hokage
+constructs, canonicalizes, hashes, and retains every protocol packet, manifest,
+checkpoint, child output, spawn target, and host delivery receipt in parent
+orchestration state. These are logical message artifacts, not child-authored or
+filesystem-persisted files. Keep runtime targets and delivery receipts outside
+the common packet hash and never ask a child to invent or echo them. Preserve
+one immutable `protocol_checkpoint.v1` value after every completed phase and
+store its digest in the manifest. If the parent cannot retain canonical bytes,
+target mappings, receipts, and checkpoints through final classification, block
+the run rather than claiming provenance.
+
+This parent-owned sidecar is an in-context logical record, not an executable
+host adapter, durable audit log, or tamper-evident enforcement mechanism. It may
+bind unmodified host-tool targets and receipts, but it cannot turn a
+child-authored ID, hash, attestation, or claimed phase transition into a host
+fact.
 
 ### 3. Establish Common Training Control
 
-Start `kakashi_hatake` with the final source packet, the method matrix, and no
-instance output.
+Start `kakashi_hatake` with `fork_turns: "none"`, the final source packet, the
+method matrix, and no instance output. Retain the returned target identifier and
+spawn receipt only in parent orchestration state.
 Kakashi creates `training_guidance_packet.v1` from
 `templates/training-guidance.md`. It may clarify the objective, acceptance
 criteria, evidence discipline, full-solution requirement, and stop conditions.
@@ -148,9 +204,12 @@ Create four `naruto_training_instance_envelope.v1` artifacts from
 source hash, method-matrix hash, and guidance hash. Only the instance ID,
 assigned fixed method ID, and resulting envelope hash may differ.
 
-Start `yamato` with the full final `source_evidence_packet`, its
+Start `yamato` with `fork_turns: "none"`, the full final
+`source_evidence_packet`, its
 `source_packet_sha256`, the full method matrix, all four envelopes, and Kakashi
-guidance. Hashes alone are insufficient for this review. Yamato verifies the
+guidance. Retain the returned target identifier and spawn receipt only in
+parent orchestration state. Hashes alone are insufficient for this review.
+Yamato verifies the
 source and matrix bytes, shared identity, unique instance and method IDs, fixed
 assignments, and the envelope difference allowlist, then creates
 `safety_control_packet.v1` from `templates/safety-control.md`. The guidance must
@@ -169,7 +228,8 @@ state only to Hokage.
 ### 4. Run Four Blind Shadow-Clone Paths
 
 Open the four dedicated runtime agents with one shared actor identity and the
-same source, method-matrix, guidance, and safety packet hashes:
+same source, method-matrix, guidance, and safety packet hashes. Use the exact
+runtime ID as `agent_type` and set `fork_turns: "none"` on every spawn:
 
 | Runtime instance | Fixed method lens |
 |---|---|
@@ -177,6 +237,13 @@ same source, method-matrix, guidance, and safety packet hashes:
 | `naruto_clone_challenger` | Adversarial and risk-first: attack assumptions, failure modes, and hidden costs. |
 | `naruto_clone_strategist` | Systems strategy: map dependencies, simplify the route, and protect maintainability. |
 | `naruto_clone_verifier` | Empirical verification: build a complete hypothesis-led route with discriminating tests, observables, decision thresholds, and rollback conditions. |
+
+Issue all four spawn calls and retain all four returned target identifiers
+before the first wait or result-processing call. This spawn-before-wait barrier
+prevents completion order from changing the blind fan-out. If any spawn fails,
+close the already-open Naruto children, return `blocked`, and do not reveal a
+partial panel. Never use inherited conversation turns as a substitute for the
+explicit common packets.
 
 These are four training instances of the same Naruto identity, not four
 characters. Each must return a full `candidate_solution`, not a subtask,
@@ -216,8 +283,10 @@ instance with a generic worker.
 
 ### 6. Moderate One Reveal
 
-After the barrier, provide the four committed instance artifacts to the same
-`kakashi_hatake` thread. Kakashi creates one `reveal_transfer_packet`
+After the barrier, send the four committed instance artifacts by host follow-up
+to the original `kakashi_hatake` target and require a successful same-target
+delivery receipt before waiting for its next result. Kakashi creates one
+`reveal_transfer_packet`
 containing:
 
 - concise anonymized solution references
@@ -236,8 +305,11 @@ Do not include raw chain-of-thought or a conversational debate transcript.
 
 ### 7. Revise In The Same Four Threads
 
-Send the identical reveal packet back to the same four instance threads. Each
-instance returns one complete revised solution and records:
+Send the identical reveal packet by host follow-up to each original instance
+target. Use the exact target identifier returned by its spawn, require a
+successful delivery receipt for every follow-up, and only then wait for the
+four revision turns. Each instance returns one complete revised solution and
+records:
 
 - adopted peer findings
 - rejected peer findings with evidence
@@ -247,12 +319,12 @@ instance returns one complete revised solution and records:
 - an `experience_transfer` claim map showing what changed, why, and which peer
   claims or evidence were adopted or rejected
 
-If the runtime cannot re-contact the same open instance threads, stop as
-`blocked`. Do not respawn replacements and pretend learning occurred.
-Record a SHA-256 hash of each instance thread's opaque runtime handle at first
-commit and revision. The two hashes must match; missing, unverifiable, or
-unequal proofs block the run. The actor identity and method assignment must also
-remain unchanged. Never record the raw handle.
+If the runtime cannot deliver a follow-up to every original open target, or a
+delivery receipt is missing or unsuccessful, stop as `blocked`. Do not respawn
+replacements and pretend learning occurred. The spawn target mapping plus the
+host's successful same-target follow-up receipt is the provenance proof. Do not
+invent, expose to children, or hash a model-visible opaque runtime handle. The
+actor identity and method assignment must also remain unchanged.
 
 Yamato receives phase metadata and protected-boundary attestations only. Yamato
 may return `hold` or `blocked` to Hokage for a concrete contract breach, but may
@@ -260,12 +332,14 @@ not send solution guidance into instance threads.
 
 ### 8. Reconcile And Synthesize
 
-Send the four revisions to the same Kakashi thread for the final
-claim/evidence/dispute matrix. Record that reconciliation state and freeze the
-manifest `reconcile` checkpoint. Then send the final boundary and
-guidance-integrity metadata plus that checkpoint to the same Yamato thread for
-`safety_report.v1`. Close all six Naruto agents before opening the host-provided
-independent `final_qa` reviewer when QA is required.
+Send the four revisions by acknowledged host follow-up to the original Kakashi
+target for the final claim/evidence/dispute matrix. Record that reconciliation
+state and freeze the manifest `reconcile` checkpoint. Then send the final
+boundary and guidance-integrity metadata plus that checkpoint by acknowledged
+host follow-up to the original Yamato target for `safety_report.v1`. Close all
+six Naruto agents before opening the host-provided independent `final_qa`
+reviewer when QA is required. Do not create a local `final_qa` profile merely to
+satisfy this dependency.
 
 Every phase preserves `protocol_checkpoint.v1` from
 `templates/protocol-checkpoint.md`, including its immutable manifest snapshot
@@ -280,8 +354,8 @@ field into itself, reconstruct an old checkpoint from later state, or change
 semantic output after QA without running QA again.
 
 Kakashi verifies shared actor identity, unique fixed methods, the
-experience-transfer ledgers, reveal byte identity, same-thread proofs, evidence
-independence, and bounded anti-groupthink checks.
+experience-transfer ledgers, reveal byte identity, acknowledged same-target
+follow-up receipts, evidence independence, and bounded anti-groupthink checks.
 Agreement derived from one shared source remains one evidence lineage. Genuine
 evidence-backed minority objections are preserved, while unsupported dissent
 is rejected rather than rewarded.
@@ -324,7 +398,7 @@ Use exactly one result:
 - `blocked`: fewer than three valid instances, Kakashi or Yamato unavailable,
   shared guidance or safety hashes differ, instance-specific coaching occurs,
   shared identity or fixed method assignments drift,
-  same-thread revision provenance is unavailable, reveal bytes differ,
+  successful same-target follow-up provenance is unavailable, reveal bytes differ,
   consequential final QA is missing or non-reproducible, required evidence is
   inaccessible, or a protected gate prevents the next step.
 
@@ -360,7 +434,9 @@ The documented default supports six open child-agent threads. This protocol
 uses all six at peak: four Naruto shadow-clone instances, Kakashi, and Yamato.
 Finish and close any optional packet-building or source-verification roles
 before training control; close instances and both supervisors before the
-host-provided final QA reviewer. Never nest training-instance spawning.
+host-provided final QA reviewer. Spawn each Naruto child with
+`fork_turns: "none"`; spawn all four training instances before waiting for any
+of them. Never nest training-instance spawning.
 
 ## Load On Demand
 
@@ -384,7 +460,8 @@ The exact trigger is proven, the common Naruto identity, four fixed methods,
 Kakashi guidance, and Yamato safety control are byte-identical where required
 and non-solution, all required packet hashes and barriers are valid, four
 complete methods were independently attempted, one
-same-thread revision cycle completed, the acceptance matrix and regression
+same-target follow-up receipt exists for every revision and one same-thread
+revision cycle completed, the acceptance matrix and regression
 check are evidenced, the experience-transfer ledger and phase-integrity
 manifest are valid, evidence independence and minority objections were
 reconciled, Hokage synthesis is traceable, Hokage issued one result and one Loop

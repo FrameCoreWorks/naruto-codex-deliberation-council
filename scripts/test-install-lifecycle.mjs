@@ -3,7 +3,9 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
+  copyFileSync,
   existsSync,
+  linkSync,
   lstatSync,
   mkdirSync,
   mkdtempSync,
@@ -22,6 +24,9 @@ const repoRoot = resolve(scriptDir, "..");
 const installerPath = join(repoRoot, "scripts/install.mjs");
 const packageManifest = JSON.parse(
   readFileSync(join(repoRoot, "manifest/package-manifest.json"), "utf8"),
+);
+const historicalMigrationInventory = JSON.parse(
+  readFileSync(join(scriptDir, "fixtures/install-0.4.0-inventory.json"), "utf8"),
 );
 const sourceSkillRoot = join(repoRoot, ".agents/skills/naruto");
 const sourceProfileRoot = join(repoRoot, ".codex/agents");
@@ -74,17 +79,15 @@ function snapshot(directory, base = "") {
   return Object.fromEntries(Object.entries(entries).sort(([left], [right]) => left.localeCompare(right)));
 }
 
-function parseLastJson(stdout, label) {
+function parseJsonOutput(stdout, label) {
   const output = (stdout ?? "").trim();
-  for (let start = output.lastIndexOf("{"); start >= 0; start = output.lastIndexOf("{", start - 1)) {
-    try {
-      const parsed = JSON.parse(output.slice(start));
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed;
-    } catch {
-      // Continue until the outermost final JSON object is found.
-    }
+  try {
+    const parsed = JSON.parse(output);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed;
+  } catch {
+    // Report the complete malformed output below.
   }
-  throw new Error(`${label} did not emit a final JSON object.\nstdout:\n${stdout ?? ""}`);
+  throw new Error(`${label} did not emit exactly one JSON object.\nstdout:\n${stdout ?? ""}`);
 }
 
 function runNode(script, args, cwd = repoRoot, env = process.env) {
@@ -101,16 +104,21 @@ function runNode(script, args, cwd = repoRoot, env = process.env) {
 function readResult(result, label, expectedExitCode) {
   let report;
   try {
-    report = parseLastJson(result.stdout, label);
+    report = parseJsonOutput(result.stdout, label);
   } catch (error) {
     throw new Error(
       `${error.message}\nstderr:\n${result.stderr ?? ""}\nexit status: ${result.status}`,
     );
   }
 
+  if ((result.stderr ?? "").trim() !== "") {
+    throw new Error(`${label} emitted unexpected stderr:\n${result.stderr}`);
+  }
+
   if (result.status !== expectedExitCode) {
     const integrityReason = new Set([
       "manifest_integrity_failed",
+      "source_inventory_failed",
       "source_preflight_failed",
     ]).has(report.reason);
     const hint = integrityReason
@@ -138,7 +146,7 @@ function runUserInstaller(home, codexHome, extraArgs = [], expectedExitCode = 0,
       installerPath,
       ["--scope", "user", ...extraArgs],
       repoRoot,
-      { ...process.env, HOME: home, CODEX_HOME: codexHome },
+      { ...process.env, HOME: home, USERPROFILE: home, CODEX_HOME: codexHome },
     ),
     label,
     expectedExitCode,
@@ -197,9 +205,149 @@ try {
   const projectTarget = join(testRoot, "project");
   mkdirSync(projectTarget, { recursive: true });
 
+  const beforeInvalidArguments = snapshot(projectTarget);
+  const unknownArgument = runInstaller(projectTarget, ["--dryrun"], 2, "unknown argument");
+  assert(unknownArgument.reason === "invalid_arguments", "Unknown argument was not rejected by the CLI parser");
+  assert(
+    unknownArgument.errors?.some((error) => error.includes("unknown argument: --dryrun")),
+    "Unknown argument report did not identify --dryrun",
+  );
+  const duplicateArgument = runInstaller(
+    projectTarget,
+    ["--force", "--force"],
+    2,
+    "duplicate argument",
+  );
+  assert(duplicateArgument.reason === "invalid_arguments", "Duplicate argument was not rejected");
+  assert(
+    duplicateArgument.errors?.some((error) => error.includes("duplicate argument: --force")),
+    "Duplicate argument report did not identify --force",
+  );
+  const missingValueArgument = readResult(
+    runNode(installerPath, ["--scope", "project", "--target"]),
+    "missing argument value",
+    2,
+  );
+  assert(missingValueArgument.reason === "invalid_arguments", "Missing argument value was not rejected");
+  assert(
+    missingValueArgument.errors?.some((error) => error.includes("missing value for --target")),
+    "Missing-value report did not identify --target",
+  );
+  const invalidUserHome = join(testRoot, "invalid-user-home");
+  const invalidUserRuntimeRoot = join(testRoot, "invalid-user-runtime-root");
+  mkdirSync(invalidUserHome, { recursive: true });
+  mkdirSync(invalidUserRuntimeRoot, { recursive: true });
+  const invalidUserTarget = runUserInstaller(
+    invalidUserHome,
+    invalidUserRuntimeRoot,
+    ["--target", projectTarget],
+    2,
+    "user scope with target",
+  );
+  assert(invalidUserTarget.reason === "invalid_arguments", "User-scope --target was not rejected");
+  assert(
+    invalidUserTarget.errors?.some((error) => error.includes("--target is not allowed for user scope")),
+    "Invalid user-scope report did not identify --target",
+  );
+  assert(
+    JSON.stringify(snapshot(projectTarget)) === JSON.stringify(beforeInvalidArguments) &&
+      Object.keys(snapshot(invalidUserHome)).length === 0 &&
+      Object.keys(snapshot(invalidUserRuntimeRoot)).length === 0,
+    "Invalid arguments caused destination writes",
+  );
+  cases.push("strict-cli-rejects-invalid-arguments-before-write");
+
+  const unexpectedTarget = join(testRoot, "unexpected-file-project");
+  const unexpectedPath = join(unexpectedTarget, ".agents/skills/naruto/unexpected.txt");
+  mkdirSync(dirname(unexpectedPath), { recursive: true });
+  writeFileSync(unexpectedPath, "not package-owned\n", "utf8");
+  const beforeUnexpectedInstall = snapshot(unexpectedTarget);
+  const unexpectedReport = runInstaller(unexpectedTarget, [], 2, "unexpected skill file");
+  assertReportStatus(unexpectedReport, "blocked", "unexpected skill file");
+  assert(
+    unexpectedReport.conflicts?.some(
+      ({ path, reason }) => resolve(path) === resolve(unexpectedPath) && reason.includes("unexpected file"),
+    ),
+    "Unexpected package-owned skill file was not reported",
+  );
+  assert(
+    JSON.stringify(snapshot(unexpectedTarget)) === JSON.stringify(beforeUnexpectedInstall),
+    "Unexpected-file conflict caused partial writes",
+  );
+  cases.push("unexpected-package-owned-skill-file-blocked");
+
+  const danglingTarget = join(testRoot, "dangling-symlink-project");
+  const danglingSink = join(testRoot, "dangling-symlink-sink");
+  const danglingPath = join(danglingTarget, ".agents/skills/naruto/SKILL.md");
+  mkdirSync(dirname(danglingPath), { recursive: true });
+  mkdirSync(danglingSink, { recursive: true });
+  const escapedPath = join(danglingSink, "escaped-SKILL.md");
+  symlinkSync(escapedPath, danglingPath, process.platform === "win32" ? "junction" : "file");
+  const beforeDanglingInstall = snapshot(danglingTarget);
+  const danglingReport = runInstaller(danglingTarget, [], 2, "dangling destination symlink");
+  assertReportStatus(danglingReport, "blocked", "dangling destination symlink");
+  assert(
+    danglingReport.conflicts?.some(({ reason }) => reason.includes("symlink")),
+    "Dangling destination symlink was not reported",
+  );
+  assert(!existsSync(escapedPath), "Installer wrote through a dangling destination symlink");
+  assert(
+    JSON.stringify(snapshot(danglingTarget)) === JSON.stringify(beforeDanglingInstall),
+    "Blocked dangling-symlink install changed the target",
+  );
+  cases.push("dangling-destination-symlink-blocked");
+
+  const nonRegularTarget = join(testRoot, "non-regular-destination-project");
+  const nonRegularPath = join(nonRegularTarget, ".agents/skills/naruto/SKILL.md");
+  mkdirSync(nonRegularPath, { recursive: true });
+  const beforeNonRegularInstall = snapshot(nonRegularTarget);
+  const nonRegularReport = runInstaller(nonRegularTarget, [], 2, "non-regular destination");
+  assertReportStatus(nonRegularReport, "blocked", "non-regular destination");
+  assert(
+    nonRegularReport.conflicts?.some(
+      ({ path, reason }) => resolve(path) === resolve(nonRegularPath) && reason.includes("not a regular file"),
+    ),
+    "Non-regular destination was not reported",
+  );
+  assert(
+    JSON.stringify(snapshot(nonRegularTarget)) === JSON.stringify(beforeNonRegularInstall),
+    "Blocked non-regular destination install changed the target",
+  );
+  cases.push("non-regular-destination-blocked");
+
+  const hardLinkTarget = join(testRoot, "hard-link-destination-project");
+  const hardLinkExternal = join(testRoot, "hard-link-external-SKILL.md");
+  const hardLinkDestination = join(hardLinkTarget, ".agents/skills/naruto/SKILL.md");
+  mkdirSync(dirname(hardLinkDestination), { recursive: true });
+  writeFileSync(hardLinkExternal, "external file must remain unchanged\n", "utf8");
+  linkSync(hardLinkExternal, hardLinkDestination);
+  const externalHashBefore = sha256(hardLinkExternal);
+  const beforeHardLinkInstall = snapshot(hardLinkTarget);
+  const hardLinkReport = runInstaller(
+    hardLinkTarget,
+    ["--force"],
+    2,
+    "hard-linked destination",
+  );
+  assertReportStatus(hardLinkReport, "blocked", "hard-linked destination");
+  assert(
+    hardLinkReport.conflicts?.some(
+      ({ path, reason }) =>
+        resolve(path) === resolve(hardLinkDestination) && reason.includes("hard-linked"),
+    ),
+    "Hard-linked destination was not reported",
+  );
+  assert(sha256(hardLinkExternal) === externalHashBefore, "Installer modified the external hard-link alias");
+  assert(
+    JSON.stringify(snapshot(hardLinkTarget)) === JSON.stringify(beforeHardLinkInstall),
+    "Blocked hard-link install changed the target",
+  );
+  cases.push("hard-linked-destination-blocked-even-with-force");
+
   const beforeFreshDryRun = snapshot(projectTarget);
   const freshDryRun = runInstaller(projectTarget, ["--dry-run"], 0, "fresh dry-run");
   assertReportStatus(freshDryRun, "dry-run", "fresh dry-run");
+  assert(freshDryRun.validation?.status === "not_run", "Dry-run must not execute target validation");
   assert(freshDryRun.counts?.create > 0, "Fresh dry-run must plan at least one create action");
   assert(freshDryRun.counts?.overwrite === 0, "Fresh dry-run must not plan overwrite actions");
   assert(freshDryRun.counts?.unchanged === 0, "Fresh dry-run must not report unchanged package files");
@@ -211,6 +359,11 @@ try {
 
   const freshInstall = runInstaller(projectTarget, [], 0, "fresh install");
   assertReportStatus(freshInstall, "installed", "fresh install");
+  assert(freshInstall.validation?.status === "pass", "Fresh install did not report target validation PASS");
+  assert(
+    freshInstall.validation?.source === "private_verified_snapshot",
+    "Fresh install did not execute the private verified validator snapshot",
+  );
   assert(freshInstall.counts?.create > 0, "Fresh install must create package files");
   assert(freshInstall.counts?.overwrite === 0, "Fresh install must not overwrite files");
   assertExactProjectInstall(projectTarget);
@@ -281,12 +434,96 @@ try {
   assertExactProjectInstall(projectTarget);
   cases.push("force-overwrite-restores-source");
 
+  const migrationTarget = join(testRoot, "historical-0.4-project");
+  const currentInstallPaths = [
+    ...listFiles(sourceSkillRoot).map((path) => `.agents/skills/naruto/${path}`),
+    ...packageManifest.required_profiles.map((profile) => `.codex/agents/${profile}`),
+  ].sort();
+  const historicalPaths = historicalMigrationInventory.entries.map(({ path }) => path).sort();
+  assert(
+    historicalMigrationInventory.schema === "naruto_installer_historical_inventory.v1" &&
+      historicalMigrationInventory.source_commit === "42cab91" &&
+      historicalMigrationInventory.source_version === "0.4.0",
+    "Historical migration fixture identity is invalid",
+  );
+  assert(
+    JSON.stringify(historicalPaths) === JSON.stringify(currentInstallPaths),
+    "Historical 0.4 inventory does not match the complete current install inventory",
+  );
+  let historicalOverwriteCount = 0;
+  let historicalUnchangedCount = 0;
+  for (const entry of historicalMigrationInventory.entries) {
+    assert(
+      /^[a-f0-9]{64}$/.test(entry.historical_sha256) && /^[a-f0-9]{64}$/.test(entry.target_sha256),
+      `Historical fixture has an invalid digest: ${entry.path}`,
+    );
+    const sourcePath = join(repoRoot, ...entry.path.split("/"));
+    const destinationPath = join(migrationTarget, ...entry.path.split("/"));
+    assert(sha256(sourcePath) === entry.target_sha256, `Historical fixture target digest is stale: ${entry.path}`);
+    mkdirSync(dirname(destinationPath), { recursive: true });
+    if (entry.historical_sha256 === entry.target_sha256) {
+      copyFileSync(sourcePath, destinationPath);
+      historicalUnchangedCount += 1;
+    } else {
+      writeFileSync(
+        destinationPath,
+        `historical 0.4 payload placeholder\npath=${entry.path}\nsha256=${entry.historical_sha256}\n`,
+        "utf8",
+      );
+      historicalOverwriteCount += 1;
+    }
+  }
+  assert(
+    historicalMigrationInventory.expected_counts?.create === 0 &&
+      historicalMigrationInventory.expected_counts?.overwrite === historicalOverwriteCount &&
+      historicalMigrationInventory.expected_counts?.unchanged === historicalUnchangedCount,
+    "Historical fixture action counts do not match its hashes",
+  );
+  const migrationReport = runInstaller(
+    migrationTarget,
+    ["--force"],
+    0,
+    "historical 0.4 migration",
+  );
+  assertReportStatus(migrationReport, "installed", "historical 0.4 migration");
+  assert(
+    JSON.stringify(migrationReport.counts) ===
+      JSON.stringify(historicalMigrationInventory.expected_counts),
+    `0.4 migration action mix mismatch: ${JSON.stringify(migrationReport.counts)}`,
+  );
+  assert(migrationReport.validation?.status === "pass", "0.4 migration target validation did not pass");
+  assertExactProjectInstall(migrationTarget);
+  cases.push("historical-0.4.0-to-1.0.1-full-inventory-migration");
+
+  const sameNameHostTarget = join(testRoot, "same-name-host-project");
+  mkdirSync(sameNameHostTarget, { recursive: true });
+  writeFileSync(
+    join(sameNameHostTarget, "package.json"),
+    `${JSON.stringify({ name: "naruto-codex-deliberation-council" })}\n`,
+    "utf8",
+  );
+  const sameNameHostReport = runInstaller(
+    sameNameHostTarget,
+    [],
+    0,
+    "same-name host project install",
+  );
+  assertReportStatus(sameNameHostReport, "installed", "same-name host project install");
+  assert(
+    sameNameHostReport.validation?.status === "pass" &&
+      sameNameHostReport.validation?.source === "private_verified_snapshot",
+    "Install validation incorrectly entered package mode for the host project",
+  );
+  assertExactProjectInstall(sameNameHostTarget);
+  cases.push("install-validation-ignores-host-package-mode");
+
   const userHome = join(testRoot, "user-home");
   const userRuntimeRoot = join(testRoot, "user-runtime-root");
   mkdirSync(userHome, { recursive: true });
   mkdirSync(userRuntimeRoot, { recursive: true });
   const userInstall = runUserInstaller(userHome, userRuntimeRoot, [], 0, "fresh user install");
   assertReportStatus(userInstall, "installed", "fresh user install", "user");
+  assert(userInstall.validation?.status === "pass", "User install did not report target validation PASS");
   assert(userInstall.counts?.create > 0, "Fresh user install must create package files");
   assert(userInstall.counts?.overwrite === 0, "Fresh user install must not overwrite files");
   assertExactInstallRoots(
@@ -302,7 +539,12 @@ try {
       userValidator,
       [],
       userHome,
-      { ...process.env, HOME: userHome, CODEX_HOME: userRuntimeRoot },
+      {
+        ...process.env,
+        HOME: userHome,
+        USERPROFILE: userHome,
+        CODEX_HOME: userRuntimeRoot,
+      },
     ),
     "user-installed skill validator",
     0,
@@ -343,6 +585,7 @@ try {
   );
   assert(listFiles(symlinkSink).length === 0, "Blocked symlink install wrote through the symlink");
   cases.push("symlink-destination-blocked");
+
 } catch (error) {
   failure = error;
 } finally {
