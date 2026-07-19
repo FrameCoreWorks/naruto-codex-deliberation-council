@@ -32,17 +32,22 @@ function parseJson(relativePath) {
   }
 }
 
+function toPortablePath(path, separator = sep) {
+  return path.split(separator).join("/");
+}
+
 function listFiles(directory, base = "") {
   const files = [];
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
     if ([".git", "node_modules", "__MACOSX"].includes(entry.name)) continue;
     const path = join(directory, entry.name);
-    const relativePath = base ? join(base, entry.name) : entry.name;
+    const nativeRelativePath = base ? join(base, entry.name) : entry.name;
+    const relativePath = toPortablePath(nativeRelativePath);
     if (entry.isSymbolicLink()) {
       files.push(relativePath);
       continue;
     }
-    if (entry.isDirectory()) files.push(...listFiles(path, relativePath));
+    if (entry.isDirectory()) files.push(...listFiles(path, nativeRelativePath));
     if (entry.isFile()) files.push(relativePath);
   }
   return files.sort();
@@ -64,6 +69,14 @@ const security = readText("SECURITY.md");
 const bannerRelativePath = "assets/naruto-codex-deliberation-council-banner.png";
 const bannerPath = join(repoRoot, bannerRelativePath);
 
+record(
+  "portable_inventory_path_normalization",
+  toPortablePath("scripts\\release-readiness.mjs", "\\") ===
+      "scripts/release-readiness.mjs" &&
+    toPortablePath("scripts/release-readiness.mjs", "/") ===
+      "scripts/release-readiness.mjs",
+  "repository inventory paths must use forward slashes on every platform",
+);
 record(
   "package_identity",
   packageJson?.name === "naruto-codex-deliberation-council" &&
@@ -169,7 +182,7 @@ const migrationEntries = Array.isArray(migrationInventory?.entries)
 const migrationPaths = migrationEntries.map(({ path }) => path);
 const expectedMigrationPaths = [
   ...listFiles(join(repoRoot, ".agents/skills/naruto")).map(
-    (path) => `.agents/skills/naruto/${path.split(sep).join("/")}`,
+    (path) => `.agents/skills/naruto/${path}`,
   ),
   ...(manifest?.required_profiles ?? []).map((profile) => `.codex/agents/${profile}`),
 ].sort();
@@ -487,7 +500,7 @@ const staleClaimHits = [];
 const symlinkHits = [];
 const runBundleClaimHits = [];
 for (const relativePath of publicTextFiles) {
-  const path = join(repoRoot, ...relativePath.split(sep));
+  const path = join(repoRoot, ...relativePath.split("/"));
   if (lstatSync(path).isSymbolicLink()) {
     symlinkHits.push(relativePath);
     continue;

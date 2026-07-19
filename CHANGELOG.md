@@ -63,6 +63,12 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   final installed-skill validation.
 - Replaced release-page-relative documentation links with absolute,
   tag-pinned GitHub URLs.
+- Made the dangling-destination regression portable on Windows by creating an
+  NTFS directory junction and removing its target before exercising the
+  fail-closed installer path.
+- Normalized release-readiness inventory paths before self-exclusion checks so
+  Windows separators cannot make the validator scan its own guard expressions
+  as public stale claims.
 - Removed stale statements that the public repository, release, and hosted CI
   had not been created.
 - Made static classifiers fail closed on missing supervision, training,

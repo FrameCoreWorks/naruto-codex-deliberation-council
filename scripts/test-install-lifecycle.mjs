@@ -282,7 +282,14 @@ try {
   mkdirSync(dirname(danglingPath), { recursive: true });
   mkdirSync(danglingSink, { recursive: true });
   const escapedPath = join(danglingSink, "escaped-SKILL.md");
-  symlinkSync(escapedPath, danglingPath, process.platform === "win32" ? "junction" : "file");
+  if (process.platform === "win32") {
+    mkdirSync(escapedPath, { recursive: true });
+    symlinkSync(escapedPath, danglingPath, "junction");
+    rmSync(escapedPath, { recursive: true, force: true });
+  } else {
+    symlinkSync(escapedPath, danglingPath, "file");
+  }
+  assert(lstatSync(danglingPath).isSymbolicLink(), "Dangling-link fixture is not a symbolic link");
   const beforeDanglingInstall = snapshot(danglingTarget);
   const danglingReport = runInstaller(danglingTarget, [], 2, "dangling destination symlink");
   assertReportStatus(danglingReport, "blocked", "dangling destination symlink");
